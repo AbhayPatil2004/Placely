@@ -151,10 +151,16 @@ const studentSchema = new mongoose.Schema(
         // BASIC PROFILE
         // =========================
 
-        name: {
+        fullname: {
             type: String,
             required: true,
             trim: true
+        },
+
+        studentId :{
+            type : Number ,
+            required : true ,
+            unique : true 
         },
 
         email: {
@@ -171,13 +177,13 @@ const studentSchema = new mongoose.Schema(
             required: true,
             select: false
         },
-
-         googleId: {
-            type: String,
-            unique: true,
-            sparse: true,
-            index: true
-        },
+        
+        // googleId: {
+        //     type: String,
+        //     unique: true,
+        //     sparse: true,
+        //     index: true
+        // },
 
         branch: {
             type: String,

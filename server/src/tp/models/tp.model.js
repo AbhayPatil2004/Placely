@@ -9,18 +9,22 @@ const tpUserSchema = new mongoose.Schema(
             trim: true,
         },
 
-        name: {
+        college :{
+            type : String ,
+            required : true 
+        } ,
+        fullname: {
             type: String,
             required: true,
             trim: true,
         },
 
-        googleId: {
-            type: String,
-            unique: true,
-            sparse: true,
-            index: true
-        },
+        // googleId: {
+        //     type: String,
+        //     unique: true,
+        //     sparse: true,
+        //     index: true
+        // },
 
         email: {
             type: String,
@@ -51,6 +55,7 @@ const tpUserSchema = new mongoose.Schema(
             default: null,
         },
 
+        
         isVerified: {
             type: Boolean,
             default: false,
