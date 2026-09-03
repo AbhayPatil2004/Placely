@@ -3,7 +3,8 @@ import { getChannel, QUEUE_NAME } from "../config/rabbitmq.js";
 import transporter from "../config/mail.js";
 
 import {
-    welcomeEmailTemplate
+    welcomeEmailTemplate,
+    passwordResetOtpTemplate
 } from "../templates/welcome.template.js";
 
 
@@ -52,6 +53,14 @@ export const startEmailConsumer = async () => {
 
                         html = welcomeEmailTemplate(
                             emailData.data.name
+                        );
+
+                        break;
+
+                    case "PASSWORD_RESET_OTP":
+                        html = passwordResetOtpTemplate(
+                            emailData.data.name,
+                            emailData.data.otp
                         );
 
                         break;

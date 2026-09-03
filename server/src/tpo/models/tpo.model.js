@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const tpUserSchema = new mongoose.Schema(
+const tpoUserSchema = new mongoose.Schema(
     {
         collegeId: {
             type: String,
@@ -39,10 +39,14 @@ const tpUserSchema = new mongoose.Schema(
             required: true,
         },
 
-        designation: {
+        refreshToken: {
             type: String,
-            required: true,
-            trim: true,
+            default: null,
+        },
+
+        role: {
+            type: String,
+            default: "tpo",
         },
 
         phone: {
@@ -71,6 +75,6 @@ const tpUserSchema = new mongoose.Schema(
     }
 );
 
-const TPUser = mongoose.model("TPUser", tpUserSchema);
+const TPOUser = mongoose.model("TPOUser", tpoUserSchema);
 
-export default TPUser;
+export default TPOUser;

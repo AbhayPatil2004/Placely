@@ -13,6 +13,12 @@ const adminSchema = new mongoose.Schema(
       unique: true,
     },
 
+    role: {
+      type: String,
+      default: "admin",
+      required: true,
+    },
+    
     profileImage :{
       type : String 
     },
@@ -20,6 +26,10 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+    refreshToken: {
+      type: String,
+      select: false,
     },
   },
   {
