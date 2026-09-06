@@ -9,6 +9,7 @@ import { publishEmail } from "./services/emailProducer.js";
 dotenv.config();
 
 const app = express();
+app.use(express.json())
 
 const prisma = new PrismaClient();
 
@@ -16,7 +17,6 @@ await connectDB();
 await connectRabbitMQ();
 
 app.use(express.json());
-
 
 const PORT = process.env.PORT || 5000;
 

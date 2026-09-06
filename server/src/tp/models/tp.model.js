@@ -55,16 +55,20 @@ const tpUserSchema = new mongoose.Schema(
             default: null,
         },
 
-        
-        isVerified: {
-            type: Boolean,
-            default: false,
-        },
+        // status: {
+        //     type: String,
+        //     enum: ["PENDING", "APPROVED", "REJECTED"],
+        //     default: "PENDING",
+        // },
+        // isVerified: {
+        //     type: Boolean,
+        //     default: false,
+        // },
 
-        isActive: {
-            type: Boolean,
-            default: true,
-        },
+        // isActive: {
+        //     type: Boolean,
+        //     default: true,
+        // },
     },
     {
         timestamps: true,

@@ -16,7 +16,7 @@ const message = {
 
     to: "abhayramkrushnapatil@gmail.com",
 
-    subject: "Placely Test Email 🚀",
+    subject: "Placely Test Email ",
 
     data: {
         name: "Abhay"

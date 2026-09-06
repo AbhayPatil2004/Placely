@@ -1,5 +1,8 @@
 import executeCpp from "../services/docker.cpp.service.js";
 import executeJava from "../services/docker.java.service.js";
+import executeJs from "../services/docker.js.service.js";
+import executePy from "../services/docker.py.service.js";
+
 
 const executeCode = async ( req , res ) =>{
 
@@ -32,10 +35,10 @@ const executeCode = async ( req , res ) =>{
             result = await executeJava( code , input )
         }
         else if( language == "js" ){
-
-        }
+            result = await executeJs( code , input )
+        }   
         else if( language == "py" ){
-
+            result = await executePy( code , input );
         }
         else{
             return res.status(400).json(
