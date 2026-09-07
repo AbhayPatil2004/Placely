@@ -1,23 +1,32 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import executionRoutes from './routes/execution.routes.js'
+import dotenv from "dotenv";
+import { connectRabbitMQ } from "./config/rabbitmq.js";
+import {
+    startCodeExecutionConsumer
+} from "./consumers/code-execution.consumer.js";
 
-dotenv.config()
-const app = express()
+dotenv.config();
 
-const PORT = process.env.PORT ;
+const startCodeExecutionService = async () => {
 
-app.use(express.json())
+    try {
 
-app.use("/api/code" , executionRoutes)
-app.get("/" , ( req , res ) => {
+        await connectRabbitMQ();
 
-    console.log("Get req received")
-    res.status(200).json({
-        message : "Everything is fine"
-    })
-})
+        await startCodeExecutionConsumer();
 
-app.listen( PORT , () => {
-    console.log(`Code Execution Server is listeing on Port ${PORT}`)
-})
+        console.log(
+            "Placely Code Execution Service is running"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error starting Code Execution Service:",
+            error.message
+        );
+
+        process.exit(1);
+    }
+};
+
+startCodeExecutionService();
