@@ -174,16 +174,29 @@ const studentSchema = new mongoose.Schema(
 
         password: {
             type: String,
-            required: true,
+            required: function(){
+                return this.authProvider === "local";
+            },
             select: false
         },
         
-        // googleId: {
-        //     type: String,
-        //     unique: true,
-        //     sparse: true,
-        //     index: true
-        // },
+        authProvider: {
+            type: String,
+            enum: ["local", "google"],
+            default: "local"
+        },
+
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true,
+            index: true
+        },
+
+        refreshedToken: {
+            type: String,
+            select: false
+        },
 
         branch: {
             type: String,
