@@ -2,29 +2,11 @@ import mongoose from "mongoose";
 
 const tpoUserSchema = new mongoose.Schema(
     {
-        collegeId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-        },
-
-        college :{
-            type : String ,
-            required : true 
-        } ,
         fullname: {
             type: String,
             required: true,
             trim: true,
         },
-
-        // googleId: {
-        //     type: String,
-        //     unique: true,
-        //     sparse: true,
-        //     index: true
-        // },
 
         email: {
             type: String,
@@ -32,47 +14,45 @@ const tpoUserSchema = new mongoose.Schema(
             unique: true,
             lowercase: true,
             trim: true,
+            index: true,
         },
 
         password: {
             type: String,
             required: true,
-        },
-
-        refreshToken: {
-            type: String,
-            default: null,
+            select: false,
         },
 
         role: {
             type: String,
+            enum: ["tpo"],
             default: "tpo",
+            required: true,
+        },
+
+        profileImage: {
+            type: String,
+            default: null,
+            trim: true,
+        },
+
+        collegeId: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
+        },
+
+        college: {
+            type: String,
+            required: true,
+            trim: true,
         },
 
         phone: {
             type: String,
             trim: true,
         },
-
-        profileImage: {
-            type: String,
-            default: null,
-        },
-
-        // status: {
-        //     type: String,
-        //     enum: ["PENDING", "APPROVED", "REJECTED"],
-        //     default: "PENDING",
-        // },
-        // isVerified: {
-        //     type: Boolean,
-        //     default: false,
-        // },
-
-        // isActive: {
-        //     type: Boolean,
-        //     default: true,
-        // },
     },
     {
         timestamps: true,

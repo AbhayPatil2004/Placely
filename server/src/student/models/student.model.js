@@ -1,24 +1,8 @@
 import mongoose from "mongoose";
 
-const semesterSchema = new mongoose.Schema(
-    {
-        semester: {
-            type: Number,
-            required: true
-        },
-        sgpa: {
-            type: Number,
-            min: 0,
-            max: 10
-        },
-        cgpa: {
-            type: Number,
-            min: 0,
-            max: 10
-        }
-    },
-    { _id: false }
-);
+// =========================
+// CODING PROFILE SCHEMA
+// =========================
 
 const codingProfileSchema = new mongoose.Schema(
     {
@@ -28,122 +12,29 @@ const codingProfileSchema = new mongoose.Schema(
                 "LEETCODE",
                 "GITHUB",
                 "CODECHEF",
+                "CODEFORCES",
                 "GEEKSFORGEEKS",
                 "HACKERRANK",
                 "LINKEDIN",
-                "OTHER"
+                "OTHER",
             ],
-            required: true
+            required: true,
         },
 
-        username: String,
-
-        profileUrl: String,
-
-        problemsSolved: {
-            type: Number,
-            default: 0
-        },
-
-        rating: {
-            type: Number,
-            default: null
-        }
-    },
-    { _id: false }
-);
-
-const projectSchema = new mongoose.Schema(
-    {
-        title: {
+        profileUrl: {
             type: String,
-            required: true
+            required: true,
+            trim: true,
         },
-
-        topic: String,
-
-        summary: String,
-
-        techStack: [String],
-
-        githubUrl: String,
-
-        liveUrl: String,
-
-        imageUrl: String,
-
-        startDate: Date,
-
-        endDate: Date
     },
-    { _id: true }
-);
-
-const internshipSchema = new mongoose.Schema(
     {
-        company: {
-            type: String,
-            required: true
-        },
-
-        role: String,
-
-        field: String,
-
-        domain: String,
-
-        startDate: Date,
-
-        endDate: Date,
-
-        description: String,
-
-        certificateUrl: String
-    },
-    { _id: true }
+        _id: false,
+    }
 );
 
-const hackathonSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: true
-        },
-
-        organizer: String,
-
-        date: Date,
-
-        summary: String,
-
-        position: String,
-
-        projectName: String,
-
-        certificateUrl: String
-    },
-    { _id: true }
-);
-
-const certificateSchema = new mongoose.Schema(
-    {
-        title: {
-            type: String,
-            required: true
-        },
-
-        issuer: String,
-
-        domain: String,
-
-        summary: String,
-
-        issueDate: Date,
-
-        credentialUrl: String
-    },
-    { _id: true }
-);
+// =========================
+// STUDENT SCHEMA
+// =========================
 
 const studentSchema = new mongoose.Schema(
     {
@@ -154,13 +45,7 @@ const studentSchema = new mongoose.Schema(
         fullname: {
             type: String,
             required: true,
-            trim: true
-        },
-
-        studentId :{
-            type : Number ,
-            required : true ,
-            unique : true 
+            trim: true,
         },
 
         email: {
@@ -169,88 +54,128 @@ const studentSchema = new mongoose.Schema(
             unique: true,
             lowercase: true,
             trim: true,
-            index: true
+            index: true,
         },
 
         password: {
             type: String,
-            required: function(){
+            required: function () {
                 return this.authProvider === "local";
             },
-            select: false
+            select: false,
         },
-        
+
+        profileImage: {
+            type: String,
+            default: null,
+            trim: true,
+        },
+
+        role: {
+            type: String,
+            enum: ["student"],
+            default: "student",
+            required: true,
+        },
+
+        // =========================
+        // AUTHENTICATION
+        // =========================
+
         authProvider: {
             type: String,
             enum: ["local", "google"],
-            default: "local"
+            default: "local",
         },
 
         googleId: {
             type: String,
             unique: true,
             sparse: true,
-            index: true
+            index: true,
         },
 
-        refreshedToken: {
+        // =========================
+        // STUDENT DETAILS
+        // =========================
+
+        studentId: {
             type: String,
-            select: false
+            required: true,
+            unique: true,
+            trim: true,
+        },
+
+        // =========================
+        // ACADEMIC DETAILS
+        // =========================
+
+        university: {
+            type: String,
+            // required: true,
+            trim: true,
+        },
+
+        college: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        collegeId: {
+            type: String,
+            required: true,
+            index: true,
         },
 
         branch: {
             type: String,
             enum: [
-                "COMP",
-                "IT",
-                "AIDS",
-                "ENTC",
-                "OTHER"
+                "Computer Science and Engineering",
+                "Information Technology",
+                "Artificial Intelligence and Data Science",
+                "Electronics and Telecommunication Engineering",
+                "Other",
             ],
             required: true,
-            index: true
-        },
-
-        college :{
-            type : String ,
-            required : true 
-        },
-
-        collegeId: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            index: true
+            index: true,
         },
 
         currentYear: {
             type: Number,
-            required: true
+            required: true,
         },
 
         passingYear: {
             type: Number,
-            required: true
+            required: true,
+        },
+
+        cgpa: {
+            type: Number,
+            min: 0,
+            max: 10,
         },
 
         tenthPercentage: {
             type: Number,
             min: 0,
-            max: 100
+            max: 100,
         },
 
         twelfthPercentage: {
             type: Number,
             min: 0,
-            max: 100
+            max: 100,
         },
 
         // =========================
-        // ACADEMICS
+        // SKILLS
         // =========================
 
-        semesters: {
-            type: [semesterSchema],
-            default: []
+        skills: {
+            type: [String],
+            default: [],
         },
 
         // =========================
@@ -259,53 +184,31 @@ const studentSchema = new mongoose.Schema(
 
         codingProfiles: {
             type: [codingProfileSchema],
-            default: []
+            default: [],
         },
 
         // =========================
-        // LINKEDIN
+        // RESUME
         // =========================
 
-        linkedin: String,
-
-        // =========================
-        // PROJECTS
-        // =========================
-
-        projects: {
-            type: [projectSchema],
-            default: []
+        resumeUrl: {
+            type: String,
+            default: null,
+            trim: true,
         },
 
         // =========================
-        // INTERNSHIPS
+        // PORTFOLIO
         // =========================
 
-        internships: {
-            type: [internshipSchema],
-            default: []
+        portfolioUrl: {
+            type: String,
+            default: null,
+            trim: true,
         },
-
-        // =========================
-        // HACKATHONS
-        // =========================
-
-        hackathons: {
-            type: [hackathonSchema],
-            default: []
-        },
-
-        // =========================
-        // CERTIFICATES
-        // =========================
-
-        certificates: {
-            type: [certificateSchema],
-            default: []
-        }
     },
     {
-        timestamps: true
+        timestamps: true,
     }
 );
 

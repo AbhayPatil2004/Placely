@@ -1,25 +1,38 @@
-import {router as studentRouter} from 'express';
+import { Router } from "express";
 
 import {
     StudentSignup,
     StudentLogin,
     StudentLogout,
-    StudentRefreshToken,
     StudentForgotPassword,
     StudentVerifyOtp,
-    StudentResetPassword
-} from "./controllers/student.auth.controller.js";
+} from "../controllers/student.auth.controller.js";
 
-import verifyAccessToken from "./middleware/student.verifytoken.middleware.js";
+// import verifyAccessToken from "../middleware/student.verifytoken.middleware.js";
 
-const router = studentRouter();
+const router = Router();
 
-router.post('/signup', StudentSignup);
-router.post('/login', StudentLogin);
-router.post('/logout', verifyAccessToken, StudentLogout);
-router.post('/refresh-token', StudentRefreshToken);
-router.post('/forgot-password', StudentForgotPassword);
-router.post('/verify-otp', StudentVerifyOtp);
-router.post('/reset-password', StudentResetPassword);
+// ===============================
+// STUDENT AUTH ROUTES
+// ===============================
+
+router.post("/signup", StudentSignup);
+
+router.post("/login", StudentLogin);
+
+router.post(
+    "/logout",
+    StudentLogout
+);
+
+router.post(
+    "/forgot-password",
+    StudentForgotPassword
+);
+
+router.post(
+    "/verify-otp",
+    StudentVerifyOtp
+);
 
 export default router;

@@ -6,8 +6,8 @@ import redis from "./config/redis.js";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
 import { publishEmail } from "./services/emailProducer.js";
 import Studentrouter from "./auth/routes/student.auth.route.js";
-import Adminrouter from "./auth/routes/admin.auth.routes.js";
-import Tporouter from "./auth/routes/tpo.auth.routes.js";
+// import Adminrouter from "./auth/routes/admin.auth.routes.js";
+// import Tporouter from "./auth/routes/tpo.auth.routes.js";/
 
 dotenv.config();
 
@@ -19,9 +19,9 @@ await connectDB();
 await connectRabbitMQ();
 
 app.use(express.json());
-app.use("/api/student", Studentrouter);
-app.use("/api/admin", Adminrouter);
-app.use("/api/tpo", Tporouter);
+app.use("/api/auth/student", Studentrouter);
+// app.use("/api/admin", Adminrouter);
+// app.use("/api/tpo", Tporouter);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,82 +1,109 @@
 import bcrypt from "bcryptjs";
-import { randomInt, randomUUID } from "crypto";
-import jwt from "jsonwebtoken";
+import { randomInt } from "crypto";
 import Student from "../../student/models/student.model.js";
-import generateTokensAndSetCookies from "../../utils/student.token.util.js";
-import asyncHandler from "../../utils/asyncHandler.js";
 import { publishEmail } from "../../services/emailProducer.js";
 import redis from "../../config/redis.js";
-import apiError from "../../utils/apiError.js";
-import apiResponse from "../../utils/apiResponse.js";
+import ApiError from "../../utils/apiError.js";
+import ApiResponse from "../../utils/apiResponse.js";
+import setAuthCookie from "../utils/cookie.util.js";
+import generateAccessToken from "../utils/token.util.js";
 
-const PASSWORD_RESET_OTP_TTL_SECONDS = 10 * 60;
-const PASSWORD_RESET_TOKEN_TTL_SECONDS = 10 * 60;
+const FORGOT_PASSWORD_OTP_TTL_SECONDS = 10 * 60;
 
-//Signup controller
-export const StudentSignup = asyncHandler(async (req, res) => {
-  const {
-    fullname,
-    studentId,
-    email,
-    branch,
-    college,
-    collegeId,
-    currentYear,
-    passingYear,
-    password,
-  } = req.body;
+// ===============================
+// STUDENT SIGNUP
+// ===============================
+const StudentSignup = async (req, res) => {
   try {
-    if (!fullname || !studentId || !email || !password) {
-      return res
-        .status(400)
-        .json(new apiResponse(400, "All fields are required"));
-    }
-
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json(
-          new apiResponse(400, "Password must be at least 6 characters long"),
-        );
-    }
-
-    const existingStudent = await Student.findOne({
-      $or: [{ email }, { studentId }],
-    });
-    if (existingStudent) {
-      return res
-        .status(400)
-        .json(
-          new apiResponse(
-            400,
-            "Student with this email or studentId already exists",
-          ),
-        );
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const parseArray = (field) => {
-      if (field === undefined || field === null) return [];
-      if (Array.isArray(field)) return field;
-      if (typeof field !== "string") return [String(field)];
-
-      try {
-        const parsed = JSON.parse(field);
-        return Array.isArray(parsed) ? parsed.map(String) : [String(parsed)];
-      } catch (e) {
-        return field
-          .split(",")
-          .map((item) => item.trim())
-          .filter(boolean);
-      }
-    };
-
-    const student = new Student({
+    const {
       fullname,
       studentId,
       email,
+      password,
+      branch,
+      college,
+      collegeId,
+      currentYear,
+      passingYear,
+    } = req.body;
+
+    // Required fields
+    if (
+      !fullname ||
+      !studentId ||
+      !email ||
+      !password ||
+      !branch ||
+      !college ||
+      !collegeId ||
+      !currentYear ||
+      !passingYear
+    ) {
+      return res.status(400).json(
+        new ApiError(400, "All fields are required")
+      );
+    }
+
+    // Normalize values
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedStudentId = studentId.trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(400, "Only Gmail addresses are allowed")
+      );
+    }
+
+    // Strong password validation
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        )
+      );
+    }
+
+    // Check email and studentId together
+    const existingStudent = await Student.findOne({
+      $or: [
+        { email: normalizedEmail },
+        { studentId: normalizedStudentId },
+      ],
+    });
+
+    if (existingStudent) {
+      if (existingStudent.email === normalizedEmail) {
+        return res.status(409).json(
+          new ApiError(
+            409,
+            "Student with this email already exists"
+          )
+        );
+      }
+
+      if (existingStudent.studentId === normalizedStudentId) {
+        return res.status(409).json(
+          new ApiError(
+            409,
+            "Student with this student ID already exists"
+          )
+        );
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create student
+    const student = await Student.create({
+      fullname: fullname.trim(),
+      studentId: normalizedStudentId,
+      email: normalizedEmail,
       password: hashedPassword,
       branch,
       college,
@@ -84,221 +111,324 @@ export const StudentSignup = asyncHandler(async (req, res) => {
       currentYear,
       passingYear,
     });
-    await student.save();
 
-    generateTokensAndSetCookies(student, student._id);
+    // Generate JWT
+    const token = generateAccessToken(student);
 
-    const { password: _pw, ...studentData } = student.toObject(); //security measure to not send password in response
+    // Set authentication cookie
+    setAuthCookie(res, token);
 
-    res
-      .status(201)
-      .json(new apiResponse(201, "Sucessfully registered", studentData));
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    // Welcome email
+    await publishEmail({
+      type: "WELCOME_EMAIL",
+      to: normalizedEmail,
+      subject: "Welcome to Placely 🎉",
+      data: {
+        name: student.fullname,
+      },
+    });
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        "Student signup successful",
+        {
+          id: student._id,
+          fullname: student.fullname,
+          studentId: student.studentId,
+          email: student.email,
+          branch: student.branch,
+          college: student.college,
+          collegeId: student.collegeId,
+          currentYear: student.currentYear,
+          passingYear: student.passingYear,
+          role: student.role,
+        }
+      )
+    );
+  } catch (error) {
+    console.error("Student Signup Error:", error);
+
+    // Handle MongoDB duplicate key race condition
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern || {})[0];
+
+      if (duplicateField === "email") {
+        return res.status(409).json(
+          new ApiError(
+            409,
+            "Student with this email already exists"
+          )
+        );
+      }
+
+      if (duplicateField === "studentId") {
+        return res.status(409).json(
+          new ApiError(
+            409,
+            "Student with this student ID already exists"
+          )
+        );
+      }
+    }
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
   }
-});
+};
 
-//Login controller
 
-export const StudentLogin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
+// ===============================
+// STUDENT LOGIN
+// ===============================
+const StudentLogin = async (req, res) => {
   try {
+    const { email, password } = req.body;
+
     if (!email || !password) {
-      return res
-        .status(400)
-        .json(new apiResponse(400, "Email and password are required"));
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Email and Password are required"
+        )
+      );
     }
 
-    const user = await Student.findOne({ email }).select("+password");
-    if (!user) {
-      return res
-        .status(401)
-        .json(new apiResponse(401, "Invalid email or password"));
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Only Gmail addresses are allowed"
+        )
+      );
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json(new apiResponse(401, "Invalid email or password"));
-    }
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    }).select("+password");
 
-    generateTokensAndSetCookies(res, user._id);
-    const { password: _pw, ...userData } = user.toObject(); //security measure to not send password in response
-
-    res.status(200).json(new apiResponse(200, "Login successful", userData));
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-  }
-});
-
-//Logout controller
-
-export const StudentLogout = asyncHandler(async (req, res) => {
-  try {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-    res.status(200).json(new apiResponse(200, "Logout successful"));
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-  }
-});
-
-// Refresh Token controller
-
-export const StudentRefreshToken = asyncHandler(async (req, res) => {
-  try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
-      return res
-        .status(401)
-        .json(new apiResponse(401, "Refresh token not found"));
-    }
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const userId = decoded.userId;
-    const user = await Student.findById(userId);
-    if (!user) {
-      return res.status(401).json(new apiResponse(401, "User not found"));
-    }
-    generateTokensAndSetCookies(res, user._id);
-
-    return res
-      .status(200)
-      .json(new apiResponse(200, "Token refreshed successfully"));
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-  }
-});
-
-export const StudentForgotPassword = asyncHandler(async (req, res) => {
-  const email =
-    typeof req.body.email === "string"
-      ? req.body.email.trim().toLowerCase()
-      : "";
-
-  if (!email) {
-    return res.status(400).json(new apiResponse(400, "Email is required"));
-  }
-
-  try {
-    const student = await Student.findOne({ email });
     if (!student) {
-      return res.status(404).json(new apiResponse(404, "Student not found"));
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Student with this email does not exist"
+        )
+      );
     }
 
-    const otp = randomInt(100000, 1000000).toString();
-    await redis.set(
-      `student:password-reset:otp:${email}`,
-      otp,
-      "EX",
-      PASSWORD_RESET_OTP_TTL_SECONDS,
+    // Compare password
+    const correctPassword = await bcrypt.compare(
+      password,
+      student.password
     );
 
+    if (!correctPassword) {
+      return res.status(400).json(
+        new ApiError(400, "Wrong password")
+      );
+    }
+
+    // Generate JWT
+    const token = generateAccessToken(student);
+
+    // Set cookie
+    setAuthCookie(res, token);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Login successful",
+        {
+          id: student._id,
+          fullname: student.fullname,
+          studentId: student.studentId,
+          email: student.email,
+          branch: student.branch,
+          college: student.college,
+          collegeId: student.collegeId,
+          currentYear: student.currentYear,
+          passingYear: student.passingYear,
+          role: student.role,
+        }
+      )
+    );
+  } catch (error) {
+    console.error("Student Login Error:", error);
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
+  }
+};
+
+
+// ===============================
+// STUDENT LOGOUT
+// ===============================
+const StudentLogout = (req, res) => {
+  res.clearCookie("accessToken");
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      "Logout successful"
+    )
+  );
+};
+
+
+// ===============================
+// FORGOT PASSWORD - SEND OTP
+// ===============================
+const StudentForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json(
+        new ApiError(400, "Email is required")
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Only Gmail addresses are allowed"
+        )
+      );
+    }
+
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!student) {
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "No student exists with this email"
+        )
+      );
+    }
+
+    // Generate 6 digit OTP
+    const otp = randomInt(100000, 1000000).toString();
+
+    // Store OTP in Redis for 10 minutes
+    await redis.set(
+      `student:forgot-password-otp:${normalizedEmail}`,
+      otp,
+      "EX",
+      FORGOT_PASSWORD_OTP_TTL_SECONDS
+    );
+
+    // Send OTP through RabbitMQ
     await publishEmail({
-      type: "PASSWORD_RESET_OTP",
-      to: email,
-      subject: "Placely password reset OTP",
+      type: "FORGOT_PASSWORD_OTP",
+      to: normalizedEmail,
+      subject: "Placely Forgot Password OTP",
       data: {
         name: student.fullname,
         otp,
       },
     });
 
-    return res
-      .status(200)
-      .json(new apiResponse(200, "Password reset OTP sent successfully"));
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-  }
-});
-
-export const StudentVerifyOtp = asyncHandler(async (req, res) => {
-  const email =
-    typeof req.body.email === "string"
-      ? req.body.email.trim().toLowerCase()
-      : "";
-  const otp = typeof req.body.otp === "string" ? req.body.otp.trim() : "";
-
-  if (!email || !/^\d{6}$/.test(otp)) {
-    return res
-      .status(400)
-      .json(new apiResponse(400, "Email and OTP are required"));
-  }
-
-  try {
-    const storedOtp = await redis.get(`student:password-reset:otp:${email}`);
-    if (!storedOtp || storedOtp !== otp) {
-      return res
-        .status(400)
-        .json(new apiResponse(400, "Invalid or expired OTP"));
-    }
-
-    const resetToken = randomUUID();
-    await redis.set(
-      `student:password-reset:verified:${resetToken}`,
-      email,
-      "EX",
-      PASSWORD_RESET_TOKEN_TTL_SECONDS,
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Forgot Password OTP sent successfully"
+      )
     );
-    await redis.del(`student:password-reset:otp:${email}`);
-
-    return res
-      .status(200)
-      .json(new apiResponse(200, "OTP verified successfully", { resetToken }));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-  }
-});
+    console.error(
+      "Student Forgot Password Error:",
+      error
+    );
 
-export const StudentResetPassword = asyncHandler(async (req, res) => {
-  const { resetToken, newPassword } = req.body;
-
-  if (!resetToken || typeof newPassword !== "string" || !newPassword) {
-    return res
-      .status(400)
-      .json(new apiResponse(400, "Reset token and new password are required"));
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
   }
-  if (newPassword.length < 6) {
-    return res
-      .status(400)
-      .json(
-        new apiResponse(400, "Password must be at least 6 characters long"),
+};
+
+
+// ===============================
+// VERIFY OTP
+// ===============================
+const StudentVerifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Email and OTP are required"
+        )
       );
-  }
-
-  try {
-    const email = await redis.get(
-      `student:password-reset:verified:${resetToken}`,
-    );
-    if (!email) {
-      return res
-        .status(400)
-        .json(new apiResponse(400, "Invalid or expired reset token"));
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const student = await Student.findOneAndUpdate(
-      { email },
-      { password: hashedPassword },
-      { new: true, runValidators: true },
-    );
-    if (!student) {
-      return res.status(404).json(new apiResponse(404, "Student not found"));
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Only Gmail addresses are allowed"
+        )
+      );
     }
 
-    await redis.del(`student:password-reset:verified:${resetToken}`);
-    return res
-      .status(200)
-      .json(new apiResponse(200, "Password updated successfully"));
+    const storedOtp = await redis.get(
+      `student:forgot-password-otp:${normalizedEmail}`
+    );
+
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Invalid or expired OTP"
+        )
+      );
+    }
+
+    // Delete OTP after successful verification
+    await redis.del(
+      `student:forgot-password-otp:${normalizedEmail}`
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "OTP verified successfully"
+      )
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    console.error(
+      "Student Verify OTP Error:",
+      error
+    );
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
   }
-});
+};
+
+
+export {
+  StudentSignup,
+  StudentLogin,
+  StudentLogout,
+  StudentForgotPassword,
+  StudentVerifyOtp,
+};
