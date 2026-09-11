@@ -30,8 +30,7 @@ export const AdminSignup = asyncHandler(async (req, res) => {
         const { accessToken, refreshToken } = generateAdminTokensAndSetCookies(res, newAdmin);
         return res.status(201).json(new apiResponse(201, "Admin registered successfully", { accessToken, refreshToken }));
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 })
 
@@ -56,8 +55,7 @@ export const AdminLogin = asyncHandler(async (req, res) => {
         return res.status(200).json(new apiResponse(200, "Admin logged in successfully", { accessToken, refreshToken }));
 
     }catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -68,8 +66,7 @@ export const AdminLogout = asyncHandler(async (req, res) => {
         res.clearCookie("adminRole");
         return res.status(200).json(new apiResponse(200, "Admin logged out successfully"));
     }catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -87,8 +84,7 @@ export const AdminRefreshToken = asyncHandler(async (req, res) => {
         const { accessToken, refreshToken: newRefreshToken } = generateAdminTokensAndSetCookies(res, admin);
         return res.status(200).json(new apiResponse(200, "Token refreshed successfully", { accessToken, refreshToken: newRefreshToken }));
     }catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -115,8 +111,7 @@ export const AdminForgotPassword = asyncHandler(async (req, res) => {
 
         return res.status(200).json(new apiResponse(200, "Password reset OTP sent successfully"));
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -138,8 +133,7 @@ export const AdminVerifyOtp = asyncHandler(async (req, res) => {
         await redis.del(`admin:password-reset:otp:${email}`);
         return res.status(200).json(new apiResponse(200, "OTP verified successfully", { resetToken }));
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -167,7 +161,6 @@ export const AdminResetPassword = asyncHandler(async (req, res) => {
         await redis.del(`admin:password-reset:verified:${resetToken}`);
         return res.status(200).json(new apiResponse(200, "Password updated successfully"));
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });

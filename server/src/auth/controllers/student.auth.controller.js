@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { randomInt, randomUUID } from "crypto";
 import jwt from "jsonwebtoken";
 import Student from "../../student/models/student.model.js";
@@ -94,8 +94,7 @@ export const StudentSignup = asyncHandler(async (req, res) => {
       .status(201)
       .json(new apiResponse(201, "Sucessfully registered", studentData));
   } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], err);
   }
 });
 
@@ -130,8 +129,7 @@ export const StudentLogin = asyncHandler(async (req, res) => {
 
     res.status(200).json(new apiResponse(200, "Login successful", userData));
   } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], err);
   }
 });
 
@@ -143,8 +141,7 @@ export const StudentLogout = asyncHandler(async (req, res) => {
     res.clearCookie("refreshToken");
     res.status(200).json(new apiResponse(200, "Logout successful"));
   } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], err);
   }
 });
 
@@ -170,8 +167,7 @@ export const StudentRefreshToken = asyncHandler(async (req, res) => {
       .status(200)
       .json(new apiResponse(200, "Token refreshed successfully"));
   } catch (err) {
-    console.error(err);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], err);
   }
 });
 
@@ -213,8 +209,7 @@ export const StudentForgotPassword = asyncHandler(async (req, res) => {
       .status(200)
       .json(new apiResponse(200, "Password reset OTP sent successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -252,8 +247,7 @@ export const StudentVerifyOtp = asyncHandler(async (req, res) => {
       .status(200)
       .json(new apiResponse(200, "OTP verified successfully", { resetToken }));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -298,7 +292,6 @@ export const StudentResetPassword = asyncHandler(async (req, res) => {
       .status(200)
       .json(new apiResponse(200, "Password updated successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });

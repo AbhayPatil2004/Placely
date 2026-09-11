@@ -8,9 +8,9 @@ import {
     StudentForgotPassword,
     StudentVerifyOtp,
     StudentResetPassword
-} from "./controllers/student.auth.controller.js";
+} from "../controllers/student.auth.controller.js";
 
-import verifyAccessToken from "./middleware/student.verifytoken.middleware.js";
+import verifyAccessToken from "../middleware/student.verifytoken.middleware.js";
 
 const router = studentRouter();
 

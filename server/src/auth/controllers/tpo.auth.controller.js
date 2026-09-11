@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { randomInt, randomUUID } from "crypto";
 import jwt from "jsonwebtoken";
-import TPO from "../models/tpo.model.js";
+import TPO from "../../tpo/models/tpo.model.js";
 import generateTPOTokensAndSetCookies from "../../utils/tpo.token.util.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import { publishEmail } from "../../services/emailProducer.js";
@@ -58,8 +58,7 @@ export const TPOSignup = asyncHandler(async (req, res) => {
         }),
       );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -108,13 +107,8 @@ export const TPOLogin = asyncHandler(async (req, res) => {
       res,
       tpo,
     );
-    tpoUser.refreshToken = refreshToken;
-    await tpoUser.save({ validateBeforeSave: false });
-
-
-    const userResponse = await TPOUser.findById(tpoUser._id).select(
-      "-password -refreshToken",
-    );
+    tpo.refreshToken = refreshToken;
+    await tpo.save({ validateBeforeSave: false });
     return res
       .status(200)
       .json(
@@ -124,8 +118,7 @@ export const TPOLogin = asyncHandler(async (req, res) => {
         }),
       );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -136,8 +129,7 @@ export const TPOLogout = asyncHandler(async (req, res) => {
         res.clearCookie("tpoRole");
         return res.status(200).json(new apiResponse(200, "TPO logged out successfully"));
     }catch (error) {
-        console.error(error);
-        return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
+        throw new apiError(500, "Internal Server Error", [], error);
     }
 });
 
@@ -164,8 +156,7 @@ export const TPOForgotPassword = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new apiResponse(200, "Password reset OTP sent successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -187,8 +178,7 @@ export const TPOVerifyOtp = asyncHandler(async (req, res) => {
     await redis.del(`tpo:password-reset:otp:${email}`);
     return res.status(200).json(new apiResponse(200, "OTP verified successfully", { resetToken }));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
 
@@ -216,7 +206,6 @@ export const TPOResetPassword = asyncHandler(async (req, res) => {
     await redis.del(`tpo:password-reset:verified:${resetToken}`);
     return res.status(200).json(new apiResponse(200, "Password updated successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json(new apiResponse(500, "Internal Server Error"));
+    throw new apiError(500, "Internal Server Error", [], error);
   }
 });
