@@ -1,222 +1,576 @@
-// import bcrypt from "bcryptjs";
-// import { randomInt, randomUUID } from "crypto";
-// import jwt from "jsonwebtoken";
-// import TPO from "../models/tpo.model.js";
-// import generateTPOTokensAndSetCookies from "../../utils/tpo.token.util.js";
-// import asyncHandler from "../../utils/asyncHandler.js";
-// import { publishEmail } from "../../services/emailProducer.js";
-// import redis from "../../config/redis.js";
-// import apiError from "../../utils/apiError.js";
-// import apiResponse from "../../utils/apiResponse.js";
+import bcrypt from "bcryptjs";
+import { randomInt } from "crypto";
 
-// const PASSWORD_RESET_OTP_TTL_SECONDS = 10 * 60;
-// const PASSWORD_RESET_TOKEN_TTL_SECONDS = 10 * 60;
+import TPO from "../../tpo/models/tpo.model.js";
+import { publishEmail } from "../../services/emailProducer.js";
+import redis from "../../config/redis.js";
 
-// export const TPOSignup = asyncHandler(async (req, res) => {
-//   const { fullname, email, password, college, collegeId, phone } = req.body;
-//   try {
-//     if (!fullname || !email || !password || !collegeId || !college || !phone) {
-//       return res
-//         .status(400)
-//         .json(new apiResponse(400, "All fields are required"));
-//     }
+import ApiError from "../../utils/apiError.js";
+import ApiResponse from "../../utils/apiResponse.js";
 
-//     const existingTPO = await TPO.findOne({ $or: [{ email }, { collegeId }] });
-//     if (existingTPO) {
-//       return res
-//         .status(400)
-//         .json(
-//           new apiResponse(
-//             400,
-//             "TPO with this email or college ID already exists",
-//           ),
-//         );
-//     }
-
-//     const hashedPassword = await bcrypt.hash(password, 10);
-//     const newTPO = new TPO({
-//       fullname,
-//       email,
-//       password: hashedPassword,
-//       college,
-//       collegeId,
-//       phone,
-//     });
-
-//     await newTPO.save();
-
-//     const { accessToken, refreshToken } = generateTPOTokensAndSetCookies(
-//       res,
-//       newTPO,
-//     );
-//     return res
-//       .status(201)
-//       .json(
-//         new apiResponse(201, "TPO registered successfully", {
-//           accessToken,
-//           refreshToken,
-//         }),
-//       );
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//   }
-// });
-
-// export const TPOLogin = asyncHandler(async (req, res) => {
-//   const { email, password } = req.body;
-//   try {
-//     if (!email || !password) {
-//       return res
-//         .status(400)
-//         .json(new apiResponse(400, "Email and password are required"));
-//     }
-//     const tpo = await TPO.findOne({ email });
-//     if (!tpo) {
-//       return res
-//         .status(401)
-//         .json(new apiResponse(401, "Invalid email or password"));
-//     }
-//     if (!tpo.isVerified) {
-//       return res
-//         .status(403)
-//         .json(
-//           new apiResponse(
-//             403,
-//             "Account not verified. Please verify your email/account first.",
-//           ),
-//         );
-//     }
-//     if (!tpo.isActive) {
-//       return res
-//         .status(403)
-//         .json(
-//           new apiResponse(
-//             403,
-//             "Your account has been deactivated. Contact administration.",
-//           ),
-//         );
-//     }
-//     const isMatch = await bcrypt.compare(password, tpo.password);
-//     if (!isMatch) {
-//       return res
-//         .status(401)
-//         .json(new apiResponse(401, "Invalid email or password"));
-//     }
-
-//     const { accessToken, refreshToken } = generateTPOTokensAndSetCookies(
-//       res,
-//       tpo,
-//     );
-//     tpoUser.refreshToken = refreshToken;
-//     await tpoUser.save({ validateBeforeSave: false });
+import setAuthCookie from "../utils/cookie.util.js";
+import generateAccessToken from "../utils/token.util.js";
 
 
-//     const userResponse = await TPOUser.findById(tpoUser._id).select(
-//       "-password -refreshToken",
-//     );
-//     return res
-//       .status(200)
-//       .json(
-//         new apiResponse(200, "TPO logged in successfully", {
-//           accessToken,
-//           refreshToken,
-//         }),
-//       );
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//   }
-// });
+const FORGOT_PASSWORD_OTP_TTL_SECONDS = 10 * 60;
 
-// export const TPOLogout = asyncHandler(async (req, res) => {
-//     try {
-//         res.clearCookie("tpoAccessToken");
-//         res.clearCookie("tpoRefreshToken");
-//         res.clearCookie("tpoRole");
-//         return res.status(200).json(new apiResponse(200, "TPO logged out successfully"));
-//     }catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
-//     }
-// });
 
-// export const TPOForgotPassword = asyncHandler(async (req, res) => {
-//   const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-//   if (!email) {
-//     return res.status(400).json(new apiResponse(400, "Email is required"));
-//   }
+// ===============================
+// TPO SIGNUP
+// ===============================
+const TPOSignup = async (req, res) => {
+    try {
 
-//   try {
-//     const tpo = await TPO.findOne({ email });
-//     if (!tpo) {
-//       return res.status(404).json(new apiResponse(404, "TPO not found"));
-//     }
+        const {
+            fullname,
+            email,
+            password,
+            collegeId,
+            college,
+            phone,
+        } = req.body;
 
-//     const otp = randomInt(100000, 1000000).toString();
-//     await redis.set(`tpo:password-reset:otp:${email}`, otp, "EX", PASSWORD_RESET_OTP_TTL_SECONDS);
-//     await publishEmail({
-//       type: "PASSWORD_RESET_OTP",
-//       to: email,
-//       subject: "Placely password reset OTP",
-//       data: { name: tpo.fullname, otp },
-//     });
 
-//     return res.status(200).json(new apiResponse(200, "Password reset OTP sent successfully"));
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//   }
-// });
+        // Required fields
+        if (
+            !fullname ||
+            !email ||
+            !password ||
+            !collegeId ||
+            !college
+        ) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "All required fields are required"
+                )
+            );
+        }
 
-// export const TPOVerifyOtp = asyncHandler(async (req, res) => {
-//   const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-//   const otp = typeof req.body.otp === "string" ? req.body.otp.trim() : "";
-//   if (!email || !/^\d{6}$/.test(otp)) {
-//     return res.status(400).json(new apiResponse(400, "Email and OTP are required"));
-//   }
 
-//   try {
-//     const storedOtp = await redis.get(`tpo:password-reset:otp:${email}`);
-//     if (!storedOtp || storedOtp !== otp) {
-//       return res.status(400).json(new apiResponse(400, "Invalid or expired OTP"));
-//     }
+        // Normalize values
+        const normalizedEmail = email.toLowerCase().trim();
+        const normalizedCollegeId = collegeId.trim();
 
-//     const resetToken = randomUUID();
-//     await redis.set(`tpo:password-reset:verified:${resetToken}`, email, "EX", PASSWORD_RESET_TOKEN_TTL_SECONDS);
-//     await redis.del(`tpo:password-reset:otp:${email}`);
-//     return res.status(200).json(new apiResponse(200, "OTP verified successfully", { resetToken }));
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//   }
-// });
 
-// export const TPOResetPassword = asyncHandler(async (req, res) => {
-//   const { resetToken, newPassword } = req.body;
-//   if (!resetToken || typeof newPassword !== "string" || !newPassword) {
-//     return res.status(400).json(new apiResponse(400, "Reset token and new password are required"));
-//   }
-//   if (newPassword.length < 6) {
-//     return res.status(400).json(new apiResponse(400, "Password must be at least 6 characters long"));
-//   }
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Only Gmail addresses are allowed"
+                )
+            );
+        }
 
-//   try {
-//     const email = await redis.get(`tpo:password-reset:verified:${resetToken}`);
-//     if (!email) {
-//       return res.status(400).json(new apiResponse(400, "Invalid or expired reset token"));
-//     }
 
-//     const password = await bcrypt.hash(newPassword, 10);
-//     const tpo = await TPO.findOneAndUpdate({ email }, { password }, { new: true, runValidators: true });
-//     if (!tpo) {
-//       return res.status(404).json(new apiResponse(404, "TPO not found"));
-//     }
+        // Strong password validation
+        const strongPasswordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-//     await redis.del(`tpo:password-reset:verified:${resetToken}`);
-//     return res.status(200).json(new apiResponse(200, "Password updated successfully"));
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//   }
-// });
+
+        if (!strongPasswordRegex.test(password)) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+                )
+            );
+        }
+
+
+        // Check email and collegeId
+        const existingTPO = await TPO.findOne({
+            $or: [
+                { email: normalizedEmail },
+                { collegeId: normalizedCollegeId },
+            ],
+        });
+
+
+        if (existingTPO) {
+
+            if (existingTPO.email === normalizedEmail) {
+                return res.status(409).json(
+                    new ApiError(
+                        409,
+                        "TPO with this email already exists"
+                    )
+                );
+            }
+
+
+
+        }
+
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(
+            password,
+            10
+        );
+
+
+        // Create TPO
+        const tpo = await TPO.create({
+            fullname: fullname.trim(),
+            email: normalizedEmail,
+            password: hashedPassword,
+            collegeId: normalizedCollegeId,
+            college: college.trim(),
+            phone: phone?.trim(),
+        });
+
+
+        // Generate JWT
+        const token = generateAccessToken(
+            tpo,
+            "tpo"
+        );
+
+
+        // Set authentication cookie
+        setAuthCookie(res, token);
+
+
+        // Welcome email
+        await publishEmail({
+            type: "WELCOME_EMAIL",
+            to: normalizedEmail,
+            subject: "Welcome to Placely 🎉",
+            data: {
+                name: tpo.fullname,
+            },
+        });
+
+
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                "TPO signup successful",
+                {
+                    id: tpo._id,
+                    fullname: tpo.fullname,
+                    email: tpo.email,
+                    collegeId: tpo.collegeId,
+                    college: tpo.college,
+                    phone: tpo.phone,
+                    role: tpo.role,
+                }
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "TPO Signup Error:",
+            error
+        );
+
+
+        // Handle MongoDB duplicate key race condition
+        if (error.code === 11000) {
+
+            const duplicateField =
+                Object.keys(error.keyPattern || {})[0];
+
+
+            if (duplicateField === "email") {
+                return res.status(409).json(
+                    new ApiError(
+                        409,
+                        "TPO with this email already exists"
+                    )
+                );
+            }
+
+
+            if (duplicateField === "collegeId") {
+                return res.status(409).json(
+                    new ApiError(
+                        409,
+                        "TPO already exists for this college"
+                    )
+                );
+            }
+        }
+
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error"
+            )
+        );
+    }
+};
+
+
+// ===============================
+// TPO LOGIN
+// ===============================
+const TPOLogin = async (req, res) => {
+    try {
+
+        const {
+            email,
+            password,
+        } = req.body;
+
+
+        if (!email || !password) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Email and Password are required"
+                )
+            );
+        }
+
+
+        // Normalize email
+        const normalizedEmail =
+            email.toLowerCase().trim();
+
+
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Only Gmail addresses are allowed"
+                )
+            );
+        }
+
+
+        // Find TPO
+        const tpo = await TPO.findOne({
+            email: normalizedEmail,
+        }).select("+password");
+
+
+        if (!tpo) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "TPO with this email does not exist"
+                )
+            );
+        }
+
+
+        // Compare password
+        const correctPassword =
+            await bcrypt.compare(
+                password,
+                tpo.password
+            );
+
+
+        if (!correctPassword) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Wrong password"
+                )
+            );
+        }
+
+
+        // Generate JWT
+        const token = generateAccessToken(
+            tpo,
+            "tpo"
+        );
+
+
+        // Set cookie
+        setAuthCookie(res, token);
+
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Login successful",
+                {
+                    id: tpo._id,
+                    fullname: tpo.fullname,
+                    email: tpo.email,
+                    collegeId: tpo.collegeId,
+                    college: tpo.college,
+                    phone: tpo.phone,
+                    role: tpo.role,
+                }
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "TPO Login Error:",
+            error
+        );
+
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error"
+            )
+        );
+    }
+};
+
+
+// ===============================
+// TPO LOGOUT
+// ===============================
+const TPOLogout = (req, res) => {
+
+    res.clearCookie("accessToken");
+
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Logout successful"
+        )
+    );
+};
+
+
+// ===============================
+// TPO FORGOT PASSWORD
+// SEND OTP
+// ===============================
+const TPOForgotPassword = async (req, res) => {
+    try {
+
+        const { email } = req.body;
+
+
+        if (!email) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Email is required"
+                )
+            );
+        }
+
+
+        const normalizedEmail =
+            email.toLowerCase().trim();
+
+
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Only Gmail addresses are allowed"
+                )
+            );
+        }
+
+
+        // Find TPO
+        const tpo = await TPO.findOne({
+            email: normalizedEmail,
+        });
+
+
+        if (!tpo) {
+            return res.status(404).json(
+                new ApiError(
+                    404,
+                    "No TPO exists with this email"
+                )
+            );
+        }
+
+
+        // Generate 6 digit OTP
+        const otp =
+            randomInt(
+                100000,
+                1000000
+            ).toString();
+
+
+        // Store OTP in Redis for 10 minutes
+        await redis.set(
+            `tpo:forgot-password-otp:${normalizedEmail}`,
+            otp,
+            "EX",
+            FORGOT_PASSWORD_OTP_TTL_SECONDS
+        );
+
+
+        // Send OTP through RabbitMQ
+        await publishEmail({
+            type: "FORGOT_PASSWORD_OTP",
+            to: normalizedEmail,
+            subject: "Placely TPO Forgot Password OTP",
+            data: {
+                name: tpo.fullname,
+                otp,
+            },
+        });
+
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Forgot Password OTP sent successfully"
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "TPO Forgot Password Error:",
+            error
+        );
+
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error"
+            )
+        );
+    }
+};
+
+
+// ===============================
+// TPO VERIFY OTP
+// ===============================
+const TPOVerifyOtp = async (req, res) => {
+    try {
+
+        const {
+            email,
+            otp,
+        } = req.body;
+
+
+        if (!email || !otp) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Email and OTP are required"
+                )
+            );
+        }
+
+
+        const normalizedEmail =
+            email.toLowerCase().trim();
+
+
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Only Gmail addresses are allowed"
+                )
+            );
+        }
+
+
+        // Get OTP from Redis
+        const storedOtp = await redis.get(
+            `tpo:forgot-password-otp:${normalizedEmail}`
+        );
+
+
+        if (!storedOtp || storedOtp !== otp) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Invalid or expired OTP"
+                )
+            );
+        }
+
+
+        // Delete OTP after successful verification
+        await redis.del(
+            `tpo:forgot-password-otp:${normalizedEmail}`
+        );
+
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "OTP verified successfully"
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "TPO Verify OTP Error:",
+            error
+        );
+
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error"
+            )
+        );
+    }
+};
+
+
+const TPORemove = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json(
+        new ApiResponse(400, "Email is required", {})
+      );
+    }
+
+    const normalizeEmail = email.toLowerCase().trim();
+
+    const result = await TPO.deleteOne({
+      email: normalizeEmail
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json(
+        new ApiResponse(404, "Tpo does not exist", {})
+      );
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Tpo account deleted successfully",
+        {}
+      )
+    );
+  } catch (error) {
+    return res.status(500).json(
+      new ApiResponse(500, "Internal Server Error", error)
+    );
+  }
+};
+
+
+export {
+    TPOSignup,
+    TPOLogin,
+    TPOLogout,
+    TPOForgotPassword,
+    TPOVerifyOtp,
+    TPORemove
+};

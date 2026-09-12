@@ -1,14 +1,32 @@
-// import {router as tpoRouter} from "express";
-// import { verifyTPO } from "../middleware/tpo.verifytoken.middleware.js";
-// import { TPOSignup, TPOLogin, TPOLogout, TPOForgotPassword, TPOVerifyOtp, TPOResetPassword } from "../controllers/tpo.auth.controller.js";
+import { Router } from "express";
 
-// const router = tpoRouter();
+import {
+    TPOSignup,
+    TPOLogin,
+    TPOLogout,
+    TPOForgotPassword,
+    TPOVerifyOtp
+} from '../controllers/tpo.auth.controller.js'
 
-// router.post("/signup", TPOSignup);
-// router.post("/login", TPOLogin);
-// router.post("/logout", verifyTPO, TPOLogout);
-// router.post("/forgot-password", TPOForgotPassword);
-// router.post("/verify-otp", TPOVerifyOtp);
-// router.post("/reset-password", TPOResetPassword);
+const router = Router()
 
-// export default router;
+router.post("/signup", TPOSignup);
+
+router.post("/login", TPOLogin);
+
+router.post(
+    "/logout",
+    TPOLogout
+);
+
+router.post(
+    "/forgot-password",
+    TPOForgotPassword
+);
+
+router.post(
+    "/verify-otp",
+    TPOVerifyOtp
+);
+
+export default router;

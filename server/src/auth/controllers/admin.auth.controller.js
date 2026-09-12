@@ -1,173 +1,364 @@
-// import bcrypt from "bcryptjs";
-// import { randomInt, randomUUID } from "crypto";
-// import jwt from "jsonwebtoken";
-// import Admin from "../../admin/models/admin.models.js";
-// import generateAdminTokensAndSetCookies from "../../utils/admin.token.util.js";
-// import asyncHandler from "../../utils/asyncHandler.js";
-// import { publishEmail } from "../../services/emailProducer.js";
-// import redis from "../../config/redis.js";
-// import apiError from "../../utils/apiError.js";
-// import apiResponse from "../../utils/apiResponse.js";
+import bcrypt from "bcryptjs";
+import { randomInt } from "crypto";
+import Admin from "../../admin/models/admin.models.js";
+import { publishEmail } from "../../services/emailProducer.js";
+import redis from "../../config/redis.js";
+import ApiError from "../../utils/apiError.js";
+import ApiResponse from "../../utils/apiResponse.js";
+import setAuthCookie from "../utils/cookie.util.js";
+import generateAccessToken from "../utils/token.util.js";
 
-// const PASSWORD_RESET_OTP_TTL_SECONDS = 10 * 60;
-// const PASSWORD_RESET_TOKEN_TTL_SECONDS = 10 * 60;
+const FORGOT_PASSWORD_OTP_TTL_SECONDS = 10 * 60;
 
-// export const AdminSignup = asyncHandler(async (req, res) => {
-//     const { fullname, email, role, password } = req.body;
-//     try {
-//         if (!fullname || !email || !password) {
-//             return res.status(400).json(new apiResponse(400, "All fields are required"));
-//         }
-        
-//         const existingAdmin = await Admin.findOne({ email });
-//         if (existingAdmin) {
-//             return res.status(400).json(new apiResponse(400, "Admin with this email already exists"));
-//         }
-//         const salt = await bcrypt.genSalt(10);
-//         const hashedPassword = await bcrypt.hash(password, salt);
-//         const newAdmin = new Admin({ fullname, email, role, password: hashedPassword });
-//         await newAdmin.save();
-//         const { accessToken, refreshToken } = generateAdminTokensAndSetCookies(res, newAdmin);
-//         return res.status(201).json(new apiResponse(201, "Admin registered successfully", { accessToken, refreshToken }));
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
-//     }
-// })
+const AdminSignup = async (req, res) => {
 
-// export const AdminLogin = asyncHandler(async (req, res) => {
-//     const { email, password } = req.body;
-//     try {
-//         if (!email || !password) {
-//             return res.status(400).json(new apiResponse(400, "Email and password are required"));
-//         }
+    try {
 
-//         const admin = await Admin.findOne({ email });
-//         if (!admin) {
-//             return res.status(401).json(new apiResponse(401, "Invalid email or password"));
-//         }
-        
-//         const isMatch = await bcrypt.compare(password, admin.password);
-//         if (!isMatch) {
-//             return res.status(401).json(new apiResponse(401, "Invalid email or password"));
-//         }
+        const { fullname, email, password } = req.body;
 
-//         const { accessToken, refreshToken } = generateAdminTokensAndSetCookies(res, admin);
-//         return res.status(200).json(new apiResponse(200, "Admin logged in successfully", { accessToken, refreshToken }));
+        // Check required fields
+        if (!fullname || !email || !password) {
+            return res.status(400).json(
+                new ApiError(400, "All fields are required")
+            );
+        }
 
-//     }catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
-//     }
-// });
+        // Normalize email
+        const normalizedEmail = email.toLowerCase().trim();
 
-// export const AdminLogout = asyncHandler(async (req, res) => {
-//     try {
-//         res.clearCookie("adminAccessToken");
-//         res.clearCookie("adminRefreshToken");
-//         res.clearCookie("adminRole");
-//         return res.status(200).json(new apiResponse(200, "Admin logged out successfully"));
-//     }catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
-//     }
-// });
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(400, "Only Gmail addresses are allowed")
+            );
+        }
 
-// export const AdminRefreshToken = asyncHandler(async (req, res) => {
-//     try {
-//         const refreshToken = req.cookies.adminRefreshToken;
-//         if (!refreshToken) {
-//             return res.status(401).json(new apiResponse(401, "Refresh token not found"));
-//         }
-//         const decoded = jwt.verify(refreshToken, process.env.JWT_ADMIN_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET);
-//         const admin = await Admin.findById(decoded.adminId);
-//         if (!admin) {
-//             return res.status(401).json(new apiResponse(401, "Admin not found"));
-//         }
-//         const { accessToken, refreshToken: newRefreshToken } = generateAdminTokensAndSetCookies(res, admin);
-//         return res.status(200).json(new apiResponse(200, "Token refreshed successfully", { accessToken, refreshToken: newRefreshToken }));
-//     }catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error")); 
-//     }
-// });
+        // Strong password validation
+        const strongPasswordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-// export const AdminForgotPassword = asyncHandler(async (req, res) => {
-//     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-//     if (!email) {
-//         return res.status(400).json(new apiResponse(400, "Email is required"));
-//     }
+        if (!strongPasswordRegex.test(password)) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+                )
+            );
+        }
 
-//     try {
-//         const admin = await Admin.findOne({ email });
-//         if (!admin) {
-//             return res.status(404).json(new apiResponse(404, "Admin not found"));
-//         }
+        // Check existing admin
+        const existingAdmin = await Admin.findOne({
+            email: normalizedEmail
+        });
 
-//         const otp = randomInt(100000, 1000000).toString();
-//         await redis.set(`admin:password-reset:otp:${email}`, otp, "EX", PASSWORD_RESET_OTP_TTL_SECONDS);
-//         await publishEmail({
-//             type: "PASSWORD_RESET_OTP",
-//             to: email,
-//             subject: "Placely password reset OTP",
-//             data: { name: admin.fullname, otp },
-//         });
+        if (existingAdmin) {
+            return res.status(409).json(
+                new ApiError(
+                    409,
+                    "Admin already exists with this email"
+                )
+            );
+        }
 
-//         return res.status(200).json(new apiResponse(200, "Password reset OTP sent successfully"));
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//     }
-// });
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-// export const AdminVerifyOtp = asyncHandler(async (req, res) => {
-//     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-//     const otp = typeof req.body.otp === "string" ? req.body.otp.trim() : "";
-//     if (!email || !/^\d{6}$/.test(otp)) {
-//         return res.status(400).json(new apiResponse(400, "Email and OTP are required"));
-//     }
+        // Create admin
+        const admin = await Admin.create({
+            fullname: fullname.trim(),
+            email: normalizedEmail,
+            password: hashedPassword
+        });
 
-//     try {
-//         const storedOtp = await redis.get(`admin:password-reset:otp:${email}`);
-//         if (!storedOtp || storedOtp !== otp) {
-//             return res.status(400).json(new apiResponse(400, "Invalid or expired OTP"));
-//         }
+        // Generate JWT
+        const token = generateAccessToken(admin, "admin");
 
-//         const resetToken = randomUUID();
-//         await redis.set(`admin:password-reset:verified:${resetToken}`, email, "EX", PASSWORD_RESET_TOKEN_TTL_SECONDS);
-//         await redis.del(`admin:password-reset:otp:${email}`);
-//         return res.status(200).json(new apiResponse(200, "OTP verified successfully", { resetToken }));
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//     }
-// });
+        // Set authentication cookie
+        setAuthCookie(res, token);
 
-// export const AdminResetPassword = asyncHandler(async (req, res) => {
-//     const { resetToken, newPassword } = req.body;
-//     if (!resetToken || typeof newPassword !== "string" || !newPassword) {
-//         return res.status(400).json(new apiResponse(400, "Reset token and new password are required"));
-//     }
-//     if (newPassword.length < 6) {
-//         return res.status(400).json(new apiResponse(400, "Password must be at least 6 characters long"));
-//     }
+        // Send welcome email
+        await publishEmail({
+            type: "WELCOME_EMAIL",
+            to: normalizedEmail,
+            subject: "Welcome to Placely 🎉",
+            data: {
+                name: admin.fullname
+            }
+        });
 
-//     try {
-//         const email = await redis.get(`admin:password-reset:verified:${resetToken}`);
-//         if (!email) {
-//             return res.status(400).json(new apiResponse(400, "Invalid or expired reset token"));
-//         }
+        // Success response
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                "Admin signup successful",
+                {
+                    id: admin._id,
+                    fullname: admin.fullname,
+                    email: admin.email,
+                    role: admin.role
+                }
+            )
+        );
 
-//         const password = await bcrypt.hash(newPassword, 10);
-//         const admin = await Admin.findOneAndUpdate({ email }, { password }, { new: true, runValidators: true });
-//         if (!admin) {
-//             return res.status(404).json(new apiResponse(404, "Admin not found"));
-//         }
+    } catch (error) {
 
-//         await redis.del(`admin:password-reset:verified:${resetToken}`);
-//         return res.status(200).json(new apiResponse(200, "Password updated successfully"));
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json(new apiResponse(500, "Internal Server Error"));
-//     }
-// });
+        console.error("Admin signup error:", error);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error",
+                error
+            )
+        );
+    }
+};
+
+const AdminLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Email and Password are required"
+                )
+            );
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Only Gmail allowed
+        if (!normalizedEmail.endsWith("@gmail.com")) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Only Gmail addresses are allowed"
+                )
+            );
+        }
+
+        const admin = await Admin.findOne({
+            email: normalizedEmail,
+        }).select("+password");
+
+        if (!admin) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Admin with this email does not exist"
+                )
+            );
+        }
+
+        // Compare password
+        const correctPassword = await bcrypt.compare(
+            password,
+            admin.password
+        );
+
+        if (!correctPassword) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Wrong password"
+                )
+            );
+        }
+
+        const token = generateAccessToken(admin, "admin");
+
+        // Set cookie
+        setAuthCookie(res, token);
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Login successful",
+                {
+                    id: admin._id,
+                    fullname: admin.fullname,
+                    email: admin.email,
+                    role: admin.role,
+                }
+            )
+        );
+
+    } catch (error) {
+        console.error("Admin login error:", error);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error",
+                error
+            )
+        );
+    }
+};
+
+const AdminLogout = (req, res) => {
+  res.clearCookie("accessToken");
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      "Logout successful"
+    )
+  );
+};
+
+// ===============================
+// ADMIN FORGOT PASSWORD
+// ===============================
+const AdminForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json(
+        new ApiError(400, "Email is required")
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Only Gmail addresses are allowed"
+        )
+      );
+    }
+
+    const admin = await Admin.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!admin) {
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "No admin exists with this email"
+        )
+      );
+    }
+
+    // Generate 6 digit OTP
+    const otp = randomInt(100000, 1000000).toString();
+
+    // Store OTP in Redis for 10 minutes
+    await redis.set(
+      `admin:forgot-password-otp:${normalizedEmail}`,
+      otp,
+      "EX",
+      FORGOT_PASSWORD_OTP_TTL_SECONDS
+    );
+
+    // Send OTP through RabbitMQ
+    await publishEmail({
+      type: "FORGOT_PASSWORD_OTP",
+      to: normalizedEmail,
+      subject: "Placely Admin Forgot Password OTP",
+      data: {
+        name: admin.fullname,
+        otp,
+      },
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Forgot Password OTP sent successfully"
+      )
+    );
+
+  } catch (error) {
+    console.error(
+      "Admin Forgot Password Error:",
+      error
+    );
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
+  }
+};
+
+
+// ===============================
+// ADMIN VERIFY OTP
+// ===============================
+const AdminVerifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Email and OTP are required"
+        )
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Only Gmail allowed
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Only Gmail addresses are allowed"
+        )
+      );
+    }
+
+    const storedOtp = await redis.get(
+      `admin:forgot-password-otp:${normalizedEmail}`
+    );
+
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Invalid or expired OTP"
+        )
+      );
+    }
+
+    // Delete OTP after successful verification
+    await redis.del(
+      `admin:forgot-password-otp:${normalizedEmail}`
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "OTP verified successfully"
+      )
+    );
+
+  } catch (error) {
+    console.error(
+      "Admin Verify OTP Error:",
+      error
+    );
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
+  }
+};
+
+
+export {
+    AdminSignup ,
+    AdminLogin ,
+    AdminLogout ,
+    AdminForgotPassword ,
+    AdminVerifyOtp 
+}

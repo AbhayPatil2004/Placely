@@ -39,7 +39,6 @@ const tpoUserSchema = new mongoose.Schema(
         collegeId: {
             type: String,
             required: true,
-            unique: true,
             trim: true,
         },
 
@@ -59,6 +58,6 @@ const tpoUserSchema = new mongoose.Schema(
     }
 );
 
-const TPOUser = mongoose.model("TPOUser", tpoUserSchema);
+const TPO = mongoose.model("TPOUser", tpoUserSchema);
 
-export default TPOUser;
+export default TPO;

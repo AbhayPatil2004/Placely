@@ -113,7 +113,7 @@ const StudentSignup = async (req, res) => {
     });
 
     // Generate JWT
-    const token = generateAccessToken(student);
+    const token = generateAccessToken(student , "student");
 
     // Set authentication cookie
     setAuthCookie(res, token);
@@ -233,7 +233,7 @@ const StudentLogin = async (req, res) => {
     }
 
     // Generate JWT
-    const token = generateAccessToken(student);
+    const token = generateAccessToken(student , "student");
 
     // Set cookie
     setAuthCookie(res, token);
@@ -424,6 +424,42 @@ const StudentVerifyOtp = async (req, res) => {
   }
 };
 
+
+const StudentRemove = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json(
+        new ApiResponse(400, "Email is required", {})
+      );
+    }
+
+    const normalizeEmail = email.toLowerCase().trim();
+
+    const result = await Student.deleteOne({
+      email: normalizeEmail
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json(
+        new ApiResponse(404, "Student does not exist", {})
+      );
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Student account deleted successfully",
+        {}
+      )
+    );
+  } catch (error) {
+    return res.status(500).json(
+      new ApiResponse(500, "Internal Server Error", error)
+    );
+  }
+};
 
 export {
   StudentSignup,
