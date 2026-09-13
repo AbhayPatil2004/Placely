@@ -2,29 +2,11 @@ import mongoose from "mongoose";
 
 const tpoUserSchema = new mongoose.Schema(
     {
-        collegeId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-        },
-
-        college :{
-            type : String ,
-            required : true 
-        } ,
         fullname: {
             type: String,
             required: true,
             trim: true,
         },
-
-        // googleId: {
-        //     type: String,
-        //     unique: true,
-        //     sparse: true,
-        //     index: true
-        // },
 
         email: {
             type: String,
@@ -32,42 +14,43 @@ const tpoUserSchema = new mongoose.Schema(
             unique: true,
             lowercase: true,
             trim: true,
+            index: true,
         },
 
         password: {
             type: String,
             required: true,
-        },
-
-        refreshToken: {
-            type: String,
-            default: null,
+            select: false,
         },
 
         role: {
             type: String,
+            enum: ["tpo"],
             default: "tpo",
-        },
-
-        phone: {
-            type: String,
-            trim: true,
+            required: true,
         },
 
         profileImage: {
             type: String,
             default: null,
+            trim: true,
         },
 
-        
-        isVerified: {
-            type: Boolean,
-            default: false,
+        collegeId: {
+            type: String,
+            required: true,
+            trim: true,
         },
 
-        isActive: {
-            type: Boolean,
-            default: true,
+        college: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        phone: {
+            type: String,
+            trim: true,
         },
     },
     {
@@ -75,6 +58,6 @@ const tpoUserSchema = new mongoose.Schema(
     }
 );
 
-const TPOUser = mongoose.model("TPOUser", tpoUserSchema);
+const TPO = mongoose.model("TPOUser", tpoUserSchema);
 
-export default TPOUser;
+export default TPO;

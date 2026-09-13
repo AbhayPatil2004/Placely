@@ -2,10 +2,9 @@ import { getChannel, QUEUE_NAME } from "../config/rabbitmq.js";
 
 import transporter from "../config/mail.js";
 
-import {
-    welcomeEmailTemplate,
-    passwordResetOtpTemplate
-} from "../templates/welcome.template.js";
+import welcomeEmailTemplate from "../templates/welcome.template.js";
+
+import forgotPasswordOtpTemplate from "../templates/forgotpassword.template.js";
 
 
 export const startEmailConsumer = async () => {
@@ -29,7 +28,7 @@ export const startEmailConsumer = async () => {
 
             try {
 
-                
+
 
                 const emailData = JSON.parse(
                     message.content.toString()
@@ -45,7 +44,7 @@ export const startEmailConsumer = async () => {
                 let html;
 
 
-                
+
 
                 switch (emailData.type) {
 
@@ -57,8 +56,20 @@ export const startEmailConsumer = async () => {
 
                         break;
 
+
                     case "PASSWORD_RESET_OTP":
+
                         html = passwordResetOtpTemplate(
+                            emailData.data.name,
+                            emailData.data.otp
+                        );
+
+                        break;
+
+
+                    case "FORGOT_PASSWORD_OTP":
+
+                        html = forgotPasswordOtpTemplate(
                             emailData.data.name,
                             emailData.data.otp
                         );
@@ -74,7 +85,7 @@ export const startEmailConsumer = async () => {
                 }
 
 
-                
+
 
                 await transporter.sendMail({
 
@@ -94,7 +105,7 @@ export const startEmailConsumer = async () => {
                 );
 
 
-                
+
 
                 channel.ack(message);
 
@@ -107,7 +118,7 @@ export const startEmailConsumer = async () => {
                 );
 
 
-                
+
 
                 channel.nack(
                     message,

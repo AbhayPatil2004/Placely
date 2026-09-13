@@ -3,9 +3,8 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/mongo.js";
 import { PrismaClient } from "@prisma/client";
-import redis from "./config/redis.js";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
-import { publishEmail } from "./services/emailProducer.js";
+
 import Studentrouter from "./auth/routes/student.auth.route.js";
 import Adminrouter from "./auth/routes/admin.auth.routes.js";
 import Tporouter from "./auth/routes/tpo.auth.routes.js";
@@ -22,10 +21,9 @@ await connectDB();
 await connectRabbitMQ();
 
 app.use(express.json());
-app.use(cookieParser());
-app.use("/api/student", Studentrouter);
-app.use("/api/admin", Adminrouter);
-app.use("/api/tpo", Tporouter);
+app.use("/api/auth/student", Studentrouter);
+app.use("/api/auth/admin", Adminrouter);
+app.use("/api/auth/tpo", Tporouter);
 
 app.use((req, res, next) => {
     next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
