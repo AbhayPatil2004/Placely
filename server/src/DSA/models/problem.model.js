@@ -234,13 +234,6 @@ const problemSchema = new mongoose.Schema(
                 "python"
             ]
         },
-
-
-        // Learning Support
-        keyConcepts: {
-            type: [String],
-            default: []
-        },
         
 
         expectedTimeComplexity: {
@@ -252,23 +245,6 @@ const problemSchema = new mongoose.Schema(
             type: String,
             default: ""
         },
-
-
-        // Execution Limits
-        timeLimit: {
-            type: Number,
-            default: 2
-        },
-
-        memoryLimit: {
-            type: Number,
-            default: 256
-        },
-
-
-        // Placement Preparation
-        
-
 
         // Ordering
         order: {
