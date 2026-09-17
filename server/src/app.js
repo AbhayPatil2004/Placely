@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from 'cors'
+import cookieParser from "cookie-parser";
 import connectDB from "./config/mongo.js";
 import { PrismaClient } from "@prisma/client";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
@@ -25,6 +26,8 @@ app.use( cors ( {
 }))
 
 app.use(express.json());
+app.use(cookieParser());
+
 app.use("/api/auth/student", Studentrouter);
 app.use("/api/auth/admin", Adminrouter);
 app.use("/api/auth/tpo", Tporouter);

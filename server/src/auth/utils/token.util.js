@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 
-const generateAccessToken = (student) => {
+const generateAccessToken = (user , role ) => {
     return jwt.sign(
         {
-            userId: student._id,
-            email: student.email,
-            role: "student",
+            userId: user._id,
+            email: user.email,
+            role: role ,
         },
         process.env.JWT_SECRET,
         {
