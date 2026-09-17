@@ -1,7 +1,7 @@
 import {
     getChannel,
-    QUEUE_NAME,
-    RESULT_QUEUE_NAME
+    CODE_EXECUTION_QUEUE_NAME,
+    CODE_RESULT_QUEUE_NAME
 } from "../config/rabbitmq.js";
 
 import executeCpp from "../services/docker.cpp.service.js";
@@ -13,21 +13,22 @@ export const startCodeExecutionConsumer = async () => {
 
     const channel = getChannel();
 
-    await channel.prefetch(1);
+    channel.prefetch(1);
 
     console.log(
-        `Waiting for jobs from ${QUEUE_NAME}...`
+        `Waiting for jobs from ${CODE_EXECUTION_QUEUE_NAME}...`
     );
 
     channel.consume(
-        QUEUE_NAME,
+        CODE_EXECUTION_QUEUE_NAME,
+
         async (message) => {
 
             if (!message) {
                 return;
             }
 
-            let job;
+            let job = null;
 
             try {
 
@@ -95,23 +96,16 @@ export const startCodeExecutionConsumer = async () => {
                     job.jobId
                 );
 
-                /*
-                 * Send result back to Main Server
-                 */
-
                 const executionResult = {
-
                     jobId: job.jobId,
-
                     status: "completed",
-
                     language: job.language,
-
-                    result: result
+                    result: result,
+                    error: null
                 };
 
                 channel.sendToQueue(
-                    RESULT_QUEUE_NAME,
+                    CODE_RESULT_QUEUE_NAME,
 
                     Buffer.from(
                         JSON.stringify(executionResult)
@@ -125,13 +119,8 @@ export const startCodeExecutionConsumer = async () => {
 
                 console.log(
                     "Result pushed to:",
-                    RESULT_QUEUE_NAME
+                    CODE_RESULT_QUEUE_NAME
                 );
-
-                /*
-                 * ACK only after result
-                 * has been pushed.
-                 */
 
                 channel.ack(message);
 
@@ -142,22 +131,16 @@ export const startCodeExecutionConsumer = async () => {
                     error.message
                 );
 
-                /*
-                 * Even errors should be sent
-                 * back to Main Server.
-                 */
-
                 const errorResult = {
-
                     jobId: job?.jobId,
-
                     status: "failed",
-
+                    language: job?.language,
+                    result: null,
                     error: error.message
                 };
 
                 channel.sendToQueue(
-                    RESULT_QUEUE_NAME,
+                    CODE_RESULT_QUEUE_NAME,
 
                     Buffer.from(
                         JSON.stringify(errorResult)
@@ -172,6 +155,7 @@ export const startCodeExecutionConsumer = async () => {
                 channel.ack(message);
             }
         },
+
         {
             noAck: false
         }

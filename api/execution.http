@@ -1,0 +1,55 @@
+@baseUrl = {{$dotenv BASEURL}}
+@accessToken = {{$dotenv TOKEN}}
+
+
+############################################################
+#                    CODE EXECUTION APIs
+############################################################
+
+
+### 1. Execute C++
+POST {{baseUrl}}/api/code/execute
+Content-Type: application/json
+Cookie: accessToken={{accessToken}}
+
+{
+    "code": "#include <iostream>\nusing namespace std;\nint main(){cout << \"Hello from C++\";}",
+    "input": "",
+    "language": "cpp"
+}
+
+
+### 2. Execute Java
+POST {{baseUrl}}/api/code/execute
+Content-Type: application/json
+Cookie: accessToken={{accessToken}}
+
+{
+    "code": "public class Main { public static void main(String[] args) { System.out.println(\"Hello from Java\"); } }",
+    "input": "",
+    "language": "java"
+}
+
+
+### 3. Execute JavaScript
+POST {{baseUrl}}/api/code/execute
+Content-Type: application/json
+Cookie: accessToken={{accessToken}}
+
+{
+    "code": "console.log(\"Hello from JavaScript\");",
+    "input": "",
+    "language": "js"
+}
+
+
+### 4. Execute Python
+POST {{baseUrl}}/api/code/execute
+Content-Type: application/json
+Cookie: accessToken={{accessToken}}
+
+{
+    "code": "print(\"Hello from Python\")",
+    "input": "",
+    "language": "py"
+}
