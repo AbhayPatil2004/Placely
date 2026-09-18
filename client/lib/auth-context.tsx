@@ -75,6 +75,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
 
   useEffect(() => {
     if (loading) return;
+    if (pathname.startsWith("/admin")) return;
     const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
     if (!user && !isAuthRoute) {

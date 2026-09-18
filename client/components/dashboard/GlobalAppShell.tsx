@@ -11,7 +11,7 @@ export function GlobalAppShell({ children }: Readonly<{ children: React.ReactNod
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
+  if (authRoutes.some((route) => pathname.startsWith(route)) || pathname.startsWith("/admin")) {
     return children;
   }
 

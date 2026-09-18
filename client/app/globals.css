@@ -12,6 +12,7 @@
   --color-abyss: #171717;
   --color-amethyst: #7c3aed;
   --color-lavender: #a78bfa;
+  --color-tag-background: #8a5cf5;
 }
 
 @theme inline {
@@ -28,6 +29,7 @@
   --color-graphite: #3f3f3f;
   --color-amethyst: #7c3aed;
   --color-lavender: #a78bfa;
+  --color-tag-background: #8a5cf5;
 }
 
 html {

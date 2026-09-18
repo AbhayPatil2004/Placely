@@ -1,0 +1,12 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { ApiError } from "@/lib/api/client";
+import { adminForgotPassword, adminVerifyOtp } from "@/services/adminAuthService";
+
+export function AdminForgotPasswordFlow() {
+  const [email, setEmail] = useState(""); const [otp, setOtp] = useState(""); const [sent, setSent] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setError(""); setMessage(""); try { if (!sent) { await adminForgotPassword(email); setSent(true); setMessage("OTP sent. Check your email."); } else { await adminVerifyOtp(email, otp); setMessage("OTP verified. You can now continue with the password reset process."); } } catch (requestError) { setError(requestError instanceof ApiError ? requestError.message : "Unable to connect to the server."); } finally { setLoading(false); } };
+  return <section className="space-y-6 rounded-cards bg-surface p-6 shadow-subtle sm:p-8"><div><p className="text-sm text-lavender">Admin access</p><h1 className="mt-2 text-heading font-semibold text-white">Forgot password</h1><p className="mt-2 text-sm text-medium-gray">Request and verify your admin OTP.</p></div><form className="space-y-4" onSubmit={submit}><label className="block text-sm text-medium-gray">Email<input required type="email" value={email} disabled={sent} onChange={(e) => setEmail(e.target.value)} className="mt-2 h-10 w-full rounded-inputs border border-graphite bg-abyss px-3 text-sm text-bright-gray disabled:opacity-60" /></label>{sent && <label className="block text-sm text-medium-gray">OTP<input required value={otp} onChange={(e) => setOtp(e.target.value)} className="mt-2 h-10 w-full rounded-inputs border border-graphite bg-abyss px-3 text-sm text-bright-gray" /></label>}{error && <p role="alert" className="rounded-buttons border border-error-red/40 bg-error-red/10 px-3 py-2 text-sm text-error-red">{error}</p>}{message && <p role="status" className="rounded-buttons border border-success-green/40 bg-success-green/10 px-3 py-2 text-sm text-success-green">{message}</p>}<button disabled={loading} className="w-full rounded-buttons bg-amethyst px-4 py-3 text-sm text-white">{loading ? "Working..." : sent ? "Verify OTP" : "Send OTP"}</button></form><Link href="/admin/login" className="block text-center text-sm text-lavender">Back to admin login</Link></section>;
+}

@@ -1,9 +1,50 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Play, Send } from "lucide-react";
+import { useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import type { PracticeProblem } from "@/data/dsaData";
+import { CodeEditorPane } from "./CodeEditorPane";
+import { ProblemStatementPane } from "./ProblemStatementPane";
+import type { Problem } from "@/services/problemService";
 
-export function ProblemSolvePage({ problem }: { problem: PracticeProblem }) {
-  return <div className="space-y-5"><Link href="/dsa/practice" className="flex items-center gap-2 text-sm text-medium-gray hover:text-white"><ArrowLeft className="size-4" />Practice</Link><div><span className="rounded-full bg-amethyst/10 px-2 py-1 text-xs text-lavender">{problem.difficulty}</span><h1 className="mt-3 text-heading font-semibold text-white">{problem.title}</h1></div><div className="grid min-h-[620px] gap-4 lg:grid-cols-2"><section className="rounded-cards border border-graphite bg-surface p-5"><h2 className="text-base font-semibold text-white">Problem statement</h2><p className="mt-4 text-sm leading-6 text-medium-gray">Solve the problem using a clear and efficient approach. This placeholder statement will be replaced with the complete problem content when the practice API is connected.</p><h3 className="mt-6 text-sm font-semibold text-white">Examples</h3><pre className="mt-3 overflow-x-auto rounded-buttons border border-graphite bg-abyss p-3 text-xs text-muted-gray">Input: sample input{"\n"}Output: sample output</pre><h3 className="mt-6 text-sm font-semibold text-white">Constraints</h3><p className="mt-2 text-sm text-medium-gray">Use valid input values and aim for an efficient solution.</p></section><section className="flex flex-col rounded-cards border border-graphite bg-surface p-4"><div className="flex items-center justify-between gap-3"><select className="rounded-buttons border border-graphite bg-abyss px-3 py-2 text-sm text-white"><option>JavaScript</option><option>TypeScript</option><option>Python</option><option>Java</option></select><div className="flex gap-2"><button type="button" className="inline-flex items-center gap-2 rounded-buttons border border-graphite px-3 py-2 text-sm text-white hover:border-lavender hover:text-lavender"><Play className="size-4" />Run</button><button type="button" className="inline-flex items-center gap-2 rounded-buttons bg-amethyst px-3 py-2 text-sm text-white hover:bg-lavender hover:text-black"><Send className="size-4" />Submit</button></div></div><textarea aria-label="Code editor" className="mt-4 min-h-[400px] flex-1 resize-none rounded-buttons border border-graphite bg-abyss p-4 font-mono text-sm text-bright-gray outline-none focus:border-lavender" placeholder="// Write your solution here" /><div className="mt-4 rounded-buttons border border-graphite bg-abyss p-4"><p className="text-xs uppercase tracking-wide text-muted-gray">Console output</p><p className="mt-2 text-sm text-muted-gray">Run your code to see output.</p></div></section></div></div>;
+export function ProblemSolvePage({ problem, problemDetails }: { problem: PracticeProblem; problemDetails?: Problem }) {
+  const [leftPaneWidth, setLeftPaneWidth] = useState(45);
+  const isDragging = useRef(false);
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !event.currentTarget.parentElement) return;
+    const bounds = event.currentTarget.parentElement.getBoundingClientRect();
+    const nextWidth = ((event.clientX - bounds.left) / bounds.width) * 100;
+    setLeftPaneWidth(Math.min(65, Math.max(30, nextWidth)));
+  };
+
+  return (
+    <main
+      className="flex min-h-[calc(100vh-10rem)] h-full flex-col overflow-hidden rounded-cards border border-graphite bg-abyss lg:h-[calc(100vh-10rem)] lg:flex-row"
+      onPointerMove={handlePointerMove}
+      onPointerUp={() => { isDragging.current = false; }}
+      onPointerLeave={() => { isDragging.current = false; }}
+    >
+      <div className="min-h-[48vh] h-full lg:min-h-0" style={{ flexBasis: `${leftPaneWidth}%` }}>
+        <ProblemStatementPane problem={problemDetails ? {
+          ...problemDetails,
+          difficulty: problemDetails.difficulty,
+          status: "unsolved",
+        } : problem} />
+      </div>
+      <div
+        role="separator"
+        aria-label="Resize problem and editor panes"
+        aria-orientation="vertical"
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          isDragging.current = true;
+        }}
+        className="hidden w-1 shrink-0 cursor-col-resize bg-graphite transition-colors hover:bg-lavender lg:block"
+      />
+      <div className="min-h-[48vh] h-full min-w-0 flex-1 lg:min-h-0">
+        <CodeEditorPane starterCode={problemDetails?.starterCode} />
+      </div>
+    </main>
+  );
 }
