@@ -6,8 +6,8 @@ dotenv.config();
 let connection;
 let channel;
 
-const QUEUE_NAME = "code-execution.queue";
-const RESULT_QUEUE_NAME = "code-result.queue";
+const CODE_EXECUTION_QUEUE_NAME = "code-execution.queue";
+const CODE_RESULT_QUEUE_NAME = "code-result.queue";
 
 export const connectRabbitMQ = async () => {
     try {
@@ -18,13 +18,13 @@ export const connectRabbitMQ = async () => {
 
         channel = await connection.createChannel();
 
-        await channel.assertQueue(QUEUE_NAME, {
+        await channel.assertQueue(CODE_EXECUTION_QUEUE_NAME, {
             durable: true
         });
 
-        await channel.assertQueue(RESULT_QUEUE_NAME, {
+        await channel.assertQueue( CODE_RESULT_QUEUE_NAME , {
             durable: true
-        });
+        }); 
 
         console.log("RabbitMQ connected successfully");
 
@@ -53,6 +53,6 @@ export const getChannel = () => {
 };
 
 export {
-    QUEUE_NAME,
-    RESULT_QUEUE_NAME
+    CODE_EXECUTION_QUEUE_NAME,
+    CODE_RESULT_QUEUE_NAME
 };

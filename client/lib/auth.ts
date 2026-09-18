@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
 export const branchOptions = [
-  { value: "COMP", label: "Computer Engineering" },
-  { value: "IT", label: "Information Technology" },
-  { value: "AIDS", label: "AI & Data Science" },
-  { value: "ENTC", label: "Electronics & Telecommunication" },
-  { value: "OTHER", label: "Other" },
+  { value: "Computer Science and Engineering", label: "Computer Science and Engineering" },
+  { value: "Information Technology", label: "Information Technology" },
+  { value: "Artificial Intelligence and Data Science", label: "Artificial Intelligence and Data Science" },
+  { value: "Electronics and Telecommunication Engineering", label: "Electronics and Telecommunication Engineering" },
+  { value: "Other", label: "Other" },
 ] as const;
 
 export const collegeOptions = [
@@ -17,6 +19,11 @@ export const collegeOptions = [
 const requiredText = (label: string) =>
   z.string().trim().min(1, `${label} is required`);
 
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(strongPasswordRegex, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character");
+
 export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -25,11 +32,17 @@ export const loginSchema = z.object({
 export const signupSchema = z
   .object({
     fullname: requiredText("Full name"),
-    studentId: z.number().int().positive("Enter a valid student ID"),
+    studentId: z.string().trim().min(1, "Enter a valid student ID"),
     email: z.string().trim().email("Enter a valid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm your password"),
-    branch: z.enum(["COMP", "IT", "AIDS", "ENTC", "OTHER"], {
+    branch: z.enum([
+      "Computer Science and Engineering",
+      "Information Technology",
+      "Artificial Intelligence and Data Science",
+      "Electronics and Telecommunication Engineering",
+      "Other",
+    ], {
       message: "Select your branch",
     }),
     college: requiredText("College"),
@@ -52,7 +65,7 @@ export const otpSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((values) => values.password === values.confirmPassword, {

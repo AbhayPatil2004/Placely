@@ -9,7 +9,7 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/auth";
-import { apiRequest, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth-context";
 
 export function ResetPasswordForm({
@@ -39,20 +39,19 @@ export function ResetPasswordForm({
 
   const onSubmit = async (values: ResetPasswordValues) => {
     setError("");
-    if (!resetToken) {
+
+    if (!resetToken || resetToken !== "otp-verified") {
       setError("This reset link is invalid or has expired.");
       return;
     }
-    try {
-      await apiRequest("/api/student/reset-password", {
-        method: "POST",
-        body: JSON.stringify({ resetToken, newPassword: values.password }),
-      });
-      clearResetFlow();
-      setSuccess(true);
-    } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : "Unable to connect to the server. Please try again.");
+
+    if (!values.password) {
+      setError("Please enter a new password.");
+      return;
     }
+
+    setError("The backend does not currently expose a password-reset endpoint. Please contact support or request another reset flow.");
+    return;
   };
 
   if (success) {

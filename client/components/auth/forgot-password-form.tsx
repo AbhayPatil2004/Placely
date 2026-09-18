@@ -9,7 +9,8 @@ import { AuthFormField } from "@/components/auth/auth-form-field";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { Button } from "@/components/ui/button";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/auth";
-import { apiRequest, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { forgotPassword } from "@/lib/api/auth";
 import { useAuth } from "@/lib/auth-context";
 
 export function ForgotPasswordForm() {
@@ -25,10 +26,7 @@ export function ForgotPasswordForm() {
   const onSubmit = async (values: ForgotPasswordValues) => {
     setError("");
     try {
-      await apiRequest("/api/student/forgot-password", {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
+      await forgotPassword(values);
       setResetEmail(values.email);
       router.push("/forgot-password/verify");
     } catch (requestError) {

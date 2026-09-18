@@ -107,29 +107,120 @@ const problemSchema = new mongoose.Schema(
         topic: {
             type: String,
             enum: [
+
+                // =========================
+                // PROGRAMMING FUNDAMENTALS
+                // =========================
+
+                "INTRODUCTION",
+                "VARIABLES",
+                "DATA_TYPES",
+                "INPUT_OUTPUT",
+                "OPERATORS",
+                "CONDITIONALS",
+                "LOOPS",
+                "FUNCTIONS",
+
+                // =========================
+                // BASIC DATA STRUCTURES
+                // =========================
+
                 "ARRAY",
                 "STRING",
                 "MATRIX",
-                "HASHING",
+
+                // =========================
+                // BASIC ALGORITHMIC CONCEPTS
+                // =========================
+
+                "TIME_SPACE_COMPLEXITY",
+                "RECURSION",
+
+                // =========================
+                // OBJECT ORIENTED PROGRAMMING
+                // =========================
+
+                "OOP",
+
+                // =========================
+                // SEARCHING & SORTING
+                // =========================
+
+                "SEARCHING",
                 "SORTING",
                 "BINARY_SEARCH",
+
+                // =========================
+                // ARRAY PATTERNS
+                // =========================
+
+                "HASHING",
                 "TWO_POINTER",
                 "SLIDING_WINDOW",
                 "PREFIX_SUM",
-                "RECURSION",
-                "BACKTRACKING",
+
+                // =========================
+                // LINKED DATA STRUCTURES
+                // =========================
+
                 "LINKED_LIST",
+
+                // =========================
+                // STACK / QUEUE
+                // =========================
+
                 "STACK",
                 "QUEUE",
                 "DEQUE",
+
+                // =========================
+                // RECURSIVE / EXPONENTIAL
+                // =========================
+
+                "BACKTRACKING",
+
+                // =========================
+                // HEAP
+                // =========================
+
                 "HEAP",
+
+                // =========================
+                // TREES
+                // =========================
+
                 "TREE",
                 "BINARY_SEARCH_TREE",
                 "TRIE",
-                "GRAPH",
+
+                // =========================
+                // GREEDY
+                // =========================
+
                 "GREEDY",
+
+                // =========================
+                // DIVIDE AND CONQUER
+                // =========================
+
                 "DIVIDE_AND_CONQUER",
+
+                // =========================
+                // GRAPHS
+                // =========================
+
+                "GRAPH",
+
+                // =========================
+                // DYNAMIC PROGRAMMING
+                // =========================
+
                 "DYNAMIC_PROGRAMMING",
+
+                // =========================
+                // OTHER IMPORTANT TOPICS
+                // =========================
+
                 "BIT_MANIPULATION",
                 "MATH"
             ],
@@ -236,13 +327,6 @@ const problemSchema = new mongoose.Schema(
         },
 
 
-        // Learning Support
-        keyConcepts: {
-            type: [String],
-            default: []
-        },
-        
-
         expectedTimeComplexity: {
             type: String,
             default: ""
@@ -252,23 +336,9 @@ const problemSchema = new mongoose.Schema(
             type: String,
             default: ""
         },
-
-
-        // Execution Limits
-        timeLimit: {
-            type: Number,
-            default: 2
+        companies: {
+            type: [String]
         },
-
-        memoryLimit: {
-            type: Number,
-            default: 256
-        },
-
-
-        // Placement Preparation
-        
-
 
         // Ordering
         order: {

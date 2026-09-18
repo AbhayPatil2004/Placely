@@ -1,13 +1,5 @@
-import { ResourceLibrary } from "@/components/resources/ResourceLibrary";
-import { dsaLearnResources } from "@/lib/resources";
+import { DsaListingPage } from "@/components/dashboard/DsaListingPage";
 
-export default function DsaLearnPage() {
-  return (
-    <ResourceLibrary
-      resources={dsaLearnResources}
-      title="DSA Learn"
-      categoryLabel="Data Structures & Algorithms"
-      description="Study concepts, patterns, and curated problems in a focused sequence."
-    />
-  );
+export default function LearnPage() {
+  return <DsaListingPage mode="learn" />;
 }

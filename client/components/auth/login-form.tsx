@@ -9,9 +9,9 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginValues } from "@/lib/auth";
-import { apiRequest, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { login } from "@/lib/api/auth";
 import { useAuth } from "@/lib/auth-context";
-import type { AuthUser } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
 export function LoginForm() {
@@ -31,10 +31,7 @@ export function LoginForm() {
     setStatus("loading");
     setMessage("");
     try {
-      const user = await apiRequest<AuthUser>("/api/student/login", {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
+      const user = await login(values);
       setUser(user);
       router.replace("/dashboard");
     } catch (error) {

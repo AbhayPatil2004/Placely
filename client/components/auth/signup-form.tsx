@@ -8,9 +8,9 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { branchOptions, collegeOptions, signupSchema, type SignupValues } from "@/lib/auth";
-import { apiRequest, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { signup } from "@/lib/api/auth";
 import { useAuth } from "@/lib/auth-context";
-import type { AuthUser } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
 const inputClassName =
@@ -39,10 +39,7 @@ export function SignupForm() {
     try {
       const { confirmPassword, ...payload } = values;
       void confirmPassword;
-      const user = await apiRequest<AuthUser>("/api/student/signup", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const user = await signup(payload);
       setUser(user);
       setSubmitted(true);
       router.replace("/dashboard");
@@ -76,7 +73,7 @@ export function SignupForm() {
           </AuthFormField>
           <div className="grid gap-4 sm:grid-cols-2">
             <AuthFormField id="studentId" label="Student ID" error={errors.studentId?.message}>
-              <input {...register("studentId", { valueAsNumber: true })} id="studentId" className={inputClassName} inputMode="numeric" type="number" />
+              <input {...register("studentId")} id="studentId" className={inputClassName} placeholder="STU001" />
             </AuthFormField>
             <AuthFormField id="signup-email" label="Email" error={errors.email?.message}>
               <input {...register("email")} id="signup-email" autoComplete="email" className={inputClassName} type="email" />

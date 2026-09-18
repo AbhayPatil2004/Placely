@@ -9,7 +9,8 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { OtpInput } from "@/components/auth/otp-input";
 import { Button } from "@/components/ui/button";
 import { otpSchema, type OtpValues } from "@/lib/auth";
-import { apiRequest, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { verifyOtp } from "@/lib/api/auth";
 import { useAuth } from "@/lib/auth-context";
 
 export function VerifyOtpForm() {
@@ -45,11 +46,8 @@ export function VerifyOtpForm() {
       return;
     }
     try {
-      const data = await apiRequest<{ resetToken: string }>("/api/student/verify-otp", {
-        method: "POST",
-        body: JSON.stringify({ email: resetEmail, otp }),
-      });
-      setResetToken(data.resetToken);
+      await verifyOtp({ email: resetEmail, otp });
+      setResetToken("otp-verified");
       router.push("/reset-password");
     } catch (error) {
       setStatus("invalid");
