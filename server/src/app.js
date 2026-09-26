@@ -12,6 +12,7 @@ import Adminrouter from "./auth/routes/admin.auth.routes.js";
 import Tporouter from "./auth/routes/tpo.auth.routes.js";
 import Problem from './DSA/routes/problem.route.js'
 import Code from "./DSA/routes/execute.route.js"
+import ApiResponse from "./utils/apiResponse.js";
 
 dotenv.config();
 
@@ -24,12 +25,22 @@ await connectRabbitMQ();
 await StartCodeResultConsumer()
 
 
-app.use( cors ( {
-    origin : "*"
-}))
+app.use(
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true
+    })
+);
 
 app.use(express.json());
 app.use(cookieParser());
+
+
+app.use("/" , ( req , res ) => {
+    res.status(200).json(
+       new ApiResponse( 200 , "Server is Running " , {})
+    )
+})
 
 app.use("/api/auth/student", Studentrouter);
 app.use("/api/auth/admin", Adminrouter);

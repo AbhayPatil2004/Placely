@@ -1,5 +1,5 @@
 @baseUrl = {{$dotenv BASEURL}}
-@accessToken = {{$dotenv TOKEN}}
+@accessToken = {{$dotenv STUDENT_TOKEN}}
 
 
 ############################################################

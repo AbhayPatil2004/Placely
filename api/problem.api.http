@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:5000
 
-@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWFiOThmY2FiYWU4MTBmZTUwMjA2ZDIiLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4OTYzMTc4NywiZXhwIjoxNzkwMjM2NTg3fQ.IFes1irYtuTy-1Q4rtPL8NdNROoVNOL1E2IwLmCIlgw
+@accessToken = {{$dotenv ADMIN_TOKEN}}
 
 
 ############################################################
@@ -11,7 +11,7 @@
 ###  Add Problem
 POST {{baseUrl}}/api/problem
 Content-Type: application/json
-Cookie: accessToken={{adminToken}}
+Cookie: accessToken={{accessToken}}
 
 {
     "title": "Two Sum",
@@ -108,7 +108,7 @@ GET http://localhost:5000/api/problem?topic=ARRAY&difficulty=EASY
 
 PUT http://localhost:5000/api/problem/two-sum
 Content-Type: application/json
-Cookie: accessToken={{adminToken}}
+Cookie: accessToken={{accessToken}}
 
 {
     "title": "Two Sum Updated",
@@ -124,4 +124,4 @@ Cookie: accessToken={{adminToken}}
 
 ### Delete Problem
 DELETE {{baseUrl}}/api/problem/two-sum
-Cookie: accessToken={{adminToken}}
+Cookie: accessToken={{accessToken}}
