@@ -1,0 +1,153 @@
+############################################################
+#                    STUDENT AUTH APIs
+############################################################
+
+### 1. Student Signup
+POST http://localhost:5000/api/auth/student/signup
+Content-Type: application/json
+
+{
+    "fullname": "Abhay Patil",
+    "studentId": "STU001",
+    "email": "abhay.student@gmail.com",
+    "branch": "Computer Science and Engineering",
+    "college": "KBTCOE",
+    "collegeId": "KBT001",
+    "currentYear": 4,
+    "passingYear": 2027,
+    "password": "Abhay@123"
+}
+
+
+### 2. Student Login
+POST http://localhost:5000/api/auth/student/login
+Content-Type: application/json
+
+{
+    "email": "abhay.student@gmail.com",
+    "password": "Abhay@123"
+}
+
+
+### 3. Student Logout
+POST http://localhost:5000/api/auth/student/logout
+
+
+### 4. Student Forgot Password
+POST http://localhost:5000/api/auth/student/forgot-password
+Content-Type: application/json
+
+{
+    "email": "abhay.student@gmail.com"
+}
+
+
+### 5. Student Verify OTP
+POST http://localhost:5000/api/auth/student/verify-otp
+Content-Type: application/json
+
+{
+    "email": "abhay.student@gmail.com",
+    "otp": "330379",
+    "newPassword": "NewAbhay@123"
+}
+
+
+
+############################################################
+#                      ADMIN AUTH APIs
+############################################################
+
+### 6. Admin Signup
+POST http://localhost:5000/api/auth/admin/signup
+Content-Type: application/json
+
+{
+    "fullname": "Placely Admin",
+    "email": "admin@gmail.com",
+    "password": "Admin@123"
+}
+
+
+### 7. Admin Login
+POST http://localhost:5000/api/auth/admin/login
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com",
+    "password": "Admin@123"
+}
+
+
+### 8. Admin Logout
+POST http://localhost:5000/api/auth/admin/logout
+
+
+### 9. Admin Forgot Password
+POST http://localhost:5000/api/auth/admin/forgot-password
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com"
+}
+
+
+### 10. Admin Verify OTP
+POST http://localhost:5000/api/auth/admin/verify-otp
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com",
+    "otp": "123456",
+    "newPassword": "NewAdmin@123"
+}
+
+
+
+############################################################
+#                       TPO AUTH APIs
+############################################################
+
+### 11. TPO Signup
+POST http://localhost:5000/api/auth/tpo/signup
+Content-Type: application/json
+
+{
+    "fullname": "TPO User",
+    "email": "tpo@gmail.com",
+    "password": "Tpo@123"
+}
+
+
+### 12. TPO Login
+POST http://localhost:5000/api/auth/tpo/login
+Content-Type: application/json
+
+{
+    "email": "tpo@gmail.com",
+    "password": "Tpo@123"
+}
+
+
+### 13. TPO Logout
+POST http://localhost:5000/api/auth/tpo/logout
+
+
+### 14. TPO Forgot Password
+POST http://localhost:5000/api/auth/tpo/forgot-password
+Content-Type: application/json
+
+{
+    "email": "tpo@gmail.com"
+}
+
+
+### 15. TPO Verify OTP
+POST http://localhost:5000/api/auth/tpo/verify-otp
+Content-Type: application/json
+
+{
+    "email": "tpo@gmail.com",
+    "otp": "123456",
+    "newPassword": "NewTpo@123"
+}
