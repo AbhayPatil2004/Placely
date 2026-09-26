@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 import { randomInt } from "crypto";
 import Student from "../../student/models/student.model.js";
 import { publishEmail } from "../../services/emailProducer.js";
@@ -97,7 +97,7 @@ const StudentSignup = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 10);
 
     // Create student
     const student = await Student.create({
@@ -221,7 +221,7 @@ const StudentLogin = async (req, res) => {
     }
 
     // Compare password
-    const correctPassword = await bcrypt.compare(
+    const correctPassword = await bcryptjs.compare(
       password,
       student.password
     );
