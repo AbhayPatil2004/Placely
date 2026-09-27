@@ -1,10 +1,53 @@
 import Student from "../models/student.model.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
+import { rmSync } from "node:fs";
 
 const getStudentId = (req) => {
     return req.user.userId;
 };
+
+
+const GetStudentProfile = async (req, res) => {
+
+    try {
+
+        const student = await Student.findById(
+            getStudentId(req)
+        );
+
+        if (!student) {
+            return res.status(404).json(
+                new ApiError(
+                    404,
+                    "Student not found",
+                    {}
+                )
+            );
+        }
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Student Profile fetched successfully",
+                student
+            )
+        );
+
+    } catch (error) {
+
+        console.error("Get Student Profile Error:", error);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error",
+                {}
+            )
+        );
+    }
+};
+
 
 const UpdateStudentInfo = async (req, res) => {
     try {
@@ -1258,6 +1301,9 @@ const DeleteInternship = async (req, res) => {
 
 
 export {
+
+    GetStudentProfile ,
+
     UpdateStudentInfo,
 
     // Coding Profiles

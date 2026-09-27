@@ -11,6 +11,9 @@
 #              1. BASIC STUDENT INFORMATION
 ############################################################
 
+GET {{baseUrl}}/api/student/profile
+Cookie: accessToken={{StudentAccessToken}}
+
 ### 1.1 Update Full Name
 PUT {{baseUrl}}/api/student/update
 Content-Type: application/json

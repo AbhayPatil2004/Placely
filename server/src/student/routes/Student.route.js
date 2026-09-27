@@ -1,7 +1,11 @@
 import Router from "express";
 
 import {
+
+    GetStudentProfile ,
+
     UpdateStudentInfo,
+
     AddCodingProfile,
     UpdateCodingProfile,
     DeleteCodingProfile,
@@ -41,6 +45,8 @@ const router = Router();
 // ============================================================
 // GENERAL STUDENT PROFILE
 // ============================================================
+
+router.get("/profile" , VerifyStudent , GetStudentProfile )
 
 router.put(
     "/update",
