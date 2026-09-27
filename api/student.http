@@ -1,0 +1,522 @@
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+
+
+############################################################
+#                    STUDENT APIs
+############################################################
+
+
+############################################################
+#              1. BASIC STUDENT INFORMATION
+############################################################
+
+### 1.1 Update Full Name
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "fullname": "Abhay Ramkrushna Patil"
+}
+
+
+### 1.2 Update Profile Image
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "profileImage": "https://example.com/profile.jpg"
+}
+
+
+### 1.3 Update Student ID
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "studentId": "STU100"
+}
+
+
+### 1.4 Update University
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "university": "SPPU"
+}
+
+
+### 1.5 Update College
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "college": "KBTCOE"
+}
+
+
+### 1.6 Update College ID
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "collegeId": "KBT001"
+}
+
+
+### 1.7 Update Branch
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "branch": "Computer Science and Engineering"
+}
+
+
+### 1.8 Update Current Year
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "currentYear": 4
+}
+
+
+### 1.9 Update Passing Year
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "passingYear": 2027
+}
+
+
+### 1.10 Update CGPA
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "cgpa": 8.66
+}
+
+
+### 1.11 Update 10th Percentage
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "tenthPercentage": 85
+}
+
+
+### 1.12 Update 12th Percentage
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "twelfthPercentage": 70.8
+}
+
+
+### 1.13 Update Skills
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "skills": [
+        "C++",
+        "JavaScript",
+        "Python",
+        "React",
+        "Next.js",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "MySQL",
+        "Redis",
+        "Docker",
+        "AWS",
+        "Git",
+        "GitHub"
+    ]
+}
+
+
+### 1.14 Update Resume URL
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "resumeUrl": "https://example.com/resume.pdf"
+}
+
+
+### 1.15 Update Portfolio URL
+PUT {{baseUrl}}/api/student/update
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "portfolioUrl": "https://example.com"
+}
+
+
+############################################################
+#              2. CODING PROFILE APIs
+############################################################
+
+### 2.1 Get All Coding Profiles
+GET {{baseUrl}}/api/student/coding-profiles
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 2.2 Add LeetCode Profile
+POST {{baseUrl}}/api/student/coding-profiles
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "platform": "LEETCODE",
+    "profileUrl": "https://leetcode.com/patilabhay2004"
+}
+
+
+### 2.3 Add GitHub Profile
+POST {{baseUrl}}/api/student/coding-profiles
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "platform": "GITHUB",
+    "profileUrl": "https://github.com/AbhayPatil2004"
+}
+
+
+### 2.4 Add GeeksForGeeks Profile
+POST {{baseUrl}}/api/student/coding-profiles
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "platform": "GEEKSFORGEEKS",
+    "profileUrl": "https://www.geeksforgeeks.org/user/patilabtwta"
+}
+
+
+### 2.5 Add LinkedIn Profile
+POST {{baseUrl}}/api/student/coding-profiles
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "platform": "LINKEDIN",
+    "profileUrl": "https://www.linkedin.com/in/abhayramkrushnapatil"
+}
+
+
+### 2.6 Update LeetCode Profile
+PUT {{baseUrl}}/api/student/coding-profiles/LEETCODE
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "profileUrl": "https://leetcode.com/patilabhay2004"
+}
+
+
+### 2.7 Delete LeetCode Profile
+DELETE {{baseUrl}}/api/student/coding-profiles/LEETCODE
+Cookie: accessToken={{StudentAccessToken}}
+
+
+############################################################
+#                    3. PROJECT APIs
+############################################################
+
+### 3.1 Get All Projects
+GET {{baseUrl}}/api/student/projects
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 3.2 Add Project - Placely
+POST {{baseUrl}}/api/student/projects
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "title": "Placely",
+    "description": "A placement preparation platform for students with DSA practice, coding execution, aptitude, resume analysis and placement-related features.",
+    "technologies": [
+        "Next.js",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "Redis",
+        "RabbitMQ",
+        "Docker",
+        "AWS"
+    ],
+    "githubUrl": "https://github.com/AbhayPatil2004/Placely",
+    "liveUrl": "https://example.com",
+    "startDate": "2026-01-01",
+    "endDate": "2026-09-27"
+}
+
+
+### 3.3 Add Project - BazzarGhar
+POST {{baseUrl}}/api/student/projects
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "title": "BazzarGhar",
+    "description": "Full-stack e-commerce application with authentication, product management, cart, search and payment functionality.",
+    "technologies": [
+        "Next.js",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "Redis",
+        "Cloudinary",
+        "Razorpay"
+    ],
+    "githubUrl": "https://github.com/AbhayPatil2004/BazzarGhar",
+    "liveUrl": "https://example.com",
+    "startDate": "2026-05-01",
+    "endDate": "2026-08-01"
+}
+
+
+### 3.4 Update Project
+### Replace PROJECT_ID with actual _id returned from Add/Get
+PUT {{baseUrl}}/api/student/projects/PROJECT_ID
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "description": "Updated project description",
+    "technologies": [
+        "Next.js",
+        "Node.js",
+        "MongoDB",
+        "Docker"
+    ]
+}
+
+
+### 3.5 Delete Project
+### Replace PROJECT_ID with actual _id
+DELETE {{baseUrl}}/api/student/projects/PROJECT_ID
+Cookie: accessToken={{StudentAccessToken}}
+
+
+############################################################
+#                  4. CERTIFICATE APIs
+############################################################
+
+### 4.1 Get All Certificates
+GET {{baseUrl}}/api/student/certificates
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 4.2 Add MERN Certificate
+POST {{baseUrl}}/api/student/certificates
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "name": "MERN Stack Development",
+    "issuingOrganization": "Udemy",
+    "issueDate": "2026-01-01",
+    "credentialId": "MERN-12345",
+    "credentialUrl": "https://example.com/certificate"
+}
+
+
+### 4.3 Add AWS Certificate
+POST {{baseUrl}}/api/student/certificates
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "name": "AWS Academy Cloud Foundations",
+    "issuingOrganization": "AWS Academy",
+    "issueDate": "2026-02-01",
+    "credentialId": "AWS-12345",
+    "credentialUrl": "https://example.com/aws-certificate"
+}
+
+
+### 4.4 Update Certificate
+### Replace CERTIFICATE_ID with actual _id
+PUT {{baseUrl}}/api/student/certificates/CERTIFICATE_ID
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "credentialUrl": "https://example.com/updated-certificate"
+}
+
+
+### 4.5 Delete Certificate
+### Replace CERTIFICATE_ID with actual _id
+DELETE {{baseUrl}}/api/student/certificates/CERTIFICATE_ID
+Cookie: accessToken={{StudentAccessToken}}
+
+
+############################################################
+#                  5. ACHIEVEMENT APIs
+############################################################
+
+### 5.1 Get All Achievements
+GET {{baseUrl}}/api/student/achievements
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 5.2 Add Achievement
+POST {{baseUrl}}/api/student/achievements
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "title": "500+ DSA Problems Solved",
+    "description": "Solved more than 500 data structures and algorithms problems across coding platforms.",
+    "date": "2026-09-01",
+    "organization": "LeetCode",
+    "proofUrl": "https://leetcode.com/patilabhay2004"
+}
+
+
+### 5.3 Update Achievement
+### Replace ACHIEVEMENT_ID with actual _id
+PUT {{baseUrl}}/api/student/achievements/ACHIEVEMENT_ID
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "description": "Solved more than 500 DSA problems."
+}
+
+
+### 5.4 Delete Achievement
+### Replace ACHIEVEMENT_ID with actual _id
+DELETE {{baseUrl}}/api/student/achievements/ACHIEVEMENT_ID
+Cookie: accessToken={{StudentAccessToken}}
+
+
+############################################################
+#                    6. HACKATHON APIs
+############################################################
+
+### 6.1 Get All Hackathons
+GET {{baseUrl}}/api/student/hackathons
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 6.2 Add Hackathon
+POST {{baseUrl}}/api/student/hackathons
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "name": "College Hackathon",
+    "organization": "KBTCOE",
+    "role": "TEAM_LEAD",
+    "teamName": "Placely",
+    "projectName": "Placely",
+    "description": "Developed a placement preparation platform for college students.",
+    "technologies": [
+        "Next.js",
+        "Node.js",
+        "MongoDB",
+        "Docker"
+    ],
+    "position": "Participant",
+    "date": "2026-08-01",
+    "certificateUrl": "https://example.com/hackathon-certificate",
+    "projectUrl": "https://github.com/AbhayPatil2004/Placely"
+}
+
+
+### 6.3 Update Hackathon
+### Replace HACKATHON_ID with actual _id
+PUT {{baseUrl}}/api/student/hackathons/HACKATHON_ID
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "position": "Winner"
+}
+
+
+### 6.4 Delete Hackathon
+### Replace HACKATHON_ID with actual _id
+DELETE {{baseUrl}}/api/student/hackathons/HACKATHON_ID
+Cookie: accessToken={{StudentAccessToken}}
+
+
+############################################################
+#                   7. INTERNSHIP APIs
+############################################################
+
+### 7.1 Get All Internships
+GET {{baseUrl}}/api/student/internships
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### 7.2 Add Internship
+POST {{baseUrl}}/api/student/internships
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "company": "Uttirna Services LLP",
+    "role": "MERN Stack Developer Intern",
+    "location": "Nashik",
+    "employmentType": "INTERNSHIP",
+    "startDate": "2026-01-01",
+    "endDate": "2026-02-28",
+    "currentlyWorking": false,
+    "description": "Worked on React applications, REST APIs, debugging and backend development.",
+    "technologies": [
+        "React",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "Postman"
+    ],
+    "certificateUrl": "https://example.com/internship-certificate",
+    "companyUrl": "https://example.com"
+}
+
+
+### 7.3 Update Internship
+### Replace INTERNSHIP_ID with actual _id
+PUT {{baseUrl}}/api/student/internships/INTERNSHIP_ID
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "description": "Worked on React, Node.js, Express APIs and debugging."
+}
+
+
+### 7.4 Delete Internship
+### Replace INTERNSHIP_ID with actual _id
+DELETE {{baseUrl}}/api/student/internships/INTERNSHIP_ID
+Cookie: accessToken={{StudentAccessToken}}
