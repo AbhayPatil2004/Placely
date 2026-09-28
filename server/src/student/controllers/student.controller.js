@@ -1,11 +1,8 @@
 import Student from "../models/student.model.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
-import { rmSync } from "node:fs";
+import { GetStudentId } from "../../utils/studentDetails.js";
 
-const getStudentId = (req) => {
-    return req.user.userId;
-};
 
 
 const GetStudentProfile = async (req, res) => {
@@ -13,7 +10,7 @@ const GetStudentProfile = async (req, res) => {
     try {
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -189,7 +186,7 @@ const UpdateStudentInfo = async (req, res) => {
 const GetCodingProfiles = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("codingProfiles");
 
         if (!student) {
@@ -230,7 +227,7 @@ const AddCodingProfile = async (req, res) => {
         }
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -304,7 +301,7 @@ const UpdateCodingProfile = async (req, res) => {
         }
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -353,7 +350,7 @@ const DeleteCodingProfile = async (req, res) => {
         const { platform } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -401,7 +398,7 @@ const DeleteCodingProfile = async (req, res) => {
 const GetProjects = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("projects");
 
         if (!student) {
@@ -431,7 +428,7 @@ const GetProjects = async (req, res) => {
 const AddProject = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -479,7 +476,7 @@ const UpdateProject = async (req, res) => {
         const { projectId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -536,7 +533,7 @@ const DeleteProject = async (req, res) => {
         const { projectId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -577,7 +574,7 @@ const DeleteProject = async (req, res) => {
 const GetCertificates = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("certificates");
 
         if (!student) {
@@ -605,7 +602,7 @@ const GetCertificates = async (req, res) => {
 const AddCertificate = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -656,7 +653,7 @@ const UpdateCertificate = async (req, res) => {
         const { certificateId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -713,7 +710,7 @@ const DeleteCertificate = async (req, res) => {
         const { certificateId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -755,7 +752,7 @@ const DeleteCertificate = async (req, res) => {
 const GetAchievements = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("achievements");
 
         if (!student) {
@@ -783,7 +780,7 @@ const GetAchievements = async (req, res) => {
 const AddAchievement = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -834,7 +831,7 @@ const UpdateAchievement = async (req, res) => {
         const { achievementId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -891,7 +888,7 @@ const DeleteAchievement = async (req, res) => {
         const { achievementId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -934,7 +931,7 @@ const DeleteAchievement = async (req, res) => {
 const GetHackathons = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("hackathons");
 
         if (!student) {
@@ -962,7 +959,7 @@ const GetHackathons = async (req, res) => {
 const AddHackathon = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -1013,7 +1010,7 @@ const UpdateHackathon = async (req, res) => {
         const { hackathonId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -1076,7 +1073,7 @@ const DeleteHackathon = async (req, res) => {
         const { hackathonId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -1118,7 +1115,7 @@ const DeleteHackathon = async (req, res) => {
 const GetInternships = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         ).select("internships");
 
         if (!student) {
@@ -1146,7 +1143,7 @@ const GetInternships = async (req, res) => {
 const AddInternship = async (req, res) => {
     try {
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -1197,7 +1194,7 @@ const UpdateInternship = async (req, res) => {
         const { internshipId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {
@@ -1260,7 +1257,7 @@ const DeleteInternship = async (req, res) => {
         const { internshipId } = req.params;
 
         const student = await Student.findById(
-            getStudentId(req)
+            GetStudentId(req)
         );
 
         if (!student) {

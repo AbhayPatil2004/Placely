@@ -1,6 +1,12 @@
 import { getChannel } from "../config/rabbitmq.js";
 
-const CODE_RESULT_QUEUE_NAME = "code-result.queue";
+import {
+    SendToStudent
+} from "../websocket/webManager.js";
+
+const CODE_RESULT_QUEUE_NAME =
+    "code-result.queue";
+
 
 const StartCodeResultConsumer = async () => {
 
@@ -14,6 +20,7 @@ const StartCodeResultConsumer = async () => {
 
         channel.consume(
             CODE_RESULT_QUEUE_NAME,
+
             async (message) => {
 
                 if (!message) {
@@ -36,6 +43,11 @@ const StartCodeResultConsumer = async () => {
                     );
 
                     console.log(
+                        "Student Id:",
+                        job.studentId
+                    );
+
+                    console.log(
                         "Status:",
                         job.status
                     );
@@ -54,6 +66,31 @@ const StartCodeResultConsumer = async () => {
                         "==========================================\n"
                     );
 
+
+                    // Send result to student's WebSocket
+
+                    const sent = SendToStudent(
+                        job.studentId,
+                        {
+                            type: "CODE_EXECUTION_RESULT",
+
+                            jobId: job.jobId,
+
+                            status: job.status,
+
+                            language: job.language,
+
+                            result: job.result
+                        }
+                    );
+
+
+                    console.log(
+                        "WebSocket result sent:",
+                        sent
+                    );
+
+
                     channel.ack(message);
 
                 } catch (error) {
@@ -66,6 +103,7 @@ const StartCodeResultConsumer = async () => {
                     channel.ack(message);
                 }
             },
+
             {
                 noAck: false
             }
@@ -81,5 +119,6 @@ const StartCodeResultConsumer = async () => {
         throw error;
     }
 };
+
 
 export default StartCodeResultConsumer;

@@ -2,9 +2,7 @@
 @StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
 
 ############################################################
-
 # CODE EXECUTION APIs
-
 ############################################################
 
 ### 1. Execute C++
@@ -14,10 +12,11 @@ Content-Type: application/json
 Cookie: accessToken={{StudentAccessToken}}
 
 {
-"code": "#include <iostream>\nusing namespace std;\nint main(){cout << "Hello from C++";}",
-"input": "",
-"language": "cpp"
+    "code": "#include <iostream>\nusing namespace std;\nint main(){cout << \"Hello from C++\";}",
+    "input": "",
+    "language": "cpp"
 }
+
 
 ### 2. Execute Java
 
@@ -26,10 +25,11 @@ Content-Type: application/json
 Cookie: accessToken={{StudentAccessToken}}
 
 {
-"code": "public class Main { public static void main(String[] args) { System.out.println("Hello from Java"); } }",
-"input": "",
-"language": "java"
+    "code": "public class Main { public static void main(String[] args) { System.out.println(\"Hello from Java\"); } }",
+    "input": "",
+    "language": "java"
 }
+
 
 ### 3. Execute JavaScript
 
@@ -38,10 +38,11 @@ Content-Type: application/json
 Cookie: accessToken={{StudentAccessToken}}
 
 {
-"code": "console.log("Hello from JavaScript");",
-"input": "",
-"language": "js"
+    "code": "console.log(\"Hello from JavaScript\");",
+    "input": "",
+    "language": "js"
 }
+
 
 ### 4. Execute Python
 
@@ -50,7 +51,7 @@ Content-Type: application/json
 Cookie: accessToken={{StudentAccessToken}}
 
 {
-"code": "print("Hello from Python")",
-"input": "",
-"language": "py"
+    "code": "print(\"Hello from Python\")",
+    "input": "",
+    "language": "py"
 }
