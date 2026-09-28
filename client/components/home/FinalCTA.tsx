@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import Link from "next/link";
@@ -7,6 +8,11 @@ import { useAuth } from "@/lib/auth-context";
 export function FinalCTA() {
   const { user } = useAuth();
 
+=======
+import { Button } from "@/components/ui/button";
+
+export function FinalCTA() {
+>>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
   return (
     <section id="cta" className="py-16 md:py-24">
       <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
@@ -16,9 +22,13 @@ export function FinalCTA() {
               Ready to start preparing?
             </h2>
 
+<<<<<<< HEAD
             <Link href={user ? "/dashboard" : "/signup"} className={buttonVariants({ size: "lg" })}>
               {user ? "Continue" : "Get Started"}
             </Link>
+=======
+            <Button size="lg">Get Started</Button>
+>>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
           </div>
         </div>
       </div>

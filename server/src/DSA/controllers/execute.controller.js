@@ -2,7 +2,7 @@ import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
 import crypto from "crypto";
 import { getChannel } from "../../config/rabbitmq.js";
-
+import { GetStudentId } from "../../utils/studentDetails.js";
 const CODE_EXECUTION_QUEUE_NAME = "code-execution.queue";
 
 
@@ -10,8 +10,8 @@ const ExecuteCode = async (req, res) => {
 
     try {
 
-        const { code, input, language } = req.body;
-
+        const { code, input, language } = req.body;    
+        
         // Validate code
         if (!code) {
             return res.status(400).json(
@@ -28,8 +28,11 @@ const ExecuteCode = async (req, res) => {
 
         const channel = getChannel();
 
+        console.log(GetStudentId(req))
+        
         const job = {
             jobId: crypto.randomUUID(),
+            studentId : GetStudentId(req) ,
             code,
             language,
             input
@@ -65,6 +68,8 @@ const ExecuteCode = async (req, res) => {
         );
     }
 };
+
+
 
 
 

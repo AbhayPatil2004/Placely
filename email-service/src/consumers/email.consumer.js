@@ -1,4 +1,7 @@
-import { getChannel, QUEUE_NAME } from "../config/rabbitmq.js";
+import {
+    getChannel,
+    QUEUE_NAME
+} from "../config/rabbitmq.js";
 
 import transporter from "../config/mail.js";
 
@@ -15,7 +18,6 @@ export const startEmailConsumer = async () => {
         `Listening for messages on ${QUEUE_NAME}...`
     );
 
-
     await channel.consume(
         QUEUE_NAME,
 
@@ -25,26 +27,18 @@ export const startEmailConsumer = async () => {
                 return;
             }
 
-
             try {
-
-
 
                 const emailData = JSON.parse(
                     message.content.toString()
                 );
-
 
                 console.log(
                     "Email event received:",
                     emailData
                 );
 
-
                 let html;
-
-
-
 
                 switch (emailData.type) {
 
@@ -52,16 +46,6 @@ export const startEmailConsumer = async () => {
 
                         html = welcomeEmailTemplate(
                             emailData.data.name
-                        );
-
-                        break;
-
-
-                    case "PASSWORD_RESET_OTP":
-
-                        html = passwordResetOtpTemplate(
-                            emailData.data.name,
-                            emailData.data.otp
                         );
 
                         break;
@@ -85,8 +69,6 @@ export const startEmailConsumer = async () => {
                 }
 
 
-
-
                 await transporter.sendMail({
 
                     from: process.env.EMAIL_USER,
@@ -105,29 +87,21 @@ export const startEmailConsumer = async () => {
                 );
 
 
-
-
                 channel.ack(message);
-
 
             } catch (error) {
 
                 console.error(
-                    " Email processing failed:",
+                    "Email processing failed:",
                     error.message
                 );
-
-
-
 
                 channel.nack(
                     message,
                     false,
                     true
                 );
-
             }
-
         }
     );
 };

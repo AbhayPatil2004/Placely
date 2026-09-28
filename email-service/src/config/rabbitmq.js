@@ -1,14 +1,15 @@
 import amqp from "amqplib";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 let connection;
 let channel;
 
-const QUEUE_NAME = "email.queue";
+export const QUEUE_NAME = "email.queue";
 
 export const connectRabbitMQ = async () => {
-
     try {
-
         connection = await amqp.connect(
             process.env.RABBITMQ_URL
         );
@@ -19,14 +20,14 @@ export const connectRabbitMQ = async () => {
             durable: true
         });
 
-        console.log(" RabbitMQ connected");
+        console.log("RabbitMQ connected successfully");
+        console.log(`Email queue ready: ${QUEUE_NAME}`);
 
         return channel;
 
     } catch (error) {
-
         console.error(
-            " RabbitMQ connection failed:",
+            "RabbitMQ connection failed:",
             error.message
         );
 
@@ -34,9 +35,7 @@ export const connectRabbitMQ = async () => {
     }
 };
 
-
 export const getChannel = () => {
-
     if (!channel) {
         throw new Error(
             "RabbitMQ channel is not initialized"
@@ -45,6 +44,3 @@ export const getChannel = () => {
 
     return channel;
 };
-
-
-export { QUEUE_NAME };

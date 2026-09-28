@@ -1,4 +1,4 @@
-import bcryptjs from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { randomInt } from "crypto";
 import Student from "../../student/models/student.model.js";
 import { publishEmail } from "../../services/emailProducer.js";

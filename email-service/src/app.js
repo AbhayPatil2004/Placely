@@ -1,37 +1,26 @@
 import "dotenv/config";
 
-import {
-    connectRabbitMQ
-} from "./config/rabbitmq.js";
+import { connectRabbitMQ } from "./config/rabbitmq.js";
 
-import {
-    startEmailConsumer
-} from "./consumers/email.consumer.js";
+import { startEmailConsumer } from "./consumers/email.consumer.js";
 
 
 const startEmailService = async () => {
 
     try {
 
-      
-
         await connectRabbitMQ();
-
-
-       
 
         await startEmailConsumer();
 
-
         console.log(
-            "Placely Email Service is running"
+            "Email service started successfully"
         );
-
 
     } catch (error) {
 
         console.error(
-            " Email Service failed:",
+            "Failed to start email service:",
             error.message
         );
 

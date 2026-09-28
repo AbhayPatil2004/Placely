@@ -44,6 +44,10 @@ export const startCodeExecutionConsumer = async () => {
                     "Job ID:",
                     job.jobId
                 );
+                console.log(
+                    "Student Id:",
+                    job.studentId 
+                );
 
                 console.log(
                     "Language:",
@@ -98,6 +102,7 @@ export const startCodeExecutionConsumer = async () => {
 
                 const executionResult = {
                     jobId: job.jobId,
+                    studentId : job.studentId ,
                     status: "completed",
                     language: job.language,
                     result: result,

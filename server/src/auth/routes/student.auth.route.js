@@ -8,7 +8,7 @@ import {
     StudentVerifyOtp,
 } from "../controllers/student.auth.controller.js";
 
-import verifyAccessToken from "../../middlewares/student.middleware.js";
+// import verifyAccessToken from "../middleware/student.verifytoken.middleware.js";
 
 const router = Router();
 

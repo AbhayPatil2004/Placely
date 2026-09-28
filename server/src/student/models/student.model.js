@@ -33,6 +33,208 @@ const codingProfileSchema = new mongoose.Schema(
 );
 
 // =========================
+// PROJECT SCHEMA
+// =========================
+
+const projectSchema = new mongoose.Schema(
+    {
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        description: {
+            type: String,
+            trim: true,
+        },
+
+        technologies: {
+            type: [String],
+            default: [],
+        },
+
+        githubUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        liveUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        startDate: {
+            type: Date,
+        },
+
+        endDate: {
+            type: Date,
+        },
+    },
+    {
+        _id: true,
+    }
+);
+
+// =========================
+// CERTIFICATE SCHEMA
+// =========================
+
+const certificateSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        issuingOrganization: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        issueDate: {
+            type: Date,
+        },
+
+        credentialId: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        credentialUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+    },
+    {
+        _id: true,
+    }
+);
+
+// =========================
+// ACHIEVEMENT SCHEMA
+// =========================
+
+const achievementSchema = new mongoose.Schema(
+    {
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        description: {
+            type: String,
+            trim: true,
+        },
+
+        date: {
+            type: Date,
+        },
+
+        organization: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        proofUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+    },
+    {
+        _id: true,
+    }
+);
+
+// =========================
+// HACKATHON SCHEMA
+// =========================
+
+const hackathonSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        organization: {
+            type: String,
+            trim: true,
+        },
+
+        role: {
+            type: String,
+            enum: [
+                "PARTICIPANT",
+                "TEAM_LEAD",
+                "TEAM_MEMBER",
+                "MENTOR",
+                "OTHER",
+            ],
+            default: "PARTICIPANT",
+        },
+
+        teamName: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        projectName: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        description: {
+            type: String,
+            trim: true,
+        },
+
+        technologies: {
+            type: [String],
+            default: [],
+        },
+
+        position: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        date: {
+            type: Date,
+        },
+
+        certificateUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+
+        projectUrl: {
+            type: String,
+            trim: true,
+            default: null,
+        },
+    },
+    {
+        _id: true,
+    }
+);
+
+// =========================
 // STUDENT SCHEMA
 // =========================
 
@@ -112,7 +314,6 @@ const studentSchema = new mongoose.Schema(
 
         university: {
             type: String,
-            // required: true,
             trim: true,
         },
 
@@ -184,6 +385,42 @@ const studentSchema = new mongoose.Schema(
 
         codingProfiles: {
             type: [codingProfileSchema],
+            default: [],
+        },
+
+        // =========================
+        // PROJECTS
+        // =========================
+
+        projects: {
+            type: [projectSchema],
+            default: [],
+        },
+
+        // =========================
+        // CERTIFICATES
+        // =========================
+
+        certificates: {
+            type: [certificateSchema],
+            default: [],
+        },
+
+        // =========================
+        // ACHIEVEMENTS
+        // =========================
+
+        achievements: {
+            type: [achievementSchema],
+            default: [],
+        },
+
+        // =========================
+        // HACKATHONS
+        // =========================
+
+        hackathons: {
+            type: [hackathonSchema],
             default: [],
         },
 

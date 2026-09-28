@@ -12,6 +12,7 @@ export function ProfileMenu() {
 
   if (!user) return null;
 
+<<<<<<< HEAD
   const initials = user.fullname
     .split(" ")
     .map((part) => part[0])
@@ -20,6 +21,8 @@ export function ProfileMenu() {
     .join("")
     .toUpperCase() || "P";
 
+=======
+>>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
   return (
     <div className="relative">
       <Button
@@ -29,6 +32,7 @@ export function ProfileMenu() {
         onClick={() => setOpen((current) => !current)}
         size="icon"
         variant="ghost"
+<<<<<<< HEAD
         className="overflow-hidden rounded-full border border-white/10 bg-[#1e1e1e] text-white"
       >
         {user.profileImage ? (
@@ -55,6 +59,16 @@ export function ProfileMenu() {
               <p className="truncate text-sm font-medium text-white">{user.fullname}</p>
               <p className="truncate text-xs text-muted-gray">{user.email}</p>
             </div>
+=======
+      >
+        <UserRound aria-hidden="true" />
+      </Button>
+      {open ? (
+        <div className="absolute right-0 top-11 z-50 w-56 rounded-cards border border-graphite bg-surface p-2 shadow-subtle" role="menu">
+          <div className="border-b border-graphite px-3 py-2">
+            <p className="truncate text-sm font-medium text-white">{user.fullname}</p>
+            <p className="truncate text-xs text-muted-gray">{user.email}</p>
+>>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
           </div>
           <Link href="/profile" className="mt-2 flex items-center gap-2 rounded-buttons px-3 py-2 text-sm text-medium-gray hover:bg-graphite/50 hover:text-white" onClick={() => setOpen(false)} role="menuitem">
             <UserRound aria-hidden="true" className="size-4" />
