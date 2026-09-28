@@ -67,6 +67,10 @@ export async function logout(): Promise<{ message?: string }> {
   });
 }
 
+export async function getCurrentUser(): Promise<AuthUser> {
+  return apiRequest<AuthUser>("/api/auth/student/me");
+}
+
 export async function forgotPassword(payload: { email: string }): Promise<{ message?: string }> {
   return apiRequest<{ message?: string }>("/api/auth/student/forgot-password", {
     method: "POST",

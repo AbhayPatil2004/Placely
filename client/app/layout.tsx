@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
-import { GlobalAppShell } from "@/components/dashboard/GlobalAppShell";
 import { AdminAuthProvider } from "@/lib/admin-auth-context";
+import { AppShell } from "@/components/layouts/AppShell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className="min-h-full bg-[#171717] text-[#eeeeee]">
         <AuthProvider>
           <AdminAuthProvider>
-            <GlobalAppShell>{children}</GlobalAppShell>
+            <AppShell>{children}</AppShell>
           </AdminAuthProvider>
         </AuthProvider>
       </body>

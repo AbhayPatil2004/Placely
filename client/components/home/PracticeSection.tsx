@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
 export function PracticeSection() {
   return (
@@ -18,9 +19,9 @@ export function PracticeSection() {
 
             <span className="text-[11px] text-[#bcbcbc]">main.py</span>
 
-            <Button size="sm" className="h-8 px-3 text-[11px]">
+            <Link href="/dsa/practice" className={buttonVariants({ size: "sm", className: "h-8 px-3 text-[11px]" })}>
               Run
-            </Button>
+            </Link>
           </div>
 
           <div className="mt-4 rounded-[8px] border border-white/5 bg-[#171717] p-4">

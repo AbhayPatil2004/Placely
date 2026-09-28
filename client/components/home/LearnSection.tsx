@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 const areas = [
-  { name: "DSA", tone: "bg-[#1e1e1e]" },
-  { name: "SQL", tone: "bg-[#1e1e1e]" },
-  { name: "Aptitude", tone: "bg-[#1e1e1e]" },
-  { name: "Core Subjects", tone: "bg-[#1e1e1e]" },
+  { name: "DSA", href: "/dsa/practice" },
+  { name: "SQL", href: "/subjects" },
+  { name: "Aptitude", href: "/aptitude" },
+  { name: "Core Subjects", href: "/subjects" },
 ];
 
 export function LearnSection() {
@@ -15,9 +17,10 @@ export function LearnSection() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {areas.map((area, index) => (
-            <div
+            <Link
               key={area.name}
-              className={`learn-card rounded-[12px] border border-white/10 bg-[#1e1e1e] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] transition-colors duration-200 ${
+              href={area.href}
+              className={`learn-card block rounded-[12px] border border-white/10 bg-[#1e1e1e] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] transition-colors duration-200 hover:border-[#7c3aed]/60 ${
                 index === 0 ? "ring-1 ring-[#7c3aed]/30" : ""
               }`}
             >
@@ -31,7 +34,7 @@ export function LearnSection() {
               <h3 className="mt-12 text-[clamp(1.65rem,2vw,2.25rem)] font-semibold tracking-[-0.06em] text-[#eeeeee]">
                 {area.name}
               </h3>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

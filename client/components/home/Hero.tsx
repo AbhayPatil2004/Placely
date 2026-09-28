@@ -1,15 +1,23 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 export function Hero() {
+  const { user } = useAuth();
+  const primaryHref = user ? "/dashboard" : "/signup";
+  const secondaryHref = user ? "/profile" : "/login";
+
   return (
     <section className="relative flex min-h-[80vh] items-center overflow-hidden">
       <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8">
         <div className="max-w-[760px]">
-          <p className="hero-word text-[11px] font-medium uppercase tracking-[0.38em] text-[#bcbcbc]">
+          <p className="hero-word block -translate-y-0 will-change-transform text-[11px] font-medium uppercase tracking-[0.38em] text-[#bcbcbc]">
             Placely
           </p>
 
-          <h1 className="hero-word mt-6 text-[clamp(3.3rem,7vw,7.5rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#eeeeee]">
+          <h1 className="hero-word mt-6 block text-[clamp(3.3rem,7vw,7.5rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#eeeeee] will-change-transform">
             Prepare
             <br />
             for what comes next.
@@ -20,8 +28,15 @@ export function Hero() {
           </p>
 
           <div className="hero-cta mt-8 flex items-center gap-3">
-            <Button>Get Started</Button>
-            <Button variant="ghost">Login</Button>
+            <Link href={primaryHref} className={buttonVariants({ size: "lg" })}>
+              {user ? "Open dashboard" : "Get Started"}
+            </Link>
+            <Link
+              href={secondaryHref}
+              className={buttonVariants({ variant: "ghost", size: "lg" })}
+            >
+              {user ? "Profile" : "Login"}
+            </Link>
           </div>
         </div>
 
