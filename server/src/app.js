@@ -1,176 +1,80 @@
 import dotenv from "dotenv";
+import http from 'http'
+import InitializeWebSocket from "./websocket/webSocketServer.js";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import cors from 'cors'
+import cookieParser from "cookie-parser";
+import connectDB from "./config/mongo.js";
+// import { PrismaClient } from "@prisma/client";
+import { connectRabbitMQ } from "./config/rabbitmq.js";
+import StartCodeResultConsumer from "./consumer/codeResult.consumer.js";
+import ApiError from "./utils/apiError.js";
+import ApiResponse from "./utils/apiResponse.js";
 
-dotenv.config();
+import StudentAuth from "./auth/routes/student.auth.route.js";
+import AdminAuth from "./auth/routes/admin.auth.routes.js";
+import TpoAuth from "./auth/routes/tpo.auth.routes.js";
+import Problem from './DSA/routes/problem.route.js'
+import Code from "./DSA/routes/execute.route.js"
+import Student from "./student/routes/Student.route.js"
+import Core from "./Core/Routes/core.routes.js"
+
+
+
+
+dotenv.config({
+    path: fileURLToPath(new URL("../.env", import.meta.url)),
+});
+
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is required in server/.env");
+}
 
 const app = express();
-const prisma = new PrismaClient();
+
+// const prisma = new PrismaClient();
+
+await connectDB();
+await connectRabbitMQ();
+await StartCodeResultConsumer()
+
+
+app.use(
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true
+    })
+);
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "Placely Backend Running 🚀",
-    });
-});
 
-// CREATE USER
-app.post("/users", async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
+// app.use("/" , ( req , res ) => {
+//     res.status(200).json(
+//        new ApiResponse( 200 , "Server is Running " , {})
+//     )
+// })
 
-        if (!name || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required",
-            });
-        }
-
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
-
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Email already exists",
-            });
-        }
-
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password,
-            },
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: "User created successfully",
-            user,
-        });
-    } catch (error) {
-        console.log(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-});
-
-// GET ALL USERS
-app.get("/users", async (req, res) => {
-    try {
-        const users = await prisma.user.findMany({
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-
-        return res.json({
-            success: true,
-            users,
-        });
-    } catch (error) {
-        console.log(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-});
-
-// GET USER BY ID
-app.get("/users/:id", async (req, res) => {
-    try {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: req.params.id,
-            },
-        });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        return res.json({
-            success: true,
-            user,
-        });
-    } catch (error) {
-        console.log(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-});
-
-// UPDATE USER
-app.put("/users/:id", async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-
-        const user = await prisma.user.update({
-            where: {
-                id: req.params.id,
-            },
-            data: {
-                name,
-                email,
-                password,
-            },
-        });
-
-        return res.json({
-            success: true,
-            message: "User updated successfully",
-            user,
-        });
-    } catch (error) {
-        console.log(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-});
-
-// DELETE USER
-app.delete("/users/:id", async (req, res) => {
-    try {
-        await prisma.user.delete({
-            where: {
-                id: req.params.id,
-            },
-        });
-
-        return res.json({
-            success: true,
-            message: "User deleted successfully",
-        });
-    } catch (error) {
-        console.log(error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-});
+app.use("/api/auth/student", StudentAuth);
+app.use("/api/auth/admin", AdminAuth);
+app.use("/api/auth/tpo", TpoAuth);
+app.use("/api/problem" , Problem )
+app.use("/api/code" , Code )
+app.use("/api/student" , Student)
+app.use("/api/core", Core)
 
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app)
 
+InitializeWebSocket(server)
+
+
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`App running on http://localhost:${PORT}`);
 });
