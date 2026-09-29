@@ -1,7 +1,7 @@
 import {
     getChannel,
     CODE_EXECUTION_QUEUE_NAME,
-    CODE_RESULT_QUEUE_NAME
+    CODE_RESULT_EXCHANGE_NAME
 } from "../config/rabbitmq.js";
 
 import executeCpp from "../services/docker.cpp.service.js";
@@ -109,8 +109,9 @@ export const startCodeExecutionConsumer = async () => {
                     error: null
                 };
 
-                channel.sendToQueue(
-                    CODE_RESULT_QUEUE_NAME,
+                channel.publish(
+                    CODE_RESULT_EXCHANGE_NAME,
+                    "",
 
                     Buffer.from(
                         JSON.stringify(executionResult)
@@ -123,8 +124,8 @@ export const startCodeExecutionConsumer = async () => {
                 );
 
                 console.log(
-                    "Result pushed to:",
-                    CODE_RESULT_QUEUE_NAME
+                    "Result published to:",
+                    CODE_RESULT_EXCHANGE_NAME
                 );
 
                 channel.ack(message);
@@ -138,14 +139,16 @@ export const startCodeExecutionConsumer = async () => {
 
                 const errorResult = {
                     jobId: job?.jobId,
+                    studentId: job?.studentId,
                     status: "failed",
                     language: job?.language,
                     result: null,
                     error: error.message
                 };
 
-                channel.sendToQueue(
-                    CODE_RESULT_QUEUE_NAME,
+                channel.publish(
+                    CODE_RESULT_EXCHANGE_NAME,
+                    "",
 
                     Buffer.from(
                         JSON.stringify(errorResult)

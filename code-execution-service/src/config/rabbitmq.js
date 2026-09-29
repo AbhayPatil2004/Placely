@@ -6,8 +6,8 @@ dotenv.config();
 let connection;
 let channel;
 
-const CODE_EXECUTION_QUEUE_NAME = "code-execution.queue";
-const CODE_RESULT_QUEUE_NAME = "code-result.queue";
+const CODE_EXECUTION_QUEUE_NAME = "code-execution.v2.queue";
+const CODE_RESULT_EXCHANGE_NAME = "code-result.exchange";
 
 export const connectRabbitMQ = async () => {
     try {
@@ -22,7 +22,7 @@ export const connectRabbitMQ = async () => {
             durable: true
         });
 
-        await channel.assertQueue( CODE_RESULT_QUEUE_NAME , {
+        await channel.assertExchange(CODE_RESULT_EXCHANGE_NAME, "fanout", {
             durable: true
         }); 
 
@@ -54,5 +54,5 @@ export const getChannel = () => {
 
 export {
     CODE_EXECUTION_QUEUE_NAME,
-    CODE_RESULT_QUEUE_NAME
+    CODE_RESULT_EXCHANGE_NAME
 };
