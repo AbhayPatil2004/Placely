@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, RotateCcw, Send } from "lucide-react";
+import { LoaderCircle, Play, RotateCcw, Send } from "lucide-react";
 import type { EditorLanguage } from "@/data/problemBoilerplate";
 import { LanguageSelect } from "./LanguageSelect";
 
@@ -12,6 +12,7 @@ export function EditorToolbar({
   onResetConfirm,
   onRun,
   onSubmit,
+  isRunning,
 }: {
   language: EditorLanguage;
   isResetConfirmOpen: boolean;
@@ -20,6 +21,7 @@ export function EditorToolbar({
   onResetConfirm: (isOpen: boolean) => void;
   onRun: () => void;
   onSubmit: () => void;
+  isRunning: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-graphite px-4 py-3">
@@ -61,10 +63,12 @@ export function EditorToolbar({
         <button
           type="button"
           onClick={onRun}
-          className="inline-flex items-center gap-2 rounded-buttons border border-graphite px-3 py-2 text-sm text-medium-gray transition-colors hover:border-lavender hover:text-lavender focus:outline-none focus:ring-2 focus:ring-lavender"
+          disabled={isRunning}
+          aria-busy={isRunning}
+          className="inline-flex items-center gap-2 rounded-buttons border border-graphite px-3 py-2 text-sm text-medium-gray transition-colors hover:border-lavender hover:text-lavender focus:outline-none focus:ring-2 focus:ring-lavender disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Play className="size-4" />
-          <span>Run</span>
+          {isRunning ? <LoaderCircle className="size-4 animate-spin" /> : <Play className="size-4" />}
+          <span>{isRunning ? "Running..." : "Run"}</span>
         </button>
         <button
           type="button"

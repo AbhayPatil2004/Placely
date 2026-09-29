@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-=======
-import { Button } from "@/components/ui/button";
->>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
 
 export function PracticeSection() {
   return (
@@ -23,15 +19,9 @@ export function PracticeSection() {
 
             <span className="text-[11px] text-[#bcbcbc]">main.py</span>
 
-<<<<<<< HEAD
             <Link href="/dsa/practice" className={buttonVariants({ size: "sm", className: "h-8 px-3 text-[11px]" })}>
               Run
             </Link>
-=======
-            <Button size="sm" className="h-8 px-3 text-[11px]">
-              Run
-            </Button>
->>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
           </div>
 
           <div className="mt-4 rounded-[8px] border border-white/5 bg-[#171717] p-4">

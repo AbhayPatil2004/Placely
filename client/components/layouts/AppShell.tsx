@@ -4,7 +4,6 @@ import { Navbar } from "@/components/layouts/Navbar";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { usePathname } from "next/navigation";
 
-<<<<<<< HEAD
 const publicRoutes = [
   "/",
   "/login",
@@ -24,11 +23,6 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     pathname.startsWith("/admin");
 
   if (isPublicRoute) {
-=======
-export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
-  const pathname = usePathname();
-  if (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password")) {
->>>>>>> a6b8baa86f3ece7ad7a80b5d3640f6435511647f
     return children;
   }
 
