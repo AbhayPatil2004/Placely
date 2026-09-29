@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 import http from 'http'
 import InitializeWebSocket from "./websocket/webSocketServer.js";
-
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import express from "express";
 import cors from 'cors'
 import cookieParser from "cookie-parser";
@@ -18,10 +19,10 @@ import TpoAuth from "./auth/routes/tpo.auth.routes.js";
 import Problem from './DSA/routes/problem.route.js'
 import Code from "./DSA/routes/execute.route.js"
 import Student from "./student/routes/Student.route.js"
-import Core from "./Core/routes/core.route.js"
+import Core from "./Core/Routes/core.routes.js"
 
 
-import ApiResponse from "./utils/apiResponse.js";
+
 
 dotenv.config({
     path: fileURLToPath(new URL("../.env", import.meta.url)),

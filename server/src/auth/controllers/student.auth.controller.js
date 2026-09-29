@@ -97,7 +97,7 @@ const StudentSignup = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcryptjs.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create student
     const student = await Student.create({
@@ -221,7 +221,7 @@ const StudentLogin = async (req, res) => {
     }
 
     // Compare password
-    const correctPassword = await bcryptjs.compare(
+    const correctPassword = await bcrypt.compare(
       password,
       student.password
     );
