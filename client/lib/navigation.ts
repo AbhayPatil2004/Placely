@@ -42,7 +42,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       {
         label: "DSA",
-        href: "/dsa",
+        href: "/dsa/practice",
         icon: Code2,
         description: "Data structures and algorithms",
       },

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { logout as logoutRequest } from "@/lib/api/auth";
+import { getCurrentUser, logout as logoutRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
 export type CodingProfile = {
@@ -61,24 +61,55 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
   const [resetToken, setResetTokenState] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(STORAGE_KEY);
-      if (storedUser) {
-        setUserState(JSON.parse(storedUser) as AuthUser);
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      let storedUser: AuthUser | null = null;
+
+      try {
+        const serializedUser = localStorage.getItem(STORAGE_KEY);
+        if (serializedUser) {
+          storedUser = JSON.parse(serializedUser) as AuthUser;
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setLoading(false);
-    }
+
+      try {
+        const currentUser = await getCurrentUser();
+        if (!cancelled) {
+          setUserState(currentUser);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
+        }
+      } catch (error) {
+        if (!cancelled && error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          setUserState(null);
+          localStorage.removeItem(STORAGE_KEY);
+        } else if (!cancelled && storedUser) {
+          setUserState(storedUser);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (loading) return;
     if (pathname.startsWith("/admin")) return;
-    const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-    if (!user && !isAuthRoute) {
+    const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+    const isPublicRoute = pathname === "/" || authRoutes.some((route) => pathname.startsWith(route));
+
+    if (!user && !isAuthRoute && !isPublicRoute) {
       router.replace("/login");
       return;
     }

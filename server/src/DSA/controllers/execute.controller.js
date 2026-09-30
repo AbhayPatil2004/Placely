@@ -3,7 +3,7 @@ import ApiError from "../../utils/apiError.js";
 import crypto from "crypto";
 import { getChannel } from "../../config/rabbitmq.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
-const CODE_EXECUTION_QUEUE_NAME = "code-execution.queue";
+const CODE_EXECUTION_QUEUE_NAME = "code-execution.v2.queue";
 
 
 const ExecuteCode = async (req, res) => {

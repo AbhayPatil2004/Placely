@@ -11,11 +11,12 @@ const AddStudentSocket = (studentId, ws) => {
 };
 
 
-const RemoveStudentSocket = (studentId) => {
+const RemoveStudentSocket = (studentId, ws) => {
+    const key = studentId.toString();
 
-    connectedStudents.delete(
-        studentId.toString()
-    );
+    if (connectedStudents.get(key) === ws) {
+        connectedStudents.delete(key);
+    }
 
 };
 
@@ -28,11 +29,6 @@ const SendToStudent = (studentId, data) => {
 
 
     if (!ws) {
-
-        console.log(
-            `Student ${studentId} is not connected`
-        );
-
         return false;
     }
 

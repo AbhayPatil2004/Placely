@@ -1,14 +1,17 @@
 import dotenv from "dotenv";
 import http from 'http'
 import InitializeWebSocket from "./websocket/webSocketServer.js";
-
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import express from "express";
 import cors from 'cors'
 import cookieParser from "cookie-parser";
 import connectDB from "./config/mongo.js";
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
 import StartCodeResultConsumer from "./consumer/codeResult.consumer.js";
+import ApiError from "./utils/apiError.js";
+import ApiResponse from "./utils/apiResponse.js";
 
 import StudentAuth from "./auth/routes/student.auth.route.js";
 import AdminAuth from "./auth/routes/admin.auth.routes.js";
@@ -16,15 +19,22 @@ import TpoAuth from "./auth/routes/tpo.auth.routes.js";
 import Problem from './DSA/routes/problem.route.js'
 import Code from "./DSA/routes/execute.route.js"
 import Student from "./student/routes/Student.route.js"
+import Core from "./Core/Routes/core.routes.js"
 
 
-import ApiResponse from "./utils/apiResponse.js";
 
-dotenv.config();
+
+dotenv.config({
+    path: fileURLToPath(new URL("../.env", import.meta.url)),
+});
+
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is required in server/.env");
+}
 
 const app = express();
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 await connectDB();
 await connectRabbitMQ();
@@ -54,7 +64,7 @@ app.use("/api/auth/tpo", TpoAuth);
 app.use("/api/problem" , Problem )
 app.use("/api/code" , Code )
 app.use("/api/student" , Student)
-
+app.use("/api/core", Core)
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app)

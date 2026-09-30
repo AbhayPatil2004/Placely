@@ -119,7 +119,8 @@ const InitializeWebSocket = (server) => {
             ws.on("close", () => {
 
                 RemoveStudentSocket(
-                    studentId
+                    studentId,
+                    ws
                 );
 
                 console.log(

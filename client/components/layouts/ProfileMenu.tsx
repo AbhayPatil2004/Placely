@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
@@ -12,6 +13,14 @@ export function ProfileMenu() {
 
   if (!user) return null;
 
+  const initials = user.fullname
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "P";
+
   return (
     <div className="relative">
       <Button
@@ -21,14 +30,32 @@ export function ProfileMenu() {
         onClick={() => setOpen((current) => !current)}
         size="icon"
         variant="ghost"
+        className="overflow-hidden rounded-full border border-white/10 bg-[#1e1e1e] text-white"
       >
-        <UserRound aria-hidden="true" />
+        {user.profileImage ? (
+          <img
+            alt={user.fullname}
+            className="h-full w-full object-cover"
+            src={user.profileImage}
+          />
+        ) : (
+          <span className="text-[10px] font-semibold tracking-[-0.03em]">{initials}</span>
+        )}
       </Button>
       {open ? (
         <div className="absolute right-0 top-11 z-50 w-56 rounded-cards border border-graphite bg-surface p-2 shadow-subtle" role="menu">
-          <div className="border-b border-graphite px-3 py-2">
-            <p className="truncate text-sm font-medium text-white">{user.fullname}</p>
-            <p className="truncate text-xs text-muted-gray">{user.email}</p>
+          <div className="flex items-center gap-3 border-b border-graphite px-3 py-2">
+            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-white/10 bg-[#171717] text-[10px] font-semibold text-white">
+              {user.profileImage ? (
+                <img alt={user.fullname} className="h-full w-full object-cover" src={user.profileImage} />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-white">{user.fullname}</p>
+              <p className="truncate text-xs text-muted-gray">{user.email}</p>
+            </div>
           </div>
           <Link href="/profile" className="mt-2 flex items-center gap-2 rounded-buttons px-3 py-2 text-sm text-medium-gray hover:bg-graphite/50 hover:text-white" onClick={() => setOpen(false)} role="menuitem">
             <UserRound aria-hidden="true" className="size-4" />

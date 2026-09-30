@@ -4,9 +4,25 @@ import { Navbar } from "@/components/layouts/Navbar";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { usePathname } from "next/navigation";
 
+const publicRoutes = [
+  "/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+];
+
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  if (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password")) {
+
+  const isPublicRoute =
+    pathname === "/" ||
+    publicRoutes.some(
+      (route) => route !== "/" && pathname.startsWith(route),
+    ) ||
+    pathname.startsWith("/admin");
+
+  if (isPublicRoute) {
     return children;
   }
 

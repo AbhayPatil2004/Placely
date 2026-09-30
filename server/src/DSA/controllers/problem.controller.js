@@ -26,7 +26,8 @@ const AddProblem = async (req, res) => {
             expectedTimeComplexity,
             expectedSpaceComplexity,
             companies,
-            order
+            order,
+            isActive
         } = req.body;
 
 
@@ -390,7 +391,9 @@ const AddProblem = async (req, res) => {
 
             companies,
 
-            order
+            order,
+
+            ...(isActive === undefined ? {} : { isActive })
 
         });
 

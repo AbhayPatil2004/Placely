@@ -2,6 +2,15 @@ const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").rep
 const REQUEST_RATE_LIMIT_MS = 1500;
 const authRequestTimestamps = new Map<string, number>();
 
+export function getApiWebSocketUrl() {
+  const url = new URL(API_URL);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = "";
+  url.search = "";
+  url.hash = "";
+  return url.toString().replace(/\/$/, "");
+}
+
 export class ApiError extends Error {
   status: number;
 

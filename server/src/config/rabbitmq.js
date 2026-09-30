@@ -4,6 +4,8 @@ let connection;
 let channel;
 
 const QUEUE_NAME = "email.queue";
+const CODE_RESULT_EXCHANGE_NAME = "code-result.exchange";
+const CODE_RESULT_QUEUE_NAME = "code-result.queue";
 
 export const connectRabbitMQ = async () => {
     try {
@@ -41,4 +43,4 @@ export const getChannel = () => {
     return channel;
 };
 
-export { QUEUE_NAME };
+export { QUEUE_NAME, CODE_RESULT_EXCHANGE_NAME, CODE_RESULT_QUEUE_NAME };
