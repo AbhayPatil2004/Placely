@@ -292,34 +292,64 @@ const AdminForgotPassword = async (req, res) => {
 // ===============================
 // ADMIN VERIFY OTP
 // ===============================
-const AdminVerifyOtp = async (req, res) => {
+const AdminVerifyOtpAndResetPassword = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, password, confirmPassword } = req.body;
 
-    if (!email || !otp) {
+    if (!email || !otp || !password || !confirmPassword) {
       return res.status(400).json(
         new ApiError(
           400,
-          "Email and OTP are required"
+          "Email, OTP, password and confirm password are required"
         )
       );
     }
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Only Gmail allowed
     if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(400, "Only Gmail addresses are allowed")
+      );
+    }
+
+    if (password !== confirmPassword) {
       return res.status(400).json(
         new ApiError(
           400,
-          "Only Gmail addresses are allowed"
+          "Password and confirm password do not match"
         )
       );
     }
 
-    const storedOtp = await redis.get(
-      `admin:forgot-password-otp:${normalizedEmail}`
-    );
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        )
+      );
+    }
+
+    const admin = await Admin.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!admin) {
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "Admin with this email does not exist"
+        )
+      );
+    }
+
+    const otpKey = `admin:forgot-password-otp:${normalizedEmail}`;
+
+    const storedOtp = await redis.get(otpKey);
 
     if (!storedOtp || storedOtp !== otp) {
       return res.status(400).json(
@@ -330,21 +360,25 @@ const AdminVerifyOtp = async (req, res) => {
       );
     }
 
-    // Delete OTP after successful verification
-    await redis.del(
-      `admin:forgot-password-otp:${normalizedEmail}`
-    );
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    admin.password = hashedPassword;
+
+    await admin.save();
+
+    await redis.del(otpKey);
 
     return res.status(200).json(
       new ApiResponse(
         200,
-        "OTP verified successfully"
+        "Password reset successful",
+        null
       )
     );
 
   } catch (error) {
     console.error(
-      "Admin Verify OTP Error:",
+      "Admin Verify OTP And Reset Password Error:",
       error
     );
 
@@ -396,6 +430,6 @@ export {
   AdminLogin,
   AdminLogout,
   AdminForgotPassword,
-  AdminVerifyOtp ,
+  AdminVerifyOtpAndResetPassword ,
   AdminRemove 
 }

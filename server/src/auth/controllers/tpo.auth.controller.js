@@ -448,84 +448,100 @@ const TPOForgotPassword = async (req, res) => {
 // ===============================
 // TPO VERIFY OTP
 // ===============================
-const TPOVerifyOtp = async (req, res) => {
-    try {
+const TpoVerifyOtpAndResetPassword = async (req, res) => {
+  try {
+    const { email, otp, password, confirmPassword } = req.body;
 
-        const {
-            email,
-            otp,
-        } = req.body;
-
-
-        if (!email || !otp) {
-            return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Email and OTP are required"
-                )
-            );
-        }
-
-
-        const normalizedEmail =
-            email.toLowerCase().trim();
-
-
-        // Only Gmail allowed
-        if (!normalizedEmail.endsWith("@gmail.com")) {
-            return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Only Gmail addresses are allowed"
-                )
-            );
-        }
-
-
-        // Get OTP from Redis
-        const storedOtp = await redis.get(
-            `tpo:forgot-password-otp:${normalizedEmail}`
-        );
-
-
-        if (!storedOtp || storedOtp !== otp) {
-            return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Invalid or expired OTP"
-                )
-            );
-        }
-
-
-        // Delete OTP after successful verification
-        await redis.del(
-            `tpo:forgot-password-otp:${normalizedEmail}`
-        );
-
-
-        return res.status(200).json(
-            new ApiResponse(
-                200,
-                "OTP verified successfully"
-            )
-        );
-
-    } catch (error) {
-
-        console.error(
-            "TPO Verify OTP Error:",
-            error
-        );
-
-
-        return res.status(500).json(
-            new ApiError(
-                500,
-                "Internal Server Error"
-            )
-        );
+    if (!email || !otp || !password || !confirmPassword) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Email, OTP, password and confirm password are required"
+        )
+      );
     }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      return res.status(400).json(
+        new ApiError(400, "Only Gmail addresses are allowed")
+      );
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password and confirm password do not match"
+        )
+      );
+    }
+
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        )
+      );
+    }
+
+    const tpo = await TPO.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!tpo) {
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "TPO with this email does not exist"
+        )
+      );
+    }
+
+    const otpKey = `tpo:forgot-password-otp:${normalizedEmail}`;
+
+    const storedOtp = await redis.get(otpKey);
+
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Invalid or expired OTP"
+        )
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    tpo.password = hashedPassword;
+
+    await tpo.save();
+
+    await redis.del(otpKey);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Password reset successful",
+        null
+      )
+    );
+
+  } catch (error) {
+    console.error(
+      "TPO Verify OTP And Reset Password Error:",
+      error
+    );
+
+    return res.status(500).json(
+      new ApiError(500, "Internal Server Error")
+    );
+  }
 };
 
 
@@ -571,6 +587,6 @@ export {
     TPOLogin,
     TPOLogout,
     TPOForgotPassword,
-    TPOVerifyOtp,
+    TpoVerifyOtpAndResetPassword,
     TPORemove
 };

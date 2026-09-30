@@ -5,7 +5,7 @@ import {
     AdminLogin,
     AdminLogout,
     AdminForgotPassword,
-    AdminVerifyOtp
+    AdminVerifyOtpAndResetPassword 
 } from '../controllers/admin.auth.controller.js'
 import VerifyAdmin from "../../middlewares/admin.middleware.js";
 import ApiResponse from "../../utils/apiResponse.js";
@@ -27,8 +27,8 @@ router.post(
 );
 
 router.post(
-    "/verify-otp",
-    AdminVerifyOtp
+  "/verify-otp-reset-password",
+  AdminVerifyOtpAndResetPassword
 );
 
 router.get("/me", VerifyAdmin, (req, res) => {

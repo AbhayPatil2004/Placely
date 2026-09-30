@@ -1,0 +1,48 @@
+[33m877b1e3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mabhay[m[33m)[m Merge remote-tracking branch 'origin/ritik' into abhay
+
+ client/app/dsa/page.tsx                            |  12 [32m+[m[31m-[m
+ client/app/layout.tsx                              |   4 [32m+[m[31m-[m
+ client/app/subjects/cn/learn/page.tsx              |   5 [32m+[m
+ client/app/subjects/dbms/learn/page.tsx            |   5 [32m+[m
+ client/app/subjects/oop/learn/page.tsx             |   5 [32m+[m
+ client/app/subjects/os/learn/page.tsx              |   5 [32m+[m
+ client/app/subjects/page.tsx                       |  44 [32m++[m[31m-[m
+ client/app/subjects/swe/learn/page.tsx             |   5 [32m+[m
+ client/components/dashboard/CodeEditorPane.tsx     |  45 [32m+[m[31m--[m
+ client/components/dashboard/CodeExecutionPanel.tsx |  97 [32m+++++++[m
+ client/components/dashboard/DashboardHome.tsx      | 158 [32m++++++++++[m[31m-[m
+ client/components/dashboard/EditorToolbar.tsx      |  12 [32m+[m[31m-[m
+ client/components/home/FinalCTA.tsx                |  12 [32m+[m[31m-[m
+ client/components/home/Hero.tsx                    |  25 [32m+[m[31m-[m
+ client/components/home/LearnSection.tsx            |  17 [32m+[m[31m-[m
+ client/components/home/Navbar.tsx                  |  47 [32m+++[m[31m-[m
+ client/components/home/PracticeSection.tsx         |   7 [32m+[m[31m-[m
+ client/components/layouts/AppShell.tsx             |  18 [32m+[m[31m-[m
+ client/components/layouts/ProfileMenu.tsx          |  35 [32m++[m[31m-[m
+ client/components/subjects/CoreLearnPage.tsx       | 221 [32m+++++++++++++++[m
+ client/hooks/useCodeExecution.ts                   | 303 [32m+++++++++++++++++++++[m
+ client/hooks/useCoreLearnProgress.ts               |  57 [32m++++[m
+ client/lib/api/auth.ts                             |   4 [32m+[m
+ client/lib/api/client.ts                           |   9 [32m+[m
+ client/lib/auth-context.tsx                        |  53 [32m+++[m[31m-[m
+ client/lib/navigation.ts                           |   2 [32m+[m[31m-[m
+ client/package-lock.json                           |  87 [32m+++++[m[31m-[m
+ client/services/codeExecutionService.ts            | 130 [32m+++++++++[m
+ client/services/coreSubjectService.ts              |  36 [32m+++[m
+ code-execution-service/src/config/rabbitmq.js      |   8 [32m+[m[31m-[m
+ .../src/consumers/code-execution.consumer.js       |  17 [32m+[m[31m-[m
+ server/src/Core/Controllers/core.controller.js     |  45 [32m+++[m
+ server/src/Core/Model/core.model.js                |  52 [32m++++[m
+ server/src/Core/Routes/core.routes.js              |  19 [32m++[m
+ server/src/DSA/controllers/execute.controller.js   |   2 [32m+[m[31m-[m
+ server/src/DSA/controllers/problem.controller.js   |   7 [32m+[m[31m-[m
+ server/src/app.js                                  |  22 [32m+[m[31m-[m
+ server/src/auth/controllers/tpo.auth.controller.js |   2 [32m+[m[31m-[m
+ server/src/auth/routes/admin.auth.routes.js        |  10 [32m+[m
+ server/src/config/rabbitmq.js                      |   4 [32m+[m[31m-[m
+ server/src/consumer/codeResult.consumer.js         | 114 [32m++++++[m[31m--[m
+ server/src/utils/apiError.js                       |  14 [32m+[m[31m-[m
+ server/src/websocket/webManager.js                 |  14 [32m+[m[31m-[m
+ server/src/websocket/webSocketServer.js            |   3 [32m+[m[31m-[m
+ stash.diff                                         |   0
+ 45 files changed, 1644 insertions(+), 149 deletions(-)
