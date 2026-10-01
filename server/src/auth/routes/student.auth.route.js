@@ -5,7 +5,7 @@ import {
     StudentLogin,
     StudentLogout,
     StudentForgotPassword,
-    StudentVerifyOtp,
+    StudentVerifyOtpAndResetPassword
 } from "../controllers/student.auth.controller.js";
 
 // import verifyAccessToken from "../middleware/student.verifytoken.middleware.js";
@@ -31,8 +31,11 @@ router.post(
 );
 
 router.post(
-    "/verify-otp",
-    StudentVerifyOtp
+    "/verify-otp-reset-password",
+    StudentVerifyOtpAndResetPassword
 );
+
+
+
 
 export default router;

@@ -1,78 +1,56 @@
-import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AuthUser } from "@/lib/auth-context";
-
-function getAvatarUrl(user: AuthUser) {
-  if (user.profileImage) {
-    return user.profileImage;
-  }
-
-  const seed = encodeURIComponent(user.studentId || user.email || user.fullname || "placely");
-  return `https://api.dicebear.com/10.x/voxel-art/svg?seed=${seed}`;
-}
+import { Avatar } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { getDefaultProfileImage } from "@/lib/profile-image";
+import type { Student } from "@/types/student";
 
 export function ProfileHeader({
-  user,
-  progress,
+  student,
   onEdit,
 }: {
-  user: AuthUser;
-  progress: number;
+  student: Student;
   onEdit: () => void;
 }) {
+  const initials = student.fullname
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((name) => name[0]?.toUpperCase() ?? "")
+    .join("");
+
   return (
-    <header className="overflow-hidden rounded-cards border border-graphite bg-surface shadow-subtle">
-      <div className="flex flex-col gap-5 border-b border-graphite p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="group relative shrink-0">
-            <img
-              src={getAvatarUrl(user)}
-              alt={`${user.fullname} profile avatar`}
-              className="size-20 rounded-full border border-graphite object-cover shadow-subtle sm:size-24"
-            />
-            <button
-              type="button"
-              onClick={onEdit}
-              className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border border-graphite bg-[#171717] text-white shadow-subtle transition hover:border-white hover:bg-white hover:text-black"
-              aria-label="Edit profile picture"
-            >
-              <Camera className="size-3.5" />
-            </button>
+    <Card as="header" className="flex flex-col gap-5 border border-white/[0.04] p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-4">
+        <Avatar
+          src={student.profileImage || getDefaultProfileImage(student)}
+          alt={`${student.fullname} profile picture`}
+          fallback={initials}
+          className="size-20 ring-1 ring-white/10 sm:size-24"
+        />
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-gray">Student profile</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h1 className="break-words text-2xl font-semibold leading-[1.25] tracking-[-0.02em] text-bright-gray sm:text-[28px]">
+              {student.fullname}
+            </h1>
+            <span className="rounded-buttons border border-graphite px-2 py-1 text-xs text-medium-gray">
+              {student.studentId}
+            </span>
           </div>
-
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-gray">
-              Student profile
-            </p>
-            <h1 className="mt-1 truncate text-2xl font-semibold text-white sm:text-[2rem]">{user.fullname}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-medium-gray">
-              <span>{user.studentId}</span>
-              <span className="text-muted-gray">•</span>
-              <span>{user.branch}</span>
-              <span className="text-muted-gray">•</span>
-              <span>{user.currentYear}th year</span>
-            </div>
-            <p className="mt-2 text-sm text-medium-gray">{user.college}</p>
-            <p className="mt-1 text-sm text-medium-gray">{user.email}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-[180px] rounded-2xl border border-graphite bg-[#171717] p-3">
-            <p className="text-[10px] uppercase tracking-[0.12em] text-muted-gray">Profile completion</p>
-            <div className="mt-2 flex items-center justify-between text-sm text-white">
-              <span>{progress}%</span>
-            </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#2a2a2a]">
-              <div className="h-full rounded-full bg-white" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-
-          <Button type="button" variant="outline" onClick={onEdit}>
-            Edit profile
-          </Button>
+          <p className="mt-1 break-all text-sm leading-[1.5] text-medium-gray">{student.email}</p>
+          <p className="mt-2 break-words text-sm text-medium-gray">{student.branch}</p>
+          <p className="mt-1 text-sm text-medium-gray">
+            Year {student.currentYear} · Batch {student.passingYear}
+          </p>
         </div>
       </div>
-    </header>
+      <Button
+        type="button"
+        onClick={onEdit}
+        className="w-full bg-white text-black hover:bg-white/90 sm:w-auto"
+      >
+        Edit profile
+      </Button>
+    </Card>
   );
 }

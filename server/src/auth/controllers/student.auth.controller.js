@@ -113,7 +113,7 @@ const StudentSignup = async (req, res) => {
     });
 
     // Generate JWT
-    const token = generateAccessToken(student , "student");
+    const token = generateAccessToken(student, "student");
 
     // Set authentication cookie
     setAuthCookie(res, token);
@@ -233,7 +233,7 @@ const StudentLogin = async (req, res) => {
     }
 
     // Generate JWT
-    const token = generateAccessToken(student , "student");
+    const token = generateAccessToken(student, "student");
 
     // Set cookie
     setAuthCookie(res, token);
@@ -361,21 +361,25 @@ const StudentForgotPassword = async (req, res) => {
 
 
 // ===============================
-// VERIFY OTP
+// VERIFY OTP AND RESET PASSWORD
 // ===============================
-const StudentVerifyOtp = async (req, res) => {
-  try {
-    const { email, otp } = req.body;
 
-    if (!email || !otp) {
+
+const StudentVerifyOtpAndResetPassword = async (req, res) => {
+  try {
+    const { email, otp, password, confirmPassword } = req.body;
+
+    // Required fields
+    if (!email || !otp || !password || !confirmPassword) {
       return res.status(400).json(
         new ApiError(
           400,
-          "Email and OTP are required"
+          "Email, OTP, password and confirm password are required"
         )
       );
     }
 
+    // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
 
     // Only Gmail allowed
@@ -388,10 +392,49 @@ const StudentVerifyOtp = async (req, res) => {
       );
     }
 
-    const storedOtp = await redis.get(
-      `student:forgot-password-otp:${normalizedEmail}`
-    );
+    // Check password confirmation
+    if (password !== confirmPassword) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password and confirm password do not match"
+        )
+      );
+    }
 
+    // Strong password validation
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json(
+        new ApiError(
+          400,
+          "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        )
+      );
+    }
+
+    // Find student
+    const student = await Student.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!student) {
+      return res.status(404).json(
+        new ApiError(
+          404,
+          "Student with this email does not exist"
+        )
+      );
+    }
+
+    // Get OTP from Redis
+    const otpKey = `student:forgot-password-otp:${normalizedEmail}`;
+
+    const storedOtp = await redis.get(otpKey);
+
+    // Verify OTP
     if (!storedOtp || storedOtp !== otp) {
       return res.status(400).json(
         new ApiError(
@@ -401,25 +444,36 @@ const StudentVerifyOtp = async (req, res) => {
       );
     }
 
-    // Delete OTP after successful verification
-    await redis.del(
-      `student:forgot-password-otp:${normalizedEmail}`
-    );
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update password
+    student.password = hashedPassword;
+
+    await student.save();
+
+    // Delete OTP after successful reset
+    await redis.del(otpKey);
 
     return res.status(200).json(
       new ApiResponse(
         200,
-        "OTP verified successfully"
+        "Password reset successful",
+        null
       )
     );
+
   } catch (error) {
     console.error(
-      "Student Verify OTP Error:",
+      "Student Verify OTP And Reset Password Error:",
       error
     );
 
     return res.status(500).json(
-      new ApiError(500, "Internal Server Error")
+      new ApiError(
+        500,
+        "Internal Server Error"
+      )
     );
   }
 };
@@ -461,10 +515,18 @@ const StudentRemove = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
 export {
   StudentSignup,
   StudentLogin,
   StudentLogout,
   StudentForgotPassword,
-  StudentVerifyOtp,
+  StudentVerifyOtpAndResetPassword ,
+  StudentRemove,
+  
 };

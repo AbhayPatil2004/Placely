@@ -4,36 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { usePathname, useRouter } from "next/navigation";
 import { getCurrentUser, logout as logoutRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import type { AuthUser } from "@/lib/api/auth";
 
-export type CodingProfile = {
-  platform: string;
-  profileUrl: string;
-};
-
-export type AuthUser = {
-  _id?: string;
-  fullname: string;
-  studentId: string;
-  email: string;
-  profileImage?: string | null;
-  authProvider?: "local" | "google";
-  branch: string;
-  college: string;
-  collegeId: string;
-  university?: string | null;
-  currentYear: number;
-  passingYear: number;
-  cgpa?: number | null;
-  tenthPercentage?: number | null;
-  twelfthPercentage?: number | null;
-  skills?: string[];
-  codingProfiles?: CodingProfile[];
-  resumeUrl?: string | null;
-  portfolioUrl?: string | null;
-  role?: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
+export type { AuthUser } from "@/lib/api/auth";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -42,9 +15,9 @@ type AuthContextValue = {
   setUser: (user: AuthUser | null) => void;
   logout: () => Promise<void>;
   resetEmail: string | null;
-  resetToken: string | null;
+  resetOtp: string | null;
   setResetEmail: (email: string) => void;
-  setResetToken: (token: string) => void;
+  setResetOtp: (otp: string) => void;
   clearResetFlow: () => void;
 };
 
@@ -58,7 +31,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
   const [user, setUserState] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [resetEmail, setResetEmailState] = useState<string | null>(null);
-  const [resetToken, setResetTokenState] = useState<string | null>(null);
+  const [resetOtp, setResetOtpState] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +55,11 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
         }
       } catch (error) {
-        if (!cancelled && error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        if (
+          !cancelled &&
+          error instanceof ApiError &&
+          (error.status === 401 || error.status === 403 || error.status === 404)
+        ) {
           setUserState(null);
           localStorage.removeItem(STORAGE_KEY);
         } else if (!cancelled && storedUser) {
@@ -151,15 +128,15 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       setUser,
       logout,
       resetEmail,
-      resetToken,
+      resetOtp,
       setResetEmail: setResetEmailState,
-      setResetToken: setResetTokenState,
+      setResetOtp: setResetOtpState,
       clearResetFlow: () => {
         setResetEmailState(null);
-        setResetTokenState(null);
+        setResetOtpState(null);
       },
     }),
-    [loading, logout, resetEmail, resetToken, setUser, user],
+    [loading, logout, resetEmail, resetOtp, setUser, user],
   );
 
   if (loading) {
@@ -184,9 +161,9 @@ export function useAuth() {
       setUser: () => undefined,
       logout: async () => undefined,
       resetEmail: null,
-      resetToken: null,
+      resetOtp: null,
       setResetEmail: () => undefined,
-      setResetToken: () => undefined,
+      setResetOtp: () => undefined,
       clearResetFlow: () => undefined,
     } satisfies AuthContextValue;
   }

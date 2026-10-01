@@ -3,8 +3,12 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { CircleX, Link2, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/lib/auth-context";
+import { branchOptions, collegeOptions } from "@/lib/auth";
+import { ApiError } from "@/lib/api/client";
+import { getPlatformLabel, PlatformIcon } from "./PlatformIcon";
 
 const platformOptions = [
   "LEETCODE",
@@ -21,7 +25,7 @@ type ProfileEditSheetProps = {
   user: AuthUser;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (value: AuthUser) => void;
+  onSave: (value: AuthUser) => Promise<AuthUser>;
 };
 
 const emptyUrl = (value?: string | null) => (value && value.trim() ? value.trim() : "");
@@ -30,17 +34,29 @@ function isValidUrl(value: string) {
   if (!value.trim()) return true;
 
   try {
-    new URL(value);
-    return true;
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
 }
 
 const inputClassName = cn(
-  "h-10 w-full rounded-xl border border-graphite bg-[#171717] px-3 text-sm text-white outline-none",
+  "h-10 w-full rounded-buttons border border-graphite bg-[#171717] px-3 text-sm text-white outline-none",
   "placeholder:text-muted-gray focus:border-white focus:ring-2 focus:ring-white/10",
 );
+
+const formatDateValue = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
+};
+
+const parseTechnologies = (value: string) => value
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean);
 
 export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEditSheetProps) {
   const [form, setForm] = useState<AuthUser>({ ...user });
@@ -48,6 +64,7 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
   const [newProfilePlatform, setNewProfilePlatform] = useState<(typeof platformOptions)[number]>("LEETCODE");
   const [newProfileUrl, setNewProfileUrl] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const skillList = useMemo(() => form.skills ?? [], [form.skills]);
   const codingProfiles = useMemo(() => form.codingProfiles ?? [], [form.codingProfiles]);
@@ -59,7 +76,7 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
 
   if (!open) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmedFullName = form.fullname.trim();
     if (!trimmedFullName) {
       setError("Full name is required.");
@@ -92,20 +109,24 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
         return;
       }
     }
+    if (new Set(codingProfiles.map((profile) => profile.platform.toUpperCase())).size !== codingProfiles.length) {
+      setError("Each coding platform can only have one profile.");
+      return;
+    }
 
     if (!isValidUrl(form.resumeUrl ?? "") || !isValidUrl(form.portfolioUrl ?? "")) {
       setError("Resume and portfolio URLs must be valid URLs.");
       return;
     }
 
-    onSave({
+    const updatedProfile: AuthUser = {
       ...form,
       fullname: trimmedFullName,
       email: form.email.trim(),
       studentId: form.studentId.trim(),
       university: emptyUrl(form.university),
       college: form.college.trim() || user.college,
-      branch: form.branch.trim() || user.branch,
+      branch: form.branch,
       collegeId: form.collegeId.trim() || user.collegeId,
       profileImage: form.profileImage && form.profileImage.trim() ? form.profileImage.trim() : null,
       resumeUrl: emptyUrl(form.resumeUrl),
@@ -117,13 +138,37 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
           profileUrl: profile.profileUrl.trim(),
         }))
         .filter((profile) => profile.profileUrl),
-    });
-    onOpenChange(false);
+    };
+
+    setSaving(true);
+    setError("");
+    try {
+      setForm(await onSave(updatedProfile));
+      onOpenChange(false);
+    } catch (requestError) {
+      if (requestError instanceof ApiError) {
+        setError(
+          requestError.status === 401 || requestError.status === 403
+            ? "Your session has expired. Sign in again to save your profile."
+            : requestError.status === 404
+              ? "Your profile could not be found. Please sign in again."
+              : requestError.status === 409
+                ? "That student ID is already in use."
+                : requestError.status === 400 || requestError.status === 422
+                  ? requestError.message
+                  : "Unable to save your profile right now. Please try again.",
+        );
+      } else {
+        setError("Unable to connect to the server. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs">
-      <div className="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col border-l border-graphite bg-[#111111] shadow-2xl">
+      <div className="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col border-l border-graphite bg-[#111111] shadow-[inset_1px_0_0_rgba(255,255,255,0.05)]">
         <div className="flex items-center justify-between border-b border-graphite px-5 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.12em] text-muted-gray">Update profile</p>
@@ -131,8 +176,9 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
           </div>
           <button
             type="button"
+            disabled={saving}
             onClick={() => onOpenChange(false)}
-            className="rounded-full border border-graphite p-2 text-medium-gray transition hover:bg-surface hover:text-white"
+            className="rounded-buttons border border-graphite p-2 text-medium-gray transition hover:bg-surface hover:text-white"
             aria-label="Close edit profile"
           >
             <CircleX className="size-4" />
@@ -159,7 +205,7 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
             </Field>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-graphite bg-surface p-4">
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
             <h3 className="text-sm font-semibold text-white">Academic information</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="University">
@@ -171,11 +217,19 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
                 />
               </Field>
               <Field label="College">
-                <input
+                <select
                   value={form.college}
                   onChange={(event) => syncForm({ ...form, college: event.target.value })}
                   className={inputClassName}
-                />
+                >
+                  {!form.college ? <option value="" disabled>Select a college</option> : null}
+                  {form.college && !collegeOptions.some((college) => college.name === form.college) ? (
+                    <option value={form.college}>{form.college} (current)</option>
+                  ) : null}
+                  {collegeOptions.map((college) => (
+                    <option key={college.id} value={college.name}>{college.name}</option>
+                  ))}
+                </select>
               </Field>
               <Field label="College ID">
                 <input
@@ -185,11 +239,18 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
                 />
               </Field>
               <Field label="Branch">
-                <input
+                <select
                   value={form.branch}
-                  onChange={(event) => syncForm({ ...form, branch: event.target.value })}
+                  onChange={(event) => syncForm({ ...form, branch: event.target.value as AuthUser["branch"] })}
                   className={inputClassName}
-                />
+                >
+                  {form.branch && !branchOptions.some((branch) => branch.value === form.branch) ? (
+                    <option value={form.branch}>{form.branch} (current)</option>
+                  ) : null}
+                  {branchOptions.map((branch) => (
+                    <option key={branch.value} value={branch.value}>{branch.label}</option>
+                  ))}
+                </select>
               </Field>
               <Field label="Current year">
                 <input
@@ -243,7 +304,7 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
             </div>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-graphite bg-surface p-4">
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
             <h3 className="text-sm font-semibold text-white">Skills</h3>
             <div className="flex flex-wrap gap-2">
               {skillList.length === 0 ? <span className="text-sm text-medium-gray">No skills added yet.</span> : null}
@@ -284,27 +345,32 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
             </div>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-graphite bg-surface p-4">
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
             <h3 className="text-sm font-semibold text-white">Coding profiles</h3>
             <div className="space-y-3">
               {codingProfiles.length === 0 ? <p className="text-sm text-medium-gray">No coding profiles connected.</p> : null}
               {codingProfiles.map((profile, index) => (
                 <div key={`${profile.platform}-${index}`} className="flex flex-col gap-2 rounded-xl border border-graphite bg-[#171717] p-3 sm:flex-row">
-                  <select
-                    value={profile.platform}
-                    onChange={(event) => {
-                      const nextProfiles = [...codingProfiles];
-                      nextProfiles[index] = { ...nextProfiles[index], platform: event.target.value as typeof platformOptions[number] };
-                      syncForm({ ...form, codingProfiles: nextProfiles });
-                    }}
-                    className={`${inputClassName} sm:max-w-[180px]`}
-                  >
-                    {platformOptions.map((platform) => (
-                      <option key={platform} value={platform}>{platform}</option>
-                    ))}
-                  </select>
+                  <div className="flex min-w-0 items-center gap-2 sm:max-w-[210px]">
+                    <PlatformIcon platform={profile.platform} className="size-[18px] shrink-0 text-medium-gray" />
+                    <select
+                      value={profile.platform}
+                      aria-label="Coding platform"
+                      onChange={(event) => {
+                        const nextProfiles = [...codingProfiles];
+                        nextProfiles[index] = { ...nextProfiles[index], platform: event.target.value as typeof platformOptions[number] };
+                        syncForm({ ...form, codingProfiles: nextProfiles });
+                      }}
+                      className={inputClassName}
+                    >
+                      {platformOptions.map((platform) => (
+                        <option key={platform} value={platform}>{getPlatformLabel(platform)}</option>
+                      ))}
+                    </select>
+                  </div>
                   <input
                     value={profile.profileUrl}
+                    aria-label={`${getPlatformLabel(profile.platform)} profile URL`}
                     onChange={(event) => {
                       const nextProfiles = [...codingProfiles];
                       nextProfiles[index] = { ...nextProfiles[index], profileUrl: event.target.value };
@@ -325,15 +391,19 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
               ))}
             </div>
             <div className="flex flex-col gap-2 rounded-xl border border-dashed border-graphite p-3 sm:flex-row">
-              <select
-                value={newProfilePlatform}
-                onChange={(event) => setNewProfilePlatform(event.target.value as (typeof platformOptions)[number])}
-                className={`${inputClassName} sm:max-w-[180px]`}
-              >
-                {platformOptions.map((platform) => (
-                  <option key={platform} value={platform}>{platform}</option>
-                ))}
-              </select>
+              <div className="flex min-w-0 items-center gap-2 sm:max-w-[210px]">
+                <PlatformIcon platform={newProfilePlatform} className="size-[18px] shrink-0 text-medium-gray" />
+                <select
+                  value={newProfilePlatform}
+                  aria-label="New coding platform"
+                  onChange={(event) => setNewProfilePlatform(event.target.value as (typeof platformOptions)[number])}
+                  className={inputClassName}
+                >
+                  {platformOptions.map((platform) => (
+                    <option key={platform} value={platform}>{getPlatformLabel(platform)}</option>
+                  ))}
+                </select>
+              </div>
               <input
                 value={newProfileUrl}
                 onChange={(event) => setNewProfileUrl(event.target.value)}
@@ -359,22 +429,476 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
             </div>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-graphite bg-surface p-4">
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-white">Projects</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncForm({
+                  ...form,
+                  projects: [
+                    ...(form.projects ?? []),
+                    { _id: "", title: "", description: "", technologies: [], githubUrl: "", liveUrl: "", startDate: null, endDate: null },
+                  ],
+                })}
+              >
+                <Plus className="mr-1 size-3" /> Add
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {(form.projects ?? []).length === 0 ? <p className="text-sm text-medium-gray">No projects added yet.</p> : null}
+              {(form.projects ?? []).map((project, index) => (
+                <div key={project._id ?? `project-${index}`} className="space-y-3 rounded-xl border border-graphite bg-[#171717] p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={project.title ?? ""}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, title: event.target.value };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={inputClassName}
+                      placeholder="Project title"
+                    />
+                    <input
+                      value={project.githubUrl ?? ""}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, githubUrl: event.target.value };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={inputClassName}
+                      placeholder="GitHub URL"
+                    />
+                  </div>
+                  <textarea
+                    value={project.description ?? ""}
+                    onChange={(event) => {
+                      const nextProjects = [...(form.projects ?? [])];
+                      nextProjects[index] = { ...project, description: event.target.value };
+                      syncForm({ ...form, projects: nextProjects });
+                    }}
+                    className={`${inputClassName} min-h-[80px] resize-y`}
+                    placeholder="Project summary"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input
+                      value={project.liveUrl ?? ""}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, liveUrl: event.target.value };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={inputClassName}
+                      placeholder="Live URL"
+                    />
+                    <input
+                      type="date"
+                      value={formatDateValue(project.startDate ?? null)}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, startDate: event.target.value || null };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={inputClassName}
+                    />
+                    <input
+                      type="date"
+                      value={formatDateValue(project.endDate ?? null)}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, endDate: event.target.value || null };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={inputClassName}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <input
+                      value={(project.technologies ?? []).join(", ")}
+                      onChange={(event) => {
+                        const nextProjects = [...(form.projects ?? [])];
+                        nextProjects[index] = { ...project, technologies: parseTechnologies(event.target.value) };
+                        syncForm({ ...form, projects: nextProjects });
+                      }}
+                      className={`${inputClassName} flex-1`}
+                      placeholder="Technologies (comma separated)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => syncForm({ ...form, projects: (form.projects ?? []).filter((_, itemIndex) => itemIndex !== index) })}
+                      className="rounded-xl border border-graphite p-2 text-medium-gray transition hover:border-red-500/50 hover:text-red-300"
+                      aria-label="Remove project"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-white">Certificates</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncForm({
+                  ...form,
+                  certificates: [
+                    ...(form.certificates ?? []),
+                    { _id: "", name: "", issuingOrganization: "", credentialId: "", credentialUrl: "", issueDate: null },
+                  ],
+                })}
+              >
+                <Plus className="mr-1 size-3" /> Add
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {(form.certificates ?? []).length === 0 ? <p className="text-sm text-medium-gray">No certificates added yet.</p> : null}
+              {(form.certificates ?? []).map((certificate, index) => (
+                <div key={certificate._id ?? `certificate-${index}`} className="space-y-3 rounded-xl border border-graphite bg-[#171717] p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={certificate.name ?? ""}
+                      onChange={(event) => {
+                        const nextCertificates = [...(form.certificates ?? [])];
+                        nextCertificates[index] = { ...certificate, name: event.target.value };
+                        syncForm({ ...form, certificates: nextCertificates });
+                      }}
+                      className={inputClassName}
+                      placeholder="Certificate name"
+                    />
+                    <input
+                      value={certificate.issuingOrganization ?? ""}
+                      onChange={(event) => {
+                        const nextCertificates = [...(form.certificates ?? [])];
+                        nextCertificates[index] = { ...certificate, issuingOrganization: event.target.value };
+                        syncForm({ ...form, certificates: nextCertificates });
+                      }}
+                      className={inputClassName}
+                      placeholder="Issuing organization"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input
+                      value={certificate.credentialId ?? ""}
+                      onChange={(event) => {
+                        const nextCertificates = [...(form.certificates ?? [])];
+                        nextCertificates[index] = { ...certificate, credentialId: event.target.value };
+                        syncForm({ ...form, certificates: nextCertificates });
+                      }}
+                      className={inputClassName}
+                      placeholder="Credential ID"
+                    />
+                    <input
+                      value={certificate.credentialUrl ?? ""}
+                      onChange={(event) => {
+                        const nextCertificates = [...(form.certificates ?? [])];
+                        nextCertificates[index] = { ...certificate, credentialUrl: event.target.value };
+                        syncForm({ ...form, certificates: nextCertificates });
+                      }}
+                      className={inputClassName}
+                      placeholder="Credential URL"
+                    />
+                    <input
+                      type="date"
+                      value={formatDateValue(certificate.issueDate ?? null)}
+                      onChange={(event) => {
+                        const nextCertificates = [...(form.certificates ?? [])];
+                        nextCertificates[index] = { ...certificate, issueDate: event.target.value || null };
+                        syncForm({ ...form, certificates: nextCertificates });
+                      }}
+                      className={inputClassName}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => syncForm({ ...form, certificates: (form.certificates ?? []).filter((_, itemIndex) => itemIndex !== index) })}
+                      className="rounded-xl border border-graphite p-2 text-medium-gray transition hover:border-red-500/50 hover:text-red-300"
+                      aria-label="Remove certificate"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-white">Achievements</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncForm({
+                  ...form,
+                  achievements: [
+                    ...(form.achievements ?? []),
+                    { _id: "", title: "", description: "", organization: "", proofUrl: "", date: null },
+                  ],
+                })}
+              >
+                <Plus className="mr-1 size-3" /> Add
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {(form.achievements ?? []).length === 0 ? <p className="text-sm text-medium-gray">No achievements added yet.</p> : null}
+              {(form.achievements ?? []).map((achievement, index) => (
+                <div key={achievement._id ?? `achievement-${index}`} className="space-y-3 rounded-xl border border-graphite bg-[#171717] p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={achievement.title ?? ""}
+                      onChange={(event) => {
+                        const nextAchievements = [...(form.achievements ?? [])];
+                        nextAchievements[index] = { ...achievement, title: event.target.value };
+                        syncForm({ ...form, achievements: nextAchievements });
+                      }}
+                      className={inputClassName}
+                      placeholder="Achievement title"
+                    />
+                    <input
+                      value={achievement.organization ?? ""}
+                      onChange={(event) => {
+                        const nextAchievements = [...(form.achievements ?? [])];
+                        nextAchievements[index] = { ...achievement, organization: event.target.value };
+                        syncForm({ ...form, achievements: nextAchievements });
+                      }}
+                      className={inputClassName}
+                      placeholder="Organization"
+                    />
+                  </div>
+                  <textarea
+                    value={achievement.description ?? ""}
+                    onChange={(event) => {
+                      const nextAchievements = [...(form.achievements ?? [])];
+                      nextAchievements[index] = { ...achievement, description: event.target.value };
+                      syncForm({ ...form, achievements: nextAchievements });
+                    }}
+                    className={`${inputClassName} min-h-[80px] resize-y`}
+                    placeholder="Achievement details"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input
+                      value={achievement.proofUrl ?? ""}
+                      onChange={(event) => {
+                        const nextAchievements = [...(form.achievements ?? [])];
+                        nextAchievements[index] = { ...achievement, proofUrl: event.target.value };
+                        syncForm({ ...form, achievements: nextAchievements });
+                      }}
+                      className={inputClassName}
+                      placeholder="Proof URL"
+                    />
+                    <input
+                      type="date"
+                      value={formatDateValue(achievement.date ?? null)}
+                      onChange={(event) => {
+                        const nextAchievements = [...(form.achievements ?? [])];
+                        nextAchievements[index] = { ...achievement, date: event.target.value || null };
+                        syncForm({ ...form, achievements: nextAchievements });
+                      }}
+                      className={inputClassName}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => syncForm({ ...form, achievements: (form.achievements ?? []).filter((_, itemIndex) => itemIndex !== index) })}
+                      className="rounded-xl border border-graphite p-2 text-medium-gray transition hover:border-red-500/50 hover:text-red-300"
+                      aria-label="Remove achievement"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-white">Hackathons</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncForm({
+                  ...form,
+                  hackathons: [
+                    ...(form.hackathons ?? []),
+                    { _id: "", name: "", organization: "", role: "PARTICIPANT", teamName: "", projectName: "", description: "", technologies: [], position: "", date: null, certificateUrl: "", projectUrl: "" },
+                  ],
+                })}
+              >
+                <Plus className="mr-1 size-3" /> Add
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {(form.hackathons ?? []).length === 0 ? <p className="text-sm text-medium-gray">No hackathons added yet.</p> : null}
+              {(form.hackathons ?? []).map((hackathon, index) => (
+                <div key={hackathon._id ?? `hackathon-${index}`} className="space-y-3 rounded-xl border border-graphite bg-[#171717] p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={hackathon.name ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, name: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Hackathon name"
+                    />
+                    <input
+                      value={hackathon.organization ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, organization: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Organization"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select
+                      value={hackathon.role ?? "PARTICIPANT"}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, role: event.target.value as typeof hackathon.role };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                    >
+                      <option value="PARTICIPANT">Participant</option>
+                      <option value="TEAM_LEAD">Team Lead</option>
+                      <option value="TEAM_MEMBER">Team Member</option>
+                      <option value="MENTOR">Mentor</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                    <input
+                      value={hackathon.position ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, position: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Position / result"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={hackathon.teamName ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, teamName: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Team name"
+                    />
+                    <input
+                      value={hackathon.projectName ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, projectName: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Project name"
+                    />
+                  </div>
+                  <textarea
+                    value={hackathon.description ?? ""}
+                    onChange={(event) => {
+                      const nextHackathons = [...(form.hackathons ?? [])];
+                      nextHackathons[index] = { ...hackathon, description: event.target.value };
+                      syncForm({ ...form, hackathons: nextHackathons });
+                    }}
+                    className={`${inputClassName} min-h-[80px] resize-y`}
+                    placeholder="What did you build?"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input
+                      value={(hackathon.technologies ?? []).join(", ")}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, technologies: parseTechnologies(event.target.value) };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Technologies"
+                    />
+                    <input
+                      type="date"
+                      value={formatDateValue(hackathon.date ?? null)}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, date: event.target.value || null };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => syncForm({ ...form, hackathons: (form.hackathons ?? []).filter((_, itemIndex) => itemIndex !== index) })}
+                      className="rounded-xl border border-graphite p-2 text-medium-gray transition hover:border-red-500/50 hover:text-red-300"
+                      aria-label="Remove hackathon"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={hackathon.certificateUrl ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, certificateUrl: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Certificate URL"
+                    />
+                    <input
+                      value={hackathon.projectUrl ?? ""}
+                      onChange={(event) => {
+                        const nextHackathons = [...(form.hackathons ?? [])];
+                        nextHackathons[index] = { ...hackathon, projectUrl: event.target.value };
+                        syncForm({ ...form, hackathons: nextHackathons });
+                      }}
+                      className={inputClassName}
+                      placeholder="Project URL"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-graphite bg-surface p-4">
             <h3 className="text-sm font-semibold text-white">Career links</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Resume URL">
-                <input
+                <Input
                   value={form.resumeUrl ?? ""}
                   onChange={(event) => syncForm({ ...form, resumeUrl: event.target.value })}
-                  className={inputClassName}
+                  className="focus:border-lavender focus:ring-2 focus:ring-lavender/20"
                   placeholder="https://..."
                 />
+                <span className="text-xs leading-5 text-muted-gray">
+                  Paste a Google Drive link with sharing set to &apos;Anyone with the link can view&apos;.
+                </span>
               </Field>
               <Field label="Portfolio URL">
-                <input
+                <Input
                   value={form.portfolioUrl ?? ""}
                   onChange={(event) => syncForm({ ...form, portfolioUrl: event.target.value })}
-                  className={inputClassName}
+                  className="focus:border-lavender focus:ring-2 focus:ring-lavender/20"
                   placeholder="https://..."
                 />
               </Field>
@@ -385,11 +909,11 @@ export function ProfileEditSheet({ user, open, onOpenChange, onSave }: ProfileEd
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-graphite bg-[#111111] px-5 py-4">
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="ghost" disabled={saving} onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSubmit}>
-            <Save className="mr-2 size-4" /> Save changes
+          <Button type="button" disabled={saving} onClick={() => void handleSubmit()}>
+            <Save className="mr-2 size-4" /> {saving ? "Saving..." : "Save changes"}
           </Button>
         </div>
       </div>

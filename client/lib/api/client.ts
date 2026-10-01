@@ -38,7 +38,8 @@ export async function apiRequest<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
-  const isAuthAction = /(login|signup|logout|forgot-password|verify-otp)/i.test(endpoint);
+  const isAuthAction =
+    /(login|signup|logout|forgot-password|verify-otp-reset-password)/i.test(endpoint);
 
   if (isAuthAction && method !== "GET") {
     protectRequest(endpoint);

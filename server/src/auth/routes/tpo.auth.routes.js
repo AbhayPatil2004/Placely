@@ -5,7 +5,7 @@ import {
     TPOLogin,
     TPOLogout,
     TPOForgotPassword,
-    TPOVerifyOtp
+    TpoVerifyOtpAndResetPassword 
 } from '../controllers/tpo.auth.controller.js'
 
 const router = Router()
@@ -25,8 +25,8 @@ router.post(
 );
 
 router.post(
-    "/verify-otp",
-    TPOVerifyOtp
+  "/verify-otp-reset-password",
+  TpoVerifyOtpAndResetPassword
 );
 
 export default router;

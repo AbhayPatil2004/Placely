@@ -17,7 +17,6 @@ const inputClassName =
   "h-10 w-full rounded-inputs border border-graphite bg-surface px-3 text-sm text-bright-gray outline-none placeholder:text-muted-gray focus:border-white focus:ring-2 focus:ring-white/20";
 
 export function SignupForm() {
-  const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState("");
   const { setUser } = useAuth();
@@ -29,7 +28,10 @@ export function SignupForm() {
     formState: { errors },
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { college: "", collegeId: "" },
+    defaultValues: {
+      college: collegeOptions[0].name,
+      collegeId: collegeOptions[0].id,
+    },
   });
   const collegeField = register("collegeId");
 
@@ -41,7 +43,6 @@ export function SignupForm() {
       void confirmPassword;
       const user = await signup(payload);
       setUser(user);
-      setSubmitted(true);
       router.replace("/dashboard");
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Unable to connect to the server. Please try again.");
@@ -59,11 +60,6 @@ export function SignupForm() {
         alternateLabel="Sign in"
         alternateHref="/login"
       />
-      {submitted ? (
-        <p className="rounded-buttons border border-success-green/40 bg-success-green/10 px-3 py-2 text-sm text-success-green" role="status">
-          Your account details are ready to submit when backend integration is connected.
-        </p>
-      ) : null}
       {error ? <p className="rounded-buttons border border-error-red/40 bg-error-red/10 px-3 py-2 text-sm text-error-red" role="alert">{error}</p> : null}
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <fieldset className="space-y-4">
@@ -93,7 +89,7 @@ export function SignupForm() {
               {...collegeField}
               id="collegeId"
               className={inputClassName}
-              defaultValue=""
+              defaultValue={collegeOptions[0].id}
               onChange={(event) => {
                 collegeField.onChange(event);
                 setValue("college", collegeOptions.find((college) => college.id === event.target.value)?.name ?? "", { shouldValidate: true });
