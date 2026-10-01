@@ -48,40 +48,6 @@ export function HomePage() {
         { opacity: 1, y: 0, duration: 0.9, delay: 0.22, ease: "power2.out" }
       );
 
-      gsap.to(".hero-word", {
-        y: -72,
-        opacity: 0.12,
-        scale: 0.97,
-        scrollTrigger: {
-          trigger: "#learn",
-          start: "top 72%",
-          end: "top 18%",
-          scrub: 1.1,
-        },
-      });
-
-      gsap.to(".hero-sub", {
-        y: -32,
-        opacity: 0,
-        scrollTrigger: {
-          trigger: "#learn",
-          start: "top 72%",
-          end: "top 18%",
-          scrub: 1.2,
-        },
-      });
-
-      gsap.to(".hero-cta", {
-        y: -18,
-        opacity: 0,
-        scrollTrigger: {
-          trigger: "#learn",
-          start: "top 72%",
-          end: "top 18%",
-          scrub: 1.2,
-        },
-      });
-
       gsap.utils.toArray<HTMLElement>(".learn-card").forEach((card) => {
         gsap.fromTo(
           card,
@@ -117,17 +83,6 @@ export function HomePage() {
         }
       );
 
-      gsap.to(".practice-preview", {
-        y: -20,
-        opacity: 0.2,
-        scrollTrigger: {
-          trigger: "#test",
-          start: "top 74%",
-          end: "top 28%",
-          scrub: 1.1,
-        },
-      });
-
       gsap.fromTo(
         ".test-card",
         { opacity: 0, y: 64 },
@@ -161,7 +116,12 @@ export function HomePage() {
       );
     }, rootRef);
 
+    const refreshFrame = window.requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
+
     return () => {
+      window.cancelAnimationFrame(refreshFrame);
       ctx.revert();
     };
   }, []);

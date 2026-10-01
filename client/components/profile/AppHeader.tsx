@@ -13,7 +13,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 h-16 border-b border-graphite/80 bg-abyss/95 backdrop-blur">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-4 px-4">
-        <Link href="/dashboard" className="text-xl font-bold tracking-[-0.04em] text-white lg:absolute lg:left-6">
+        <Link href="/" className="text-xl font-bold tracking-[-0.04em] text-white lg:absolute lg:left-6">
           Placely<span className="text-lavender">.</span>
         </Link>
         <Link href="/dashboard" className="ml-2 flex items-center gap-2 rounded-buttons border border-graphite px-2.5 py-2 text-sm text-medium-gray transition hover:border-lavender hover:text-white sm:px-3">

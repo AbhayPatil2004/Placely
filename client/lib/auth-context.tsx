@@ -84,10 +84,9 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     if (pathname.startsWith("/admin")) return;
 
     const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-    const isPublicRoute = pathname === "/" || authRoutes.some((route) => pathname.startsWith(route));
 
-    if (!user && !isAuthRoute && !isPublicRoute) {
-      router.replace("/login");
+    if (!user && !isAuthRoute && pathname !== "/") {
+      router.replace("/");
       return;
     }
 
@@ -116,7 +115,7 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       }
     } finally {
       setUser(null);
-      router.replace("/login");
+      router.replace("/");
     }
   }, [router, setUser]);
 

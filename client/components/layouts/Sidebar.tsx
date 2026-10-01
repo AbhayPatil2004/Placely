@@ -10,7 +10,7 @@ export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-graphite bg-surface md:flex">
       <div className="flex h-16 items-center border-b border-graphite px-6">
-        <Link href="/dashboard" className="font-bold tracking-[-0.02em] text-white">
+        <Link href="/" className="font-bold tracking-[-0.02em] text-white">
           Placely
         </Link>
       </div>

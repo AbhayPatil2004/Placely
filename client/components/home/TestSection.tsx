@@ -24,7 +24,7 @@ export function TestSection() {
         <div className="test-card mt-8 max-w-[720px] rounded-[12px] border border-white/10 bg-[#1e1e1e] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <span className="text-[10px] uppercase tracking-[0.2em] text-[#a3a3a3]">
-              Question 03
+              Question
             </span>
             <span className="rounded-full border border-white/10 bg-[#171717] px-2 py-1 text-[10px] text-[#bcbcbc]">
               MCQ
@@ -38,17 +38,24 @@ export function TestSection() {
           <div className="mt-6 space-y-3">
             {options.map((option, index) => {
               const active = selected === index;
+              const submittedCorrect = submitted && active && selected === 0;
+              const submittedIncorrect = submitted && active && selected !== 0;
 
               return (
                 <button
                   key={option}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => {
                     setSelected(index);
                     setSubmitted(false);
                   }}
                   className={`flex w-full items-center justify-between rounded-[8px] border px-4 py-3 text-left transition-colors ${
-                    active
+                    submittedCorrect
+                      ? "border-[#4ade80]/60 bg-[#4ade80]/10 text-[#4ade80]"
+                      : submittedIncorrect
+                        ? "border-[#f87171]/60 bg-[#f87171]/10 text-[#f87171]"
+                        : active
                       ? "border-[#7c3aed]/60 bg-[#7c3aed]/10 text-[#eeeeee]"
                       : "border-white/10 bg-[#171717] text-[#bcbcbc] hover:border-white/20"
                   }`}
@@ -67,9 +74,13 @@ export function TestSection() {
               Submit
             </Button>
 
-            {submitted && selected === 0 ? (
-              <span className="text-[11px] uppercase tracking-[0.2em] text-[#4ade80]">
-                Correct
+            {submitted ? (
+              <span
+                className={`text-[11px] uppercase tracking-[0.2em] ${
+                  selected === 0 ? "text-[#4ade80]" : "text-[#f87171]"
+                }`}
+              >
+                {selected === 0 ? "Correct" : "Incorrect"}
               </span>
             ) : null}
           </div>
