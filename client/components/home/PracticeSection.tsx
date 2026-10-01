@@ -1,7 +1,19 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { LoaderCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 
 export function PracticeSection() {
+  const [runState, setRunState] = useState<"idle" | "running" | "complete">("idle");
+
+  const runCode = () => {
+    if (runState === "running") return;
+
+    setRunState("running");
+    window.setTimeout(() => setRunState("complete"), 900);
+  };
+
   return (
     <section id="practice" className="py-16 md:py-24">
       <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
@@ -19,9 +31,21 @@ export function PracticeSection() {
 
             <span className="text-[11px] text-[#bcbcbc]">main.py</span>
 
-            <Link href="/dsa/practice" className={buttonVariants({ size: "sm", className: "h-8 px-3 text-[11px]" })}>
-              Run
-            </Link>
+            <button
+              type="button"
+              onClick={runCode}
+              disabled={runState === "running"}
+              className={buttonVariants({ size: "sm", className: "h-8 px-3 text-[11px]" })}
+            >
+              {runState === "running" ? (
+                <>
+                  <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                  Running
+                </>
+              ) : (
+                "Run"
+              )}
+            </button>
           </div>
 
           <div className="mt-4 rounded-[8px] border border-white/5 bg-[#171717] p-4">
@@ -48,16 +72,23 @@ export function PracticeSection() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-[8px] border border-white/5 bg-[#171717] p-4">
+          <div
+            className="mt-4 rounded-[8px] border border-white/5 bg-[#171717] p-4"
+            aria-live="polite"
+          >
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-[#a3a3a3]">
               <span>Output</span>
-              <span className="rounded-full border border-[#4ade80]/40 bg-[#4ade80]/10 px-2 py-1 text-[#4ade80]">
-                Completed
-              </span>
+              {runState === "complete" ? (
+                <span className="rounded-full border border-[#4ade80]/40 bg-[#4ade80]/10 px-2 py-1 text-[#4ade80]">
+                  Completed
+                </span>
+              ) : runState === "running" ? (
+                <span className="text-[#bcbcbc]">Running</span>
+              ) : null}
             </div>
 
             <div className="mt-3 font-mono text-[12px] leading-6 text-[#d9d9d9]">
-              ready
+              {runState === "complete" ? "ready" : "Run the code to see output."}
             </div>
           </div>
         </div>

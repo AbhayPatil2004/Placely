@@ -88,7 +88,7 @@ export default function ProfilePage() {
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         setUser(null);
-        router.replace("/login");
+        router.replace("/");
       }
       throw error;
     }

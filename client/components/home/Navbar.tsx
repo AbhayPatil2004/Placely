@@ -13,10 +13,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#171717]/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3" aria-label="Placely home">
-          <div className="grid h-7 w-7 place-items-center rounded-[6px] border border-[#7c3aed]/30 bg-[#1e1e1e] text-[10px] font-semibold text-[#a78bfa]">
-            P
-          </div>
-          <span className="text-[15px] font-medium tracking-[-0.03em] text-[#eeeeee]">
+          <span className="text-[15px] font-bold tracking-[-0.03em] text-[#eeeeee]">
             Placely
           </span>
         </Link>
@@ -53,13 +50,12 @@ export function Navbar() {
                 href="/login"
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
-                  "hidden sm:inline-flex",
                 )}
               >
                 Login
               </Link>
               <Link href="/signup" className={buttonVariants({ size: "sm" })}>
-                Get Started
+                Sign up
               </Link>
             </>
           )}

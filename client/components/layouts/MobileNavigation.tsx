@@ -39,7 +39,7 @@ export function MobileNavigation() {
           <aside className="relative flex h-full w-[min(85vw,320px)] flex-col border-r border-graphite bg-surface shadow-subtle-2">
             <div className="flex h-16 items-center justify-between border-b border-graphite px-4">
               <Link
-                href="/dashboard"
+                href="/"
                 className="font-bold tracking-[-0.02em] text-white"
                 onClick={() => setIsOpen(false)}
               >
