@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
 import type { SubjectKey } from "@/services/coreSubjectService";
+import { recordResourceCompletion } from "@/lib/activity";
 
 const getStorageKey = (subject: SubjectKey) =>
   `placely:core:${subject}:learn:progress`;
@@ -22,9 +23,9 @@ function persistIds(subject: SubjectKey, ids: Set<string>) {
   localStorage.setItem(getStorageKey(subject), JSON.stringify([...ids]));
 }
 
-export function useCoreLearnProgress(subject: SubjectKey) {
+export function useCoreLearnProgress(subject: SubjectKey, userId: string | null) {
   const [progressBySubject, setProgressBySubject] = useState(
-    () => new Map<SubjectKey, Set<string>>([[subject, readStoredIds(subject)]]),
+    () => new Map([[subject, readStoredIds(subject)]]),
   );
   const completedQuestionIds =
     progressBySubject.get(subject) ?? readStoredIds(subject);
@@ -40,18 +41,21 @@ export function useCoreLearnProgress(subject: SubjectKey) {
   }, [subject]);
 
   const toggleCompleted = useCallback((questionId: string) => {
-    setProgressBySubject((previousBySubject) => {
-      const previous = previousBySubject.get(subject) ?? readStoredIds(subject);
-      const next = new Set(previous);
-      if (next.has(questionId)) {
-        next.delete(questionId);
-      } else {
-        next.add(questionId);
-      }
-      persistIds(subject, next);
-      return new Map(previousBySubject).set(subject, next);
-    });
-  }, [subject]);
+    const next = new Set(completedQuestionIds);
+    const completed = !next.has(questionId);
+    if (completed) next.add(questionId);
+    else next.delete(questionId);
+
+    persistIds(subject, next);
+    recordResourceCompletion(
+      userId,
+      `core:${subject}:${questionId}`,
+      completed,
+    );
+    setProgressBySubject((previousBySubject) =>
+      new Map(previousBySubject).set(subject, next),
+    );
+  }, [completedQuestionIds, subject, userId]);
 
   return { completedQuestionIds, reconcile, toggleCompleted };
 }

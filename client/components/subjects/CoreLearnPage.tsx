@@ -10,6 +10,7 @@ import {
   type LearnQuestion,
   type SubjectKey,
 } from "@/services/coreSubjectService";
+import { useAuth } from "@/lib/auth-context";
 
 const subjectDetails: Record<SubjectKey, { code: string; title: string; description: string }> = {
   oop: {
@@ -49,12 +50,14 @@ function formatDifficulty(difficulty: string) {
 
 export function CoreLearnPage({ subject }: { subject: SubjectKey }) {
   const details = subjectDetails[subject];
+  const { user } = useAuth();
+  const userId = user?._id ?? user?.studentId ?? null;
   const [questions, setQuestions] = useState<LearnQuestion[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { completedQuestionIds, reconcile, toggleCompleted } =
-    useCoreLearnProgress(subject);
+    useCoreLearnProgress(subject, userId);
 
   const completedCount = questions.reduce(
     (count, question) => count + (completedQuestionIds.has(question.id) ? 1 : 0),

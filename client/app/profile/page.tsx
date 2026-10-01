@@ -1,69 +1,171 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, BriefcaseBusiness, FileText, Link2 } from "lucide-react";
-import { AcademicsTab } from "@/components/profile/AcademicsTab";
-import { ActivityHeatmap } from "@/components/profile/ActivityHeatmap";
-import { CodingProfilesTab } from "@/components/profile/CodingProfilesTab";
-import { OverviewTab } from "@/components/profile/OverviewTab";
-import { ProfileCompletionCard, profileCompletion } from "@/components/profile/ProfileCompletionCard";
+import { useRouter } from "next/navigation";
+import { AchievementCard } from "@/components/profile/AchievementCard";
+import { AcademicDetails } from "@/components/profile/AcademicDetails";
+import { CertificateCard } from "@/components/profile/CertificateCard";
+import { CodingProfiles } from "@/components/profile/CodingProfiles";
+import { HackathonCard } from "@/components/profile/HackathonCard";
 import { ProfileEditSheet } from "@/components/profile/ProfileEditSheet";
-import { ProfileHeaderCard } from "@/components/profile/ProfileHeaderCard";
-import { ProfileTabs, type ProfileTab } from "@/components/profile/ProfileTabs";
-import { SkillsTab } from "@/components/profile/SkillsTab";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ProfileSection } from "@/components/profile/ProfileSection";
+import { ProjectCard } from "@/components/profile/ProjectCard";
+import { ResumeLink } from "@/components/profile/ResumeLink";
+import { SkillsList } from "@/components/profile/SkillsList";
 import { useAuth, type AuthUser } from "@/lib/auth-context";
+import { updateProfile, type StudentProfileUpdate } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 
 function ProfileSkeleton() {
-  return <div className="mx-auto max-w-7xl animate-pulse space-y-5 px-4 py-6"><div className="h-4 w-32 rounded bg-surface" /><div className="h-44 rounded-cards bg-surface" /><div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"><div className="h-80 rounded-cards bg-surface" /><div className="h-64 rounded-cards bg-surface" /></div></div>;
+  return (
+    <main className="mx-auto max-w-[1120px] space-y-4 px-4 py-6 font-[system-ui]">
+      <div className="h-36 animate-pulse rounded-xl bg-surface" />
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="h-36 animate-pulse rounded-xl bg-surface" />
+      ))}
+    </main>
+  );
 }
 
 export default function ProfilePage() {
   const { user, loading, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
 
   if (loading) return <ProfileSkeleton />;
-  if (!user) return <main className="grid min-h-screen place-items-center bg-abyss text-sm text-muted-gray">Unable to load your profile.</main>;
+  if (!user) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-abyss px-4 text-sm text-medium-gray">
+        Unable to load your profile.
+      </main>
+    );
+  }
 
-  const { percentage } = profileCompletion(user);
-  const saveProfile = (nextUser: AuthUser) => setUser(nextUser);
-  const tabContent = {
-    Overview: <OverviewTab user={user} onEdit={() => setEditing(true)} />,
-    Academics: <AcademicsTab user={user} />,
-    Skills: <SkillsTab user={user} onEdit={() => setEditing(true)} />,
-    "Coding Profiles": <CodingProfilesTab user={user} onEdit={() => setEditing(true)} />,
-    Activity: <ActivityHeatmap data={[]} />,
-  }[activeTab];
+  const editProfile = () => setEditing(true);
+  const saveProfile = async (nextUser: AuthUser) => {
+    try {
+      const profileUpdate: StudentProfileUpdate = {};
+      if (nextUser.fullname !== user.fullname) profileUpdate.fullname = nextUser.fullname;
+      if (nextUser.profileImage !== user.profileImage) profileUpdate.profileImage = nextUser.profileImage;
+      if (nextUser.studentId !== user.studentId) profileUpdate.studentId = nextUser.studentId;
+      if (nextUser.university !== user.university) profileUpdate.university = nextUser.university;
+      if (nextUser.college !== user.college) profileUpdate.college = nextUser.college;
+      if (nextUser.collegeId !== user.collegeId) profileUpdate.collegeId = nextUser.collegeId;
+      if (nextUser.branch !== user.branch) profileUpdate.branch = nextUser.branch;
+      if (nextUser.currentYear !== user.currentYear) profileUpdate.currentYear = nextUser.currentYear;
+      if (nextUser.passingYear !== user.passingYear) profileUpdate.passingYear = nextUser.passingYear;
+      if (nextUser.cgpa !== user.cgpa) profileUpdate.cgpa = nextUser.cgpa;
+      if (nextUser.tenthPercentage !== user.tenthPercentage) {
+        profileUpdate.tenthPercentage = nextUser.tenthPercentage;
+      }
+      if (nextUser.twelfthPercentage !== user.twelfthPercentage) {
+        profileUpdate.twelfthPercentage = nextUser.twelfthPercentage;
+      }
+      if (JSON.stringify(nextUser.skills) !== JSON.stringify(user.skills)) {
+        profileUpdate.skills = nextUser.skills;
+      }
+      if (nextUser.resumeUrl !== user.resumeUrl) profileUpdate.resumeUrl = nextUser.resumeUrl;
+      if (nextUser.portfolioUrl !== user.portfolioUrl) profileUpdate.portfolioUrl = nextUser.portfolioUrl;
 
-  return <div>
-    <main className="mx-auto max-w-7xl px-0 py-0">
-      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-gray"><span>Explore</span><span className="mx-2 text-graphite">&gt;</span><span className="text-white">Profile</span></nav>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-5">
-          <ProfileHeaderCard user={user} completion={percentage} onEdit={() => setEditing(true)} />
-          <section className="rounded-cards border border-graphite bg-surface p-5 shadow-subtle">
-            <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
-            <div className="pt-5">{tabContent}</div>
-          </section>
+      const updatedUser = await updateProfile(
+        profileUpdate,
+        user.codingProfiles,
+        nextUser.codingProfiles,
+        {
+          previousProjects: user.projects,
+          nextProjects: nextUser.projects,
+          previousCertificates: user.certificates,
+          nextCertificates: nextUser.certificates,
+          previousAchievements: user.achievements,
+          nextAchievements: nextUser.achievements,
+          previousHackathons: user.hackathons,
+          nextHackathons: nextUser.hackathons,
+        },
+      );
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        setUser(null);
+        router.replace("/login");
+      }
+      throw error;
+    }
+  };
+
+  return (
+    <main className="mx-auto max-w-[1120px] space-y-4 px-4 py-6 font-[system-ui] sm:px-6">
+      <ProfileHeader student={user} onEdit={editProfile} />
+
+      <ProfileSection title="Academic details" onEdit={editProfile}>
+        <AcademicDetails student={user} />
+      </ProfileSection>
+
+      <SkillsList student={user} onEdit={editProfile} />
+      <CodingProfiles student={user} onEdit={editProfile} />
+
+      <ProfileSection
+        title="Projects"
+        onEdit={editProfile}
+        isEmpty={!user.projects.length}
+        emptyMessage="No projects added yet"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {user.projects.map((project) => <ProjectCard key={project._id} project={project} />)}
         </div>
-        <aside className="space-y-5">
-          <ProfileCompletionCard user={user} />
-          <section className="rounded-cards border border-graphite bg-surface p-5 shadow-subtle">
-            <h2 className="text-base font-semibold text-white">Career Links</h2>
-            <div className="mt-4 space-y-3">
-              {(user.codingProfiles ?? []).slice(0, 3).map((profile) => <a key={`${profile.platform}-${profile.profileUrl}`} href={profile.profileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 text-sm text-medium-gray hover:text-lavender"><span className="flex items-center gap-2"><Link2 className="size-4" />{profile.platform}</span><ArrowUpRight className="size-3.5" /></a>)}
-              <a href={user.resumeUrl || "#"} target={user.resumeUrl ? "_blank" : undefined} rel={user.resumeUrl ? "noopener noreferrer" : undefined} className="flex items-center justify-between gap-3 text-sm text-medium-gray hover:text-lavender"><span className="flex items-center gap-2"><FileText className="size-4" />Resume</span><ArrowUpRight className="size-3.5" /></a>
-              <a href={user.portfolioUrl || "#"} target={user.portfolioUrl ? "_blank" : undefined} rel={user.portfolioUrl ? "noopener noreferrer" : undefined} className="flex items-center justify-between gap-3 text-sm text-medium-gray hover:text-lavender"><span className="flex items-center gap-2"><BriefcaseBusiness className="size-4" />Portfolio</span><ArrowUpRight className="size-3.5" /></a>
-              {!user.codingProfiles?.length && !user.resumeUrl && !user.portfolioUrl ? <button type="button" onClick={() => setEditing(true)} className="text-sm text-lavender hover:underline">Add a career link</button> : null}
-            </div>
-          </section>
-          <section className="rounded-cards border border-graphite bg-surface p-5 shadow-subtle">
-            <h2 className="text-base font-semibold text-white">Quick Stats</h2>
-            <dl className="mt-4 grid grid-cols-2 gap-4"><div><dt className="text-xs uppercase tracking-wide text-zinc-500">Skills</dt><dd className="mt-1 text-lg font-semibold text-white">{user.skills?.length ?? 0}</dd></div><div><dt className="text-xs uppercase tracking-wide text-zinc-500">Profiles</dt><dd className="mt-1 text-lg font-semibold text-white">{user.codingProfiles?.length ?? 0}</dd></div><div><dt className="text-xs uppercase tracking-wide text-zinc-500">CGPA</dt><dd className="mt-1 text-lg font-semibold text-white">{user.cgpa ?? "—"}</dd></div><div><dt className="text-xs uppercase tracking-wide text-zinc-500">Batch</dt><dd className="mt-1 text-lg font-semibold text-white">{user.passingYear}</dd></div></dl>
-          </section>
-        </aside>
-      </div>
+      </ProfileSection>
+
+      <ProfileSection
+        title="Hackathons"
+        onEdit={editProfile}
+        isEmpty={!user.hackathons.length}
+        emptyMessage="No hackathons added yet"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {user.hackathons.map((hackathon) => (
+            <HackathonCard key={hackathon._id} hackathon={hackathon} />
+          ))}
+        </div>
+      </ProfileSection>
+
+      <ProfileSection
+        title="Certificates"
+        onEdit={editProfile}
+        isEmpty={!user.certificates.length}
+        emptyMessage="No certificates added yet"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {user.certificates.map((certificate) => (
+            <CertificateCard key={certificate._id} certificate={certificate} />
+          ))}
+        </div>
+      </ProfileSection>
+
+      <ProfileSection
+        title="Achievements"
+        onEdit={editProfile}
+        isEmpty={!user.achievements.length}
+        emptyMessage="No achievements added yet"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {user.achievements.map((achievement) => (
+            <AchievementCard key={achievement._id} achievement={achievement} />
+          ))}
+        </div>
+      </ProfileSection>
+
+      <ResumeLink student={user} onEdit={editProfile} />
+
+      {editing ? (
+        <ProfileEditSheet
+          key={user._id}
+          user={user}
+          open={editing}
+          onOpenChange={setEditing}
+          onSave={saveProfile}
+        />
+      ) : null}
     </main>
-    <ProfileEditSheet user={user} open={editing} onOpenChange={setEditing} onSave={saveProfile} />
-  </div>;
+  );
 }

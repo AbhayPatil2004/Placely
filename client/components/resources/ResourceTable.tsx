@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ResourceRow } from "@/components/resources/ResourceRow";
+import { useAuth } from "@/lib/auth-context";
+import { recordResourceCompletion } from "@/lib/activity";
 import type { Difficulty, Resource } from "@/lib/resources";
 
 type ResourceTableProps = {
@@ -17,11 +19,35 @@ export function ResourceTable({
   search = "",
   onCompletedChange,
 }: ResourceTableProps) {
+  const { user } = useAuth();
+  const userId = user?._id ?? user?.studentId ?? null;
+  const category = resources[0]?.category ?? "all";
+  const progressKey = `placely:resources:${encodeURIComponent(userId ?? "guest")}:${encodeURIComponent(category)}:progress`;
+
+  const readCompleted = () => {
+    if (typeof window === "undefined") {
+      return new Set(resources.filter((resource) => resource.completed).map((resource) => resource.id));
+    }
+    try {
+      const stored = localStorage.getItem(progressKey);
+      if (stored) {
+        const ids: unknown = JSON.parse(stored);
+        if (Array.isArray(ids)) {
+          const validIds = new Set(resources.map((resource) => resource.id));
+          return new Set(ids.filter((id): id is string => typeof id === "string" && validIds.has(id)));
+        }
+      }
+    } catch {
+      return new Set(resources.filter((resource) => resource.completed).map((resource) => resource.id));
+    }
+    return new Set(resources.filter((resource) => resource.completed).map((resource) => resource.id));
+  };
+  const [completedByKey, setCompletedByKey] = useState(
+    () => new Map([[progressKey, readCompleted()]]),
+  );
+  const completedIds = completedByKey.get(progressKey) ?? readCompleted();
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(
     () => new Set(),
-  );
-  const [completedIds, setCompletedIds] = useState<Set<string>>(
-    () => new Set(resources.filter((resource) => resource.completed).map((resource) => resource.id)),
   );
   const filteredResources = useMemo(
     () =>
@@ -34,6 +60,10 @@ export function ResourceTable({
       ),
     [difficulty, resources, search],
   );
+
+  useEffect(() => {
+    onCompletedChange?.(completedIds.size);
+  }, [completedIds, onCompletedChange]);
 
   const toggleBookmark = (id: string) => {
     setBookmarkedIds((current) => {
@@ -48,16 +78,14 @@ export function ResourceTable({
   };
 
   const toggleComplete = (id: string) => {
-    setCompletedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      onCompletedChange?.(next.size);
-      return next;
-    });
+    const next = new Set(completedIds);
+    const completed = !next.has(id);
+    if (completed) next.add(id);
+    else next.delete(id);
+
+    localStorage.setItem(progressKey, JSON.stringify([...next]));
+    recordResourceCompletion(userId, `resource:${category}:${id}`, completed);
+    setCompletedByKey((current) => new Map(current).set(progressKey, next));
   };
 
   return (

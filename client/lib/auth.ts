@@ -11,9 +11,11 @@ export const branchOptions = [
 ] as const;
 
 export const collegeOptions = [
-  { id: "665f1a2b8c9d0e1f2a3b4c5d", name: "Placely Institute of Technology" },
-  { id: "665f1a2b8c9d0e1f2a3b4c5e", name: "Northstar College of Engineering" },
-  { id: "665f1a2b8c9d0e1f2a3b4c5f", name: "Pioneer Institute of Computing" },
+  {
+    id: "mvp-kbt-college-of-engineering-nashik",
+    name: "MVP's KBT College of Engineering, Nashik",
+  },
+  { id: "other", name: "Other" },
 ] as const;
 
 const requiredText = (label: string) =>

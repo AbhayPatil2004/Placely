@@ -30,7 +30,19 @@ export function ForgotPasswordForm() {
       setResetEmail(values.email);
       router.push("/forgot-password/verify");
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : "Unable to connect to the server. Please try again.");
+      if (requestError instanceof ApiError) {
+        setError(
+          requestError.status === 404
+            ? "No account was found for that email address."
+            : requestError.status === 429
+              ? "Please wait before requesting another code."
+              : requestError.status === 400
+                ? "Enter a valid Gmail address and try again."
+                : "Unable to send a reset code right now. Please try again.",
+        );
+      } else {
+        setError("Unable to connect to the server. Please try again.");
+      }
     }
   };
 

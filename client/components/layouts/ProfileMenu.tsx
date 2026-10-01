@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { getDefaultProfileImage } from "@/lib/profile-image";
 
 export function ProfileMenu() {
   const { user, logout } = useAuth();
@@ -20,6 +21,7 @@ export function ProfileMenu() {
     .slice(0, 2)
     .join("")
     .toUpperCase() || "P";
+  const profileImage = user.profileImage || getDefaultProfileImage(user);
 
   return (
     <div className="relative">
@@ -32,26 +34,22 @@ export function ProfileMenu() {
         variant="ghost"
         className="overflow-hidden rounded-full border border-white/10 bg-[#1e1e1e] text-white"
       >
-        {user.profileImage ? (
-          <img
-            alt={user.fullname}
-            className="h-full w-full object-cover"
-            src={user.profileImage}
-          />
-        ) : (
-          <span className="text-[10px] font-semibold tracking-[-0.03em]">{initials}</span>
-        )}
+        <Avatar
+          src={profileImage}
+          alt={`${user.fullname} profile picture`}
+          fallback={initials}
+          className="size-full text-[10px] tracking-[-0.03em]"
+        />
       </Button>
       {open ? (
         <div className="absolute right-0 top-11 z-50 w-56 rounded-cards border border-graphite bg-surface p-2 shadow-subtle" role="menu">
           <div className="flex items-center gap-3 border-b border-graphite px-3 py-2">
-            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-white/10 bg-[#171717] text-[10px] font-semibold text-white">
-              {user.profileImage ? (
-                <img alt={user.fullname} className="h-full w-full object-cover" src={user.profileImage} />
-              ) : (
-                initials
-              )}
-            </div>
+            <Avatar
+              src={profileImage}
+              alt={`${user.fullname} profile picture`}
+              fallback={initials}
+              className="size-9 border border-white/10 bg-[#171717] text-[10px]"
+            />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-white">{user.fullname}</p>
               <p className="truncate text-xs text-muted-gray">{user.email}</p>
