@@ -76,6 +76,16 @@ const starterCodeSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const driverCodeSchema = new mongoose.Schema(
+    {
+        cpp: { type: String, required: true },
+        java: { type: String, required: true },
+        javascript: { type: String, required: true },
+        python: { type: String, required: true }
+    },
+    { _id: false }
+);
+
 
 // -------------------------
 // Problem Schema
@@ -303,6 +313,11 @@ const problemSchema = new mongoose.Schema(
         starterCode: {
             type: starterCodeSchema,
             required: true
+        },
+        driverCode: {
+            type: driverCodeSchema,
+            required: true,
+            select: false
         },
 
         testCases: {

@@ -27,6 +27,21 @@ const submissionSchema = new mongoose.Schema(
             required: true,
         },
 
+        stdout: {
+            type: String,
+            default: ""
+        },
+
+        stderr: {
+            type: String,
+            default: ""
+        },
+
+        exitCode: {
+            type: Number,
+            default: null
+        },
+
 
         status: {
             type: String,
@@ -56,6 +71,14 @@ const submissionSchema = new mongoose.Schema(
             default: 0,
         },
 
+        failedTestCases: [
+            {
+                testCase: Number,
+                expectedOutput: String,
+                actualOutput: String,
+            },
+        ],
+
         executionTime: {
             type: Number,
             default: 0,
@@ -80,12 +103,7 @@ const submissionSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
-
-        testCaseResults: {
-            type: [testCaseResultSchema],
-            default: [],
-        },
-
+        
         executionTime: {
             type: Number,
             default: 0,

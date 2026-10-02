@@ -1,232 +1,230 @@
 
 import {
-    getChannel,
-    CODE_SUBMISSION_QUEUE_NAME,
-    CODE_RESULT_EXCHANGE_NAME,
+  getChannel,
+  CODE_SUBMISSION_QUEUE_NAME,
+  CODE_SUBMISSION_RESULT_QUEUE_NAME,
 } from "../config/rabbitmq.js";
 
 import executeCpp from "../services/docker.cpp.service.js";
 import executeJava from "../services/docker.java.service.js";
-import executePy from "../services/docker.py.service.js";
 import executeJs from "../services/docker.js.service.js";
+import executePy from "../services/docker.py.service.js";
 
-const normalizeOutput = (output) => {
-    return String(output ?? "")
-        .replace(/\r\n/g, "\n")
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .join(" ");
+const executors = {
+  cpp: executeCpp,
+  java: executeJava,
+  js: executeJs,
+  py: executePy,
 };
 
-const getStdout = (result) => {
-    if (typeof result === "string") {
-        return result;
+const publishResult = (channel, result) => {
+  channel.sendToQueue(
+    CODE_SUBMISSION_RESULT_QUEUE_NAME,
+    Buffer.from(JSON.stringify(result)),
+    {
+      persistent: true,
+      contentType: "application/json",
+      messageId: result.jobId,
     }
-
-    return (
-        result?.stdout ??
-        result?.output ??
-        result?.result ??
-        ""
-    );
+  );
 };
 
-const getExecutionError = (error) => {
-    const message = String(
-        error?.message ?? error ?? "Execution failed"
-    );
+export const startCodeSubmissionConsumer = async () => {
+  const channel = await getChannel();
 
-    if (/out of memory|memory limit|oom/i.test(message)) {
-        return {
-            status: "MEMORY_LIMIT_EXCEEDED",
-            message,
-        };
-    }
+  if (!channel) {
+    throw new Error("RabbitMQ channel is unavailable");
+  }
 
-    if (/time limit|timed out|timeout/i.test(message)) {
-        return {
-            status: "TIME_LIMIT_EXCEEDED",
-            message,
-        };
-    }
+  await channel.assertQueue(CODE_SUBMISSION_QUEUE_NAME, {
+    durable: true,
+  });
 
-    if (/compil(e|ation).*error|syntax error/i.test(message)) {
-        return {
-            status: "COMPILE_ERROR",
-            message,
-        };
-    }
+  
 
-    return {
-        status: "RUNTIME_ERROR",
-        message,
-    };
-};
+  channel.prefetch(1);
 
-const executeForLanguage = async (job, input) => {
-    switch (job.language.toLowerCase()) {
-        case "cpp":
-            return executeCpp(job.code, input);
+  console.log(
+    `Waiting for submissions from ${CODE_SUBMISSION_QUEUE_NAME}...`
+  );
 
-        case "java":
-            return executeJava(job.code, input);
+  channel.consume(
+    CODE_SUBMISSION_QUEUE_NAME,
+    async (message) => {
+      if (!message) return;
 
-        case "js":
-            return executeJs(job.code, input);
+      let job;
 
-        case "py":
-            return executePy(job.code, input);
+      try {
+        job = JSON.parse(message.content.toString());
 
-        default:
-            throw new Error(`Unsupported language: ${job.language}`);
-    }
-};
+        const {
+          jobId,
+          submissionId,
+          studentId,
+          problemId,
+          language,
+          code,
+        } = job;
 
-const StartCodeSubmissionConsumer = async () => {
-    const channel = getChannel();
+        if (
+          !jobId ||
+          !submissionId ||
+          !studentId ||
+          !problemId ||
+          typeof code !== "string" ||
+          !code.trim()
+        ) {
+          throw new Error("Invalid submission job");
+        }
 
-    await channel.assertQueue(CODE_SUBMISSION_QUEUE_NAME, {
-        durable: true,
-    });
+        const execute = executors[language?.toLowerCase()];
 
-    await channel.assertExchange(CODE_RESULT_EXCHANGE_NAME, "fanout", {
-        durable: true,
-    });
+        if (!execute) {
+          throw new Error(`Unsupported language: ${language}`);
+        }
 
-    channel.prefetch(1);
+        console.log("\n========== EXECUTING SUBMISSION ==========");
+        console.log("Job ID:", jobId);
+        console.log("Submission ID:", submissionId);
+        console.log("Language:", language);
 
-    console.log(
-        `Waiting for submissions from ${CODE_SUBMISSION_QUEUE_NAME}...`
-    );
+        // The driver contains its own test inputs.
+        const execution = await execute(code);
 
-    channel.consume(
-        CODE_SUBMISSION_QUEUE_NAME,
-        async (message) => {
-            if (!message) return;
+        const executionStatus = String(
+          execution.status ?? ""
+        ).toLowerCase();
 
-            let job;
+        let verdict = "RUNTIME_ERROR";
+        let totalTestCases = 0;
+        let passedTestCases = 0;
+        let failedTestCases = [];
+        let errorMessage = execution.stderr ?? "";
 
-            try {
-                job = JSON.parse(message.content.toString());
-            } catch (error) {
-                console.error("Invalid submission message:", error.message);
-                channel.ack(message);
-                return;
-            }
+        if (
+          executionStatus === "timeout" ||
+          executionStatus === "time_limit_exceeded"
+        ) {
+          verdict = "TIME_LIMIT_EXCEEDED";
+        } else if (
+          executionStatus === "memory_limit_exceeded"
+        ) {
+          verdict = "MEMORY_LIMIT_EXCEEDED";
+        } else if (
+          executionStatus === "compilation_error"
+        ) {
+          verdict = "COMPILATION_ERROR";
+        } else if (
+          executionStatus === "success" &&
+          execution.exitCode === 0
+        ) {
+          try {
+            const driverResult = JSON.parse(
+              String(execution.stdout ?? "").trim()
+            );
+
+            totalTestCases = Number(driverResult.totalTestCases);
+            passedTestCases = Number(driverResult.passedTestCases);
+
+            failedTestCases = Array.isArray(
+              driverResult.failedTestCases
+            )
+              ? driverResult.failedTestCases
+              : [];
 
             if (
-                !job.jobId ||
-                !job.submissionId ||
-                !job.studentId ||
-                !job.code ||
-                !job.language ||
-                !Array.isArray(job.testCases) ||
-                job.testCases.length === 0
+              !Number.isInteger(totalTestCases) ||
+              !Number.isInteger(passedTestCases) ||
+              totalTestCases < 1 ||
+              passedTestCases < 0 ||
+              passedTestCases > totalTestCases
             ) {
-                console.error("Invalid code submission job:", job.jobId);
-                channel.ack(message);
-                return;
+              throw new Error("Invalid test-case summary");
             }
 
-            const startedAt = Date.now();
+            verdict =
+              passedTestCases === totalTestCases
+                ? "ACCEPTED"
+                : "WRONG_ANSWER";
 
-            const submissionResult = {
-                type: "SUBMISSION_RESULT",
-                jobId: job.jobId,
-                submissionId: job.submissionId,
-                studentId: job.studentId,
-                problemId: job.problemId,
-                language: job.language,
-                status: "RUNNING",
-                totalTestCases: job.testCases.length,
-                passedTestCases: 0,
-                executionTime: 0,
-                memoryUsed: null,
-                errorMessage: null,
-            };
+            errorMessage = "";
+          } catch (error) {
+            verdict = "RUNTIME_ERROR";
+            errorMessage = `Invalid driver output: ${error.message}`;
+          }
+        }
 
-            try {
-                console.log(
-                    `Running submission ${job.submissionId} against ${job.testCases.length} test cases`
-                );
+        const result = {
+          jobId,
+          submissionId,
+          studentId,
+          problemId,
+          language,
 
-                for (const testCase of job.testCases) {
-                    const input = testCase.input ?? "";
-                    const expectedOutput =
-                        testCase.expectedOutput ?? testCase.output;
+          status: executionStatus,
+          verdict,
 
-                    if (expectedOutput === undefined) {
-                        throw new Error(
-                            "Test case is missing expectedOutput/output"
-                        );
-                    }
+          totalTestCases,
+          passedTestCases,
+          failedTestCases,
 
-                    const result = await executeForLanguage(job, input);
+          stdout: execution.stdout ?? "",
+          stderr: execution.stderr ?? "",
+          exitCode: execution.exitCode ?? -1,
+          executionTime: execution.executionTime ?? null,
+          memoryUsed: execution.memoryUsed ?? null,
 
-                    // Adapt this check to the actual return format
-                    // of your Docker execution services.
-                    if (result?.error) {
-                        throw new Error(String(result.error));
-                    }
+          errorMessage,
+          completedAt: new Date().toISOString(),
+        };
 
-                    const actualOutput = getStdout(result);
+        publishResult(channel, result);
 
-                    if (
-                        normalizeOutput(actualOutput) !==
-                        normalizeOutput(expectedOutput)
-                    ) {
-                        submissionResult.status = "WRONG_ANSWER";
-                        break;
-                    }
+        console.log("Verdict:", verdict);
+        console.log(
+          `Passed test cases: ${passedTestCases}/${totalTestCases}`
+        );
 
-                    submissionResult.passedTestCases++;
-                }
+        channel.ack(message);
+      } catch (error) {
+        console.error("Submission execution failed:", error.message);
 
-                if (
-                    submissionResult.passedTestCases ===
-                    submissionResult.totalTestCases
-                ) {
-                    submissionResult.status = "ACCEPTED";
-                }
-            } catch (error) {
-                const failure = getExecutionError(error);
+        // Send a failure result when the job has enough identifiers.
+        if (
+          job?.jobId &&
+          job?.submissionId &&
+          job?.studentId &&
+          job?.problemId
+        ) {
+          publishResult(channel, {
+            jobId: job.jobId,
+            submissionId: job.submissionId,
+            studentId: job.studentId,
+            problemId: job.problemId,
+            language: job.language,
 
-                submissionResult.status = failure.status;
-                submissionResult.errorMessage = failure.message;
-            }
+            status: "error",
+            verdict: "RUNTIME_ERROR",
 
-            submissionResult.executionTime = Date.now() - startedAt;
+            totalTestCases: 0,
+            passedTestCases: 0,
+            failedTestCases: [],
 
-            try {
-                channel.publish(
-                    CODE_SUBMISSION_RESULT_QUEUE_NAME,
-                    "",
-                    Buffer.from(JSON.stringify(submissionResult)),
-                    {
-                        persistent: true,
-                        contentType: "application/json",
-                        messageId: job.jobId,
-                    }
-                );
+            stdout: "",
+            stderr: error.message,
+            exitCode: -1,
+            executionTime: null,
+            memoryUsed: null,
 
-                channel.ack(message);
+            errorMessage: error.message,
+            completedAt: new Date().toISOString(),
+          });
+        }
 
-                console.log(
-                    `Submission ${job.submissionId}: ${submissionResult.status} ` +
-                    `(${submissionResult.passedTestCases}/${submissionResult.totalTestCases})`
-                );
-            } catch (error) {
-                console.error(
-                    "Failed to publish submission result:",
-                    error.message
-                );
-
-                channel.nack(message, false, true);
-            }
-        },
-        { noAck: false }
-    );
+        channel.ack(message);
+      }
+    },
+    { noAck: false }
+  );
 };
-
-export default StartCodeSubmissionConsumer;

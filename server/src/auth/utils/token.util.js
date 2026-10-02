@@ -5,7 +5,7 @@ const generateAccessToken = (user , role ) => {
         {
             userId: user._id,
             fullname : user.fullname ,
-            email: user.email,
+            email: user.email ,
             role: role ,
         },
         process.env.JWT_SECRET,

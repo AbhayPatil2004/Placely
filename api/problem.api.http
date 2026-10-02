@@ -1,130 +1,116 @@
+
 @baseUrl = {{$dotenv BASEURL}}
 @AdminAccessToken = {{$dotenv ADMIN_TOKEN}}
 
 ############################################################
-
-# PROBLEM APIs
-
+# 1. ADD PROBLEM
 ############################################################
-
-### 1. Add Problem
 
 POST {{baseUrl}}/api/problem
 Content-Type: application/json
 Cookie: accessToken={{AdminAccessToken}}
 
 {
-"title": "Two Sum",
-"slug": "two-sum",
-"problemStatement": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+  "title": "Two Sum",
+  "slug": "two-sum",
+  "problemStatement": "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target.",
 
-```
-"topic": "ARRAY",
+  "topic": "ARRAY",
+  "subTopics": ["HASHING"],
+  "tags": ["array", "hashing"],
+  "pattern": ["HASHING"],
+  "difficulty": "EASY",
 
-"subTopics": [
-    "HASHING"
-],
+  "inputFormat": "The driver defines the array and target for each test case.",
+  "outputFormat": "Return the indices of the two numbers that add up to the target.",
 
-"tags": [
-    "array",
-    "hashing"
-],
-
-"pattern": [
-    "HASHING"
-],
-
-"difficulty": "EASY",
-
-"inputFormat": "The first line contains the array elements and the target value.",
-
-"outputFormat": "Return the indices of the two numbers that add up to the target.",
-
-"constraints": [
+  "constraints": [
     "2 <= nums.length <= 10^4",
     "-10^9 <= nums[i] <= 10^9",
     "-10^9 <= target <= 10^9"
-],
+  ],
 
-"examples": [
+  "examples": [
     {
-        "input": "nums = [2,7,11,15], target = 9",
-        "output": "[0,1]"
+      "input": "nums = [2,7,11,15], target = 9",
+      "output": "[0,1]"
     },
     {
-        "input": "nums = [3,2,4], target = 6",
-        "output": "[1,2]"
+      "input": "nums = [3,2,4], target = 6",
+      "output": "[1,2]"
     }
-],
+  ],
 
-"starterCode": {
-    "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your code here\n        return {};\n    }\n};",
+    "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}",
+    "javascript": "var twoSum = function(nums, target) {\n    // Write your code here\n    return [];\n};",
+    "python": "class Solution:\n    def twoSum(self, nums, target):\n        # Write your code here\n        return []"
+  },
 
-    "java": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}",
+  "driverCode": {
+    "cpp": "int main() {\n    Solution solution;\n    int total = 3, passed = 0;\n    vector<string> failedCases;\n    auto check = [&](int tc, vector<int> nums, int target, vector<int> expected) {\n        vector<int> actual;\n        try { actual = solution.twoSum(nums, target); }\n        catch (...) { failedCases.push_back(\"{\\\"testCase\\\":\" + to_string(tc) + \",\\\"expectedOutput\\\":\\\"test expected\\\",\\\"actualOutput\\\":\\\"exception\\\",\\\"isPublic\\\":true}\"); return; }\n        sort(actual.begin(), actual.end());\n        sort(expected.begin(), expected.end());\n        if (actual == expected) passed++;\n        else {\n            auto fmt = [](const vector<int>& v) { string s; for (int i = 0; i < (int)v.size(); i++) { if (i) s += \" \"; s += to_string(v[i]); } return s; };\n            failedCases.push_back(\"{\\\"testCase\\\":\" + to_string(tc) + \",\\\"expectedOutput\\\":\\\"\" + fmt(expected) + \"\\\",\\\"actualOutput\\\":\\\"\" + fmt(actual) + \"\\\",\\\"isPublic\\\":true}\");\n        }\n    };\n    check(1, {2,7,11,15}, 9, {0,1});\n    check(2, {3,2,4}, 6, {1,2});\n    check(3, {3,3}, 6, {0,1});\n    cout << \"{\\\"totalTestCases\\\":\" << total << \",\\\"passedTestCases\\\":\" << passed << \",\\\"failedTestCases\\\":[\";\n    for (int i = 0; i < (int)failedCases.size(); i++) { if (i) cout << \",\"; cout << failedCases[i]; }\n    cout << \"]}\" << endl;\n    return 0;\n}",
+    "java": "public class Main {\n    public static void main(String[] args) {\n        Solution solution = new Solution();\n        int total = 3, passed = 0;\n        List<String> failed = new ArrayList<>();\n        int[][] nums = {{2,7,11,15},{3,2,4},{3,3}};\n        int[] targets = {9,6,6};\n        int[][] expected = {{0,1},{1,2},{0,1}};\n        for (int i = 0; i < total; i++) {\n            try {\n                int[] actual = solution.twoSum(nums[i], targets[i]);\n                Arrays.sort(actual);\n                int[] exp = expected[i].clone();\n                Arrays.sort(exp);\n                if (Arrays.equals(actual, exp)) passed++;\n                else failed.add(\"{\\\"testCase\\\":\"+(i+1)+\",\\\"expectedOutput\\\":\\\"\"+Arrays.toString(exp)+\"\\\",\\\"actualOutput\\\":\\\"\"+Arrays.toString(actual)+\"\\\",\\\"isPublic\\\":true}\");\n            } catch (Throwable e) {\n                failed.add(\"{\\\"testCase\\\":\"+(i+1)+\",\\\"expectedOutput\\\":\\\"expected result\\\",\\\"actualOutput\\\":\\\"exception\\\",\\\"isPublic\\\":true}\");\n            }\n        }\n        System.out.print(\"{\\\"totalTestCases\\\":\"+total+\",\\\"passedTestCases\\\":\"+passed+\",\\\"failedTestCases\\\":[\"+String.join(\",\",failed)+\"]}\");\n    }\n}",
+    "javascript": "const numsCases = [[2,7,11,15],[3,2,4],[3,3]];\nconst targets = [9,6,6];\nconst expected = [[0,1],[1,2],[0,1]];\nlet passed = 0;\nconst failedTestCases = [];\nfor (let i = 0; i < numsCases.length; i++) {\n    try {\n        const actual = twoSum(numsCases[i], targets[i]);\n        const normalized = Array.from(actual || []).sort((a,b) => a-b);\n        const exp = [...expected[i]].sort((a,b) => a-b);\n        if (JSON.stringify(normalized) === JSON.stringify(exp)) passed++;\n        else failedTestCases.push({testCase:i+1, expectedOutput:JSON.stringify(exp), actualOutput:JSON.stringify(normalized), isPublic:true});\n    } catch (e) {\n        failedTestCases.push({testCase:i+1, expectedOutput:JSON.stringify(expected[i]), actualOutput:\"exception\", isPublic:true});\n    }\n}\nconsole.log(JSON.stringify({totalTestCases:numsCases.length, passedTestCases:passed, failedTestCases}));",
+    "python": "import json\nnums_cases = [[2,7,11,15],[3,2,4],[3,3]]\ntargets = [9,6,6]\nexpected = [[0,1],[1,2],[0,1]]\npassed = 0\nfailed_test_cases = []\nsolution = Solution()\nfor i, nums in enumerate(nums_cases):\n    try:\n        actual = solution.twoSum(nums, targets[i])\n        actual = sorted(actual or [])\n        exp = sorted(expected[i])\n        if actual == exp:\n            passed += 1\n        else:\n            failed_test_cases.append({\"testCase\": i+1, \"expectedOutput\": json.dumps(exp), \"actualOutput\": json.dumps(actual), \"isPublic\": True})\n    except Exception:\n        failed_test_cases.append({\"testCase\": i+1, \"expectedOutput\": json.dumps(expected[i]), \"actualOutput\": \"exception\", \"isPublic\": True})\nprint(json.dumps({\"totalTestCases\": len(nums_cases), \"passedTestCases\": passed, \"failedTestCases\": failed_test_cases}))"
+  },
 
-    "javascript": "// Write your code here\n",
-
-    "python": "# Write your code here\n"
-},
-
-"testCases": [
+  "testCases": [
     {
-        "input": "2 7 11 15\n9",
-        "expectedOutput": "0 1"
+      "input": "nums = [2,7,11,15], target = 9",
+      "expectedOutput": "[0,1]",
+      "isPublic": true
     },
     {
-        "input": "3 2 4\n6",
-        "expectedOutput": "1 2"
+      "input": "nums = [3,2,4], target = 6",
+      "expectedOutput": "[1,2]",
+      "isPublic": true
+    },
+    {
+      "input": "nums = [3,3], target = 6",
+      "expectedOutput": "[0,1]",
+      "isPublic": true
     }
-],
+  ],
 
-"supportedLanguages": [
-    "cpp",
-    "java",
-    "javascript",
-    "python"
-],
+  "supportedLanguages": ["cpp", "java", "javascript", "python"],
 
-"expectedTimeComplexity": "O(n)",
-
-"expectedSpaceComplexity": "O(n)",
-
-"companies": [
-    "Google",
-    "Amazon"
-],
-
-"order": 1
-```
-
+  "expectedTimeComplexity": "O(n)",
+  "expectedSpaceComplexity": "O(n)",
+  "companies": ["Google", "Amazon"],
+  "order": 1
 }
 
-### 2. Get Problem
+############################################################
+# 2. GET PROBLEM
+############################################################
 
 GET {{baseUrl}}/api/problem/two-sum
 
-### 3. Get Easy Array Problems
+############################################################
+# 3. GET EASY ARRAY PROBLEMS
+############################################################
 
 GET {{baseUrl}}/api/problem?topic=ARRAY&difficulty=EASY
 
-### 4. Update Problem
+############################################################
+# 4. UPDATE PROBLEM
+############################################################
 
 PUT {{baseUrl}}/api/problem/two-sum
 Content-Type: application/json
 Cookie: accessToken={{AdminAccessToken}}
 
 {
-"title": "Two Sum Updated",
-"difficulty": "MEDIUM",
-"companies": [
-"Google",
-"Amazon",
-"Microsoft"
-],
-"order": 2
+  "title": "Two Sum Updated",
+  "difficulty": "MEDIUM",
+  "companies": ["Google", "Amazon", "Microsoft"],
+  "order": 2
 }
 
-### 5. Delete Problem
+############################################################
+# 5. DELETE PROBLEM
+############################################################
 
 DELETE {{baseUrl}}/api/problem/two-sum
 Cookie: accessToken={{AdminAccessToken}}

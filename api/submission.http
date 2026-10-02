@@ -1,0 +1,102 @@
+```http
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+
+############################################################
+# CODE SUBMISSION API - CORRECT SOLUTIONS
+############################################################
+
+### Submit C++ Solution
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "cpp",
+  "studentCode": "class Solution { public: vector<int> twoSum(vector<int>& nums, int target) { unordered_map<int, int> mp; for (int i = 0; i < nums.size(); i++) { int need = target - nums[i]; if (mp.count(need)) return {mp[need], i}; mp[nums[i]] = i; } return {}; } };"
+}
+
+### Submit Java Solution
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "java",
+  "studentCode": "class Solution { public int[] twoSum(int[] nums, int target) { Map<Integer, Integer> map = new HashMap<>(); for (int i = 0; i < nums.length; i++) { int need = target - nums[i]; if (map.containsKey(need)) return new int[]{map.get(need), i}; map.put(nums[i], i); } return new int[]{}; } }"
+}
+
+### Submit JavaScript Solution
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "js",
+  "studentCode": "var twoSum = function(nums, target) { const map = new Map(); for (let i = 0; i < nums.length; i++) { const need = target - nums[i]; if (map.has(need)) return [map.get(need), i]; map.set(nums[i], i); } return []; };"
+}
+
+### Submit Python Solution
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "py",
+  "studentCode": "class Solution:\n    def twoSum(self, nums, target):\n        seen = {}\n        for i, num in enumerate(nums):\n            need = target - num\n            if need in seen:\n                return [seen[need], i]\n            seen[num] = i\n        return []"
+}
+
+############################################################
+# CODE SUBMISSION API - WRONG ANSWER TESTING
+############################################################
+
+### Submit C++ Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "cpp",
+  "studentCode": "class Solution { public: vector<int> twoSum(vector<int>& nums, int target) { return {0, 1}; } };"
+}
+
+### Submit Java Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "java",
+  "studentCode": "class Solution { public int[] twoSum(int[] nums, int target) { return new int[]{0, 1}; } }"
+}
+
+### Submit JavaScript Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "js",
+  "studentCode": "var twoSum = function(nums, target) { return [0, 1]; };"
+}
+
+### Submit Python Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "6abfa498932531ed1d542de6",
+  "language": "py",
+  "studentCode": "class Solution:\n    def twoSum(self, nums, target):\n        return [0, 1]"
+}
+
+GET {{baseUrl}}/api/submit/all
+Cookie: accessToken={{StudentAccessToken}}
