@@ -86,6 +86,8 @@ const StartCodeSubmissionResultConsumer = async () => {
           return;
         }
 
+        console.log("Student Id before Saving Code" , studentId  )
+
         // Find the submission without using jobId.
         const submission = await Submission.findOne({
           _id: submissionId,
@@ -187,6 +189,20 @@ const StartCodeSubmissionResultConsumer = async () => {
               runValidators: true,
             }
           );
+
+          console.log("========== FINALIZATION DB DEBUG ==========");
+console.log("Updated studentId:", updatedSubmission?.studentId);
+
+const rawFinalSubmission = await Submission.collection.findOne({
+    _id: submissionId,
+});
+
+console.log(
+    "Raw MongoDB studentId after finalization:",
+    rawFinalSubmission?.studentId
+);
+
+console.log("==========================================");
 
         // Another result may have finalized the submission first.
         if (!updatedSubmission) {

@@ -86,6 +86,7 @@ export const startCodeSubmissionConsumer = async () => {
 
         console.log("\n========== EXECUTING SUBMISSION ==========");
         console.log("Job ID:", jobId);
+        console.log("Student Id" , studentId )
         console.log("Submission ID:", submissionId);
         console.log("Language:", language);
 

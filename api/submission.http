@@ -6,6 +6,9 @@
 # CODE SUBMISSION API - CORRECT SOLUTIONS
 ############################################################
 
+GET {{baseUrl}}/api/submit/all
+Cookie: accessToken={{StudentAccessToken}}
+
 ### Submit C++ Solution
 POST {{baseUrl}}/api/submit/code
 Content-Type: application/json
@@ -98,5 +101,4 @@ Cookie: accessToken={{StudentAccessToken}}
   "studentCode": "class Solution:\n    def twoSum(self, nums, target):\n        return [0, 1]"
 }
 
-GET {{baseUrl}}/api/submit/all
-Cookie: accessToken={{StudentAccessToken}}
+

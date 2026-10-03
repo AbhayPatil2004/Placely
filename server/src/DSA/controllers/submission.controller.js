@@ -46,6 +46,7 @@ const SubmitCode = async (req, res) => {
         console.log("Student ID:", studentId);
         console.log("Problem ID:", problemId);
         console.log("Language:", language);
+        console.log("Student Id" , studentId)
 
         // Validate required fields
         if (
@@ -171,11 +172,25 @@ const SubmitCode = async (req, res) => {
             studentId,
             problemId: problem._id,
             language,
-            code,
+            code : studentCode,
             status: "QUEUED",
             totalTestCases: problem.testCases.length,
             passedTestCases: 0
         });
+
+        console.log("========== SUBMISSION DB DEBUG ==========");
+console.log("Input studentId:", studentId);
+console.log("Input studentId type:", typeof studentId);
+console.log("Mongoose saved studentId:", submission.studentId);
+console.log("Mongoose saved document:", submission.toObject());
+
+const rawSubmission = await Submission.collection.findOne({
+    _id: submission._id,
+});
+
+console.log("Raw MongoDB studentId:", rawSubmission?.studentId);
+console.log("Raw MongoDB document:", rawSubmission);
+console.log("==========================================");
 
         console.log("Submission created:", submission._id.toString());
 
