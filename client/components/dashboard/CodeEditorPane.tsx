@@ -3,19 +3,16 @@
 import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import type { OnChange, OnMount } from "@monaco-editor/react";
 import { EditorToolbar } from "./EditorToolbar";
-import { problemBoilerplate, type EditorLanguage } from "@/data/problemBoilerplate";
+import {
+  monacoLanguageByEditorLanguage,
+  problemBoilerplate,
+  type EditorLanguage,
+} from "@/data/problemBoilerplate";
 import type { ProblemLanguage } from "@/services/problemService";
 import { CodeExecutionPanel } from "./CodeExecutionPanel";
 import { useCodeExecution } from "@/hooks/useCodeExecution";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
-
-const monacoLanguage: Record<EditorLanguage, string> = {
-  Java: "java",
-  "C++": "cpp",
-  Python: "python",
-  JavaScript: "javascript",
-};
 
 export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<ProblemLanguage, string>> }) {
   const [language, setLanguage] = useState<EditorLanguage>("JavaScript");
@@ -96,7 +93,7 @@ export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<P
         <Suspense fallback={<div className="h-full min-h-[360px] animate-pulse bg-abyss p-5 font-mono text-sm text-muted-gray">Loading editor...</div>}>
           <MonacoEditor
             height="100%"
-            language={monacoLanguage[language]}
+            language={monacoLanguageByEditorLanguage[language]}
             theme="placely-dark"
             value={code}
             onChange={handleCodeChange}

@@ -27,11 +27,11 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   }
 
   return (
-    <div className="min-h-screen bg-abyss text-bright-gray">
+    <div className="relative z-0 min-h-screen bg-abyss text-bright-gray">
       <Sidebar />
-      <div className="md:pl-64">
+      <div className="relative z-0 md:pl-64">
         <Navbar />
-        <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-8 md:py-8">
+        <main className="relative z-0 min-h-[calc(100vh-4rem)] px-4 py-6 md:px-8 md:py-8">
           <div className="mx-auto w-full max-w-[1120px]">{children}</div>
         </main>
       </div>

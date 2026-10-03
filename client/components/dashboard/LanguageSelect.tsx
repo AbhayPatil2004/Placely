@@ -1,9 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import type { EditorLanguage } from "@/data/problemBoilerplate";
-
-const languages: EditorLanguage[] = ["Java", "C++", "Python", "JavaScript"];
+import { editorLanguages, type EditorLanguage } from "@/data/problemBoilerplate";
 
 export function LanguageSelect({
   language,
@@ -25,7 +23,7 @@ export function LanguageSelect({
         onChange={handleChange}
         className="rounded-buttons border border-graphite bg-abyss px-3 py-2 text-sm text-bright-gray outline-none transition-colors focus:border-lavender"
       >
-        {languages.map((option) => (
+        {editorLanguages.map((option) => (
           <option key={option} value={option}>
             {option}
           </option>

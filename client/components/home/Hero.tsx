@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { BrandLogo } from "@/components/layouts/BrandLogo";
 import { buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 
 export function Hero() {
   const { user } = useAuth();
@@ -13,14 +14,6 @@ export function Hero() {
     <section className="relative flex min-h-[80vh] items-center overflow-hidden">
       <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8">
         <div className="max-w-[760px]">
-          <Link
-            href="/"
-            className="hero-word block -translate-y-0 will-change-transform text-[11px] font-medium uppercase tracking-[0.38em] text-[#bcbcbc]"
-            aria-label="Placely home"
-          >
-            Placely
-          </Link>
-
           <h1 className="hero-word mt-6 block text-[clamp(3.3rem,7vw,7.5rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#eeeeee] will-change-transform">
             Prepare
             <br />
