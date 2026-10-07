@@ -295,6 +295,17 @@ const executeCpp = async (code, input = "") => {
         // Get final execution result
         const finalResult = await runExec.inspect();
 
+        if( memoryUsed > 128 * 1024 ){
+            return {
+                status: "memory_limit_exceeded",
+                stdout,
+                stderr: "Memory limit exceeded: 128 MB",
+                exitCode: 137,
+                executionTime,
+                memoryUsed
+            };
+        }
+        
         // Timeout result
         if (timedOut) {
             return {

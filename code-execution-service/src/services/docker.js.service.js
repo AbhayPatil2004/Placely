@@ -58,7 +58,7 @@ const executeJs = async (code, input = "") => {
             HostConfig: {
                 Binds: [`${workDir}:/app`],
                 NetworkMode: "none",
-                Memory: 256 * 1024 * 1024,
+                Memory: 128 * 1024 * 1024,
                 NanoCpus: 1_000_000_000,
                 PidsLimit: 50
             }
@@ -206,6 +206,17 @@ const executeJs = async (code, input = "") => {
 
         // 13. Get final execution result
         const finalResult = await runExec.inspect();
+
+        if( memoryUsed > 128 * 1024  ){
+            return {
+                status: "memory_limit_exceeded",
+                stdout,
+                stderr: "Memory limit exceeded: 128 MB",
+                exitCode: 137,
+                executionTime,
+                memoryUsed
+            };
+        }
 
         // 14. Return timeout result
         if (timedOut) {

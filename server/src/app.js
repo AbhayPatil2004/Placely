@@ -22,6 +22,7 @@ import Code from "./DSA/routes/execute.route.js"
 import Student from "./student/routes/Student.route.js"
 import Core from "./Core/Routes/core.routes.js"
 import Submit from "./DSA/routes/submission.route.js"
+import Solved from "./DSA/routes/solved.route.js"
 
 dotenv.config({
     path: fileURLToPath(new URL("../.env", import.meta.url)),
@@ -66,6 +67,7 @@ app.use("/api/code" , Code )
 app.use("/api/student" , Student)
 app.use("/api/core", Core)
 app.use("/api/submit" , Submit )
+app.use("/api/solved" , Solved )
 
 
 const PORT = process.env.PORT || 5000;

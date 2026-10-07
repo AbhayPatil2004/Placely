@@ -1,6 +1,7 @@
 
 @baseUrl = {{$dotenv BASEURL}}
 @AdminAccessToken = {{$dotenv ADMIN_TOKEN}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
 
 ############################################################
 # 1. ADD PROBLEM
@@ -11,81 +12,123 @@ Content-Type: application/json
 Cookie: accessToken={{AdminAccessToken}}
 
 {
-  "title": "Two Sum",
-  "slug": "two-sum",
-  "problemStatement": "Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to target.",
-
+  "title": "Binary Search",
+  "slug": "binary-search",
+  "problemStatement": "Given a sorted array of integers nums and an integer target, return the index of target if it exists in the array. Otherwise, return -1.",
+  
   "topic": "ARRAY",
-  "subTopics": ["HASHING"],
-  "tags": ["array", "hashing"],
-  "pattern": ["HASHING"],
+  "subTopics": ["BINARY_SEARCH"],
+  "tags": ["array", "binary-search", "searching"],
+  "pattern": ["BINARY_SEARCH"],
   "difficulty": "EASY",
 
-  "inputFormat": "The driver defines the array and target for each test case.",
-  "outputFormat": "Return the indices of the two numbers that add up to the target.",
+  "inputFormat": "The driver defines the sorted array and target for each test case.",
+
+  "outputFormat": "Return the index of target if it exists in the array. Otherwise, return -1.",
 
   "constraints": [
-    "2 <= nums.length <= 10^4",
-    "-10^9 <= nums[i] <= 10^9",
-    "-10^9 <= target <= 10^9"
+    "1 <= nums.length <= 10^4",
+    "-10^4 <= nums[i] <= 10^4",
+    "nums is sorted in ascending order",
+    "-10^4 <= target <= 10^4"
   ],
 
   "examples": [
     {
-      "input": "nums = [2,7,11,15], target = 9",
-      "output": "[0,1]"
+      "input": "nums = [-1,0,3,5,9,12], target = 9",
+      "output": "4"
     },
     {
-      "input": "nums = [3,2,4], target = 6",
-      "output": "[1,2]"
+      "input": "nums = [-1,0,3,5,9,12], target = 2",
+      "output": "-1"
     }
   ],
 
   "starterCode": {
-    "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your code here\n        return {};\n    }\n};",
-    "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}",
-    "javascript": "var twoSum = function(nums, target) {\n    // Write your code here\n    return [];\n};",
-    "python": "class Solution:\n    def twoSum(self, nums, target):\n        # Write your code here\n        return []"
+    "cpp": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        // Write your code here\n        return -1;\n    }\n};",
+
+    "java": "class Solution {\n    public int search(int[] nums, int target) {\n        // Write your code here\n        return -1;\n    }\n}",
+
+    "javascript": "var search = function(nums, target) {\n    // Write your code here\n    return -1;\n};",
+
+    "python": "class Solution:\n    def search(self, nums, target):\n        # Write your code here\n        return -1"
   },
 
   "driverCode": {
-    "cpp": "int main() {\n    Solution solution;\n    int total = 3, passed = 0;\n    vector<string> failedCases;\n    auto check = [&](int tc, vector<int> nums, int target, vector<int> expected) {\n        vector<int> actual;\n        try { actual = solution.twoSum(nums, target); }\n        catch (...) { failedCases.push_back(\"{\\\"testCase\\\":\" + to_string(tc) + \",\\\"expectedOutput\\\":\\\"test expected\\\",\\\"actualOutput\\\":\\\"exception\\\",\\\"isPublic\\\":true}\"); return; }\n        sort(actual.begin(), actual.end());\n        sort(expected.begin(), expected.end());\n        if (actual == expected) passed++;\n        else {\n            auto fmt = [](const vector<int>& v) { string s; for (int i = 0; i < (int)v.size(); i++) { if (i) s += \" \"; s += to_string(v[i]); } return s; };\n            failedCases.push_back(\"{\\\"testCase\\\":\" + to_string(tc) + \",\\\"expectedOutput\\\":\\\"\" + fmt(expected) + \"\\\",\\\"actualOutput\\\":\\\"\" + fmt(actual) + \"\\\",\\\"isPublic\\\":true}\");\n        }\n    };\n    check(1, {2,7,11,15}, 9, {0,1});\n    check(2, {3,2,4}, 6, {1,2});\n    check(3, {3,3}, 6, {0,1});\n    cout << \"{\\\"totalTestCases\\\":\" << total << \",\\\"passedTestCases\\\":\" << passed << \",\\\"failedTestCases\\\":[\";\n    for (int i = 0; i < (int)failedCases.size(); i++) { if (i) cout << \",\"; cout << failedCases[i]; }\n    cout << \"]}\" << endl;\n    return 0;\n}",
-    "java": "public class Main {\n    public static void main(String[] args) {\n        Solution solution = new Solution();\n        int total = 3, passed = 0;\n        List<String> failed = new ArrayList<>();\n        int[][] nums = {{2,7,11,15},{3,2,4},{3,3}};\n        int[] targets = {9,6,6};\n        int[][] expected = {{0,1},{1,2},{0,1}};\n        for (int i = 0; i < total; i++) {\n            try {\n                int[] actual = solution.twoSum(nums[i], targets[i]);\n                Arrays.sort(actual);\n                int[] exp = expected[i].clone();\n                Arrays.sort(exp);\n                if (Arrays.equals(actual, exp)) passed++;\n                else failed.add(\"{\\\"testCase\\\":\"+(i+1)+\",\\\"expectedOutput\\\":\\\"\"+Arrays.toString(exp)+\"\\\",\\\"actualOutput\\\":\\\"\"+Arrays.toString(actual)+\"\\\",\\\"isPublic\\\":true}\");\n            } catch (Throwable e) {\n                failed.add(\"{\\\"testCase\\\":\"+(i+1)+\",\\\"expectedOutput\\\":\\\"expected result\\\",\\\"actualOutput\\\":\\\"exception\\\",\\\"isPublic\\\":true}\");\n            }\n        }\n        System.out.print(\"{\\\"totalTestCases\\\":\"+total+\",\\\"passedTestCases\\\":\"+passed+\",\\\"failedTestCases\\\":[\"+String.join(\",\",failed)+\"]}\");\n    }\n}",
-    "javascript": "const numsCases = [[2,7,11,15],[3,2,4],[3,3]];\nconst targets = [9,6,6];\nconst expected = [[0,1],[1,2],[0,1]];\nlet passed = 0;\nconst failedTestCases = [];\nfor (let i = 0; i < numsCases.length; i++) {\n    try {\n        const actual = twoSum(numsCases[i], targets[i]);\n        const normalized = Array.from(actual || []).sort((a,b) => a-b);\n        const exp = [...expected[i]].sort((a,b) => a-b);\n        if (JSON.stringify(normalized) === JSON.stringify(exp)) passed++;\n        else failedTestCases.push({testCase:i+1, expectedOutput:JSON.stringify(exp), actualOutput:JSON.stringify(normalized), isPublic:true});\n    } catch (e) {\n        failedTestCases.push({testCase:i+1, expectedOutput:JSON.stringify(expected[i]), actualOutput:\"exception\", isPublic:true});\n    }\n}\nconsole.log(JSON.stringify({totalTestCases:numsCases.length, passedTestCases:passed, failedTestCases}));",
-    "python": "import json\nnums_cases = [[2,7,11,15],[3,2,4],[3,3]]\ntargets = [9,6,6]\nexpected = [[0,1],[1,2],[0,1]]\npassed = 0\nfailed_test_cases = []\nsolution = Solution()\nfor i, nums in enumerate(nums_cases):\n    try:\n        actual = solution.twoSum(nums, targets[i])\n        actual = sorted(actual or [])\n        exp = sorted(expected[i])\n        if actual == exp:\n            passed += 1\n        else:\n            failed_test_cases.append({\"testCase\": i+1, \"expectedOutput\": json.dumps(exp), \"actualOutput\": json.dumps(actual), \"isPublic\": True})\n    except Exception:\n        failed_test_cases.append({\"testCase\": i+1, \"expectedOutput\": json.dumps(expected[i]), \"actualOutput\": \"exception\", \"isPublic\": True})\nprint(json.dumps({\"totalTestCases\": len(nums_cases), \"passedTestCases\": passed, \"failedTestCases\": failed_test_cases}))"
+    "cpp": "int main() {\n    Solution solution;\n    int total = 5, passed = 0;\n    vector<string> testCasesResult;\n\n    auto check = [&](int tc, vector<int> nums, int target, int expected) {\n        string logs;\n        stringstream buffer;\n        streambuf* oldCout = cout.rdbuf(buffer.rdbuf());\n\n        int actual = -1;\n        bool runtimeError = false;\n\n        try {\n            actual = solution.search(nums, target);\n        } catch (...) {\n            runtimeError = true;\n        }\n\n        cout.rdbuf(oldCout);\n        logs = buffer.str();\n\n        string status = (!runtimeError && actual == expected) ? \"passed\" : \"wrong_answer\";\n        if (status == \"passed\") passed++;\n\n        testCasesResult.push_back(\n            \"{\\\"testCase\\\":\\\"nums = [\" + [&]() { string s; for (int i = 0; i < nums.size(); i++) { if (i) s += \",\"; s += to_string(nums[i]); } return s; }() + \"], target = \" + to_string(target) + \"\\\",\\\"expectedOutput\\\":\\\"\" + to_string(expected) + \"\\\",\\\"actualOutput\\\":\\\"\" + to_string(actual) + \"\\\",\\\"logs\\\":\\\"\" + logs + \"\\\",\\\"status\\\":\\\"\" + status + \"\\\"}\"\n        );\n    };\n\n    check(1, {-1,0,3,5,9,12}, 9, 4);\n    check(2, {-1,0,3,5,9,12}, 2, -1);\n    check(3, {1,3,5,7,9}, 1, 0);\n    check(4, {1,3,5,7,9}, 9, 4);\n    check(5, {1,3,5,7,9}, 6, -1);\n\n    cout << \"{\\\"totalTestCases\\\":\" << total\n         << \",\\\"passedTestCases\\\":\" << passed\n         << \",\\\"testCasesResult\\\":[\";\n\n    for (int i = 0; i < testCasesResult.size(); i++) {\n        if (i) cout << \",\";\n        cout << testCasesResult[i];\n    }\n\n    cout << \"]}\" << endl;\n    return 0;\n}",
+
+    "java": "public class Main {\n    public static void main(String[] args) {\n        Solution solution = new Solution();\n        int[][] numsCases = {\n            {-1,0,3,5,9,12},\n            {-1,0,3,5,9,12},\n            {1,3,5,7,9},\n            {1,3,5,7,9},\n            {1,3,5,7,9}\n        };\n        int[] targets = {9,2,1,9,6};\n        int[] expected = {4,-1,0,4,-1};\n        int passed = 0;\n        List<String> testCasesResult = new ArrayList<>();\n\n        for (int i = 0; i < numsCases.length; i++) {\n            ByteArrayOutputStream buffer = new ByteArrayOutputStream();\n            PrintStream oldOut = System.out;\n            System.setOut(new PrintStream(buffer));\n\n            int actual = -1;\n            boolean runtimeError = false;\n\n            try {\n                actual = solution.search(numsCases[i], targets[i]);\n            } catch (Throwable e) {\n                runtimeError = true;\n            }\n\n            System.setOut(oldOut);\n            String logs = buffer.toString();\n\n            String status = (!runtimeError && actual == expected[i]) ? \"passed\" : \"wrong_answer\";\n            if (status.equals(\"passed\")) passed++;\n\n            testCasesResult.add(\n                \"{\\\"testCase\\\":\\\"test case \" + (i + 1) + \"\\\",\\\"expectedOutput\\\":\\\"\" + expected[i] + \"\\\",\\\"actualOutput\\\":\\\"\" + actual + \"\\\",\\\"logs\\\":\\\"\" + logs.replace(\"\\\\\", \"\\\\\\\\\").replace(\"\\\"\", \"\\\\\\\"\").replace(\"\\n\", \"\\\\n\") + \"\\\",\\\"status\\\":\\\"\" + status + \"\\\"}\"\n            );\n        }\n\n        System.out.print(\n            \"{\\\"totalTestCases\\\":\" + numsCases.length +\n            \",\\\"passedTestCases\\\":\" + passed +\n            \",\\\"testCasesResult\\\":[\" +\n            String.join(\",\", testCasesResult) + \"]}\"\n        );\n    }\n}",
+
+    "javascript": "const numsCases = [[-1,0,3,5,9,12],[-1,0,3,5,9,12],[1,3,5,7,9],[1,3,5,7,9],[1,3,5,7,9]];\nconst targets = [9,2,1,9,6];\nconst expected = [4,-1,0,4,-1];\nlet passed = 0;\nconst testCasesResult = [];\n\nfor (let i = 0; i < numsCases.length; i++) {\n    let logs = \"\";\n    const originalLog = console.log;\n    console.log = (...args) => {\n        logs += args.map(String).join(\" \") + \"\\n\";\n    };\n\n    let actual = -1;\n    let runtimeError = false;\n\n    try {\n        actual = search(numsCases[i], targets[i]);\n    } catch (e) {\n        runtimeError = true;\n    }\n\n    console.log = originalLog;\n\n    const status = (!runtimeError && actual === expected[i]) ? \"passed\" : \"wrong_answer\";\n    if (status === \"passed\") passed++;\n\n    testCasesResult.push({\n        testCase: `nums = [${numsCases[i].join(\",\")}], target = ${targets[i]}`,\n        expectedOutput: String(expected[i]),\n        actualOutput: String(actual),\n        logs,\n        status\n    });\n}\n\nconsole.log(JSON.stringify({\n    totalTestCases: numsCases.length,\n    passedTestCases: passed,\n    testCasesResult\n}));",
+
+    "python": "import json\nimport io\nimport sys\n\nnums_cases = [\n    [-1,0,3,5,9,12],\n    [-1,0,3,5,9,12],\n    [1,3,5,7,9],\n    [1,3,5,7,9],\n    [1,3,5,7,9]\n]\n\ntargets = [9,2,1,9,6]\nexpected = [4,-1,0,4,-1]\n\nsolution = Solution()\npassed = 0\ntest_cases_result = []\n\nfor i, nums in enumerate(nums_cases):\n    buffer = io.StringIO()\n    old_stdout = sys.stdout\n    sys.stdout = buffer\n\n    actual = -1\n    runtime_error = False\n\n    try:\n        actual = solution.search(nums, targets[i])\n    except Exception:\n        runtime_error = True\n\n    sys.stdout = old_stdout\n    logs = buffer.getvalue()\n\n    status = \"passed\" if not runtime_error and actual == expected[i] else \"wrong_answer\"\n\n    if status == \"passed\":\n        passed += 1\n\n    test_cases_result.append({\n        \"testCase\": f\"nums = [{','.join(map(str, nums))}], target = {targets[i]}\",\n        \"expectedOutput\": str(expected[i]),\n        \"actualOutput\": str(actual),\n        \"logs\": logs,\n        \"status\": status\n    })\n\nprint(json.dumps({\n    \"totalTestCases\": len(nums_cases),\n    \"passedTestCases\": passed,\n    \"testCasesResult\": test_cases_result\n}))"
   },
 
   "testCases": [
     {
-      "input": "nums = [2,7,11,15], target = 9",
-      "expectedOutput": "[0,1]",
+      "input": "nums = [-1,0,3,5,9,12], target = 9",
+      "expectedOutput": "4",
       "isPublic": true
     },
     {
-      "input": "nums = [3,2,4], target = 6",
-      "expectedOutput": "[1,2]",
+      "input": "nums = [-1,0,3,5,9,12], target = 2",
+      "expectedOutput": "-1",
       "isPublic": true
     },
     {
-      "input": "nums = [3,3], target = 6",
-      "expectedOutput": "[0,1]",
+      "input": "nums = [1,3,5,7,9], target = 1",
+      "expectedOutput": "0",
+      "isPublic": true
+    },
+    {
+      "input": "nums = [1,3,5,7,9], target = 9",
+      "expectedOutput": "4",
+      "isPublic": true
+    },
+    {
+      "input": "nums = [1,3,5,7,9], target = 6",
+      "expectedOutput": "-1",
       "isPublic": true
     }
   ],
 
-  "supportedLanguages": ["cpp", "java", "javascript", "python"],
+  "supportedLanguages": [
+    "cpp",
+    "java",
+    "javascript",
+    "python"
+  ],
 
-  "expectedTimeComplexity": "O(n)",
-  "expectedSpaceComplexity": "O(n)",
-  "companies": ["Google", "Amazon"],
-  "order": 1
+  "expectedTimeComplexity": "O(log n)",
+  "expectedSpaceComplexity": "O(1)",
+
+  "companies": [
+    "Google",
+    "Amazon",
+    "Microsoft"
+  ],
+
+  "order": 2
 }
+
+
+
 
 ############################################################
 # 2. GET PROBLEM
 ############################################################
 
-GET {{baseUrl}}/api/problem/two-sum
+GET {{baseUrl}}/api/problem/binary-search
+
+
+############################################################
+# 2. GET Problem Sheet
+############################################################
+
+GET {{baseUrl}}/api/problem/sheet
+Cookie: accessToken={{StudentAccessToken}}
+
+
 
 ############################################################
 # 3. GET EASY ARRAY PROBLEMS

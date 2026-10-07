@@ -46,7 +46,7 @@ const SubmitCode = async (req, res) => {
         console.log("Student ID:", studentId);
         console.log("Problem ID:", problemId);
         console.log("Language:", language);
-        console.log("Student Id" , studentId)
+        console.log("Student Id", studentId)
 
         // Validate required fields
         if (
@@ -160,6 +160,23 @@ const SubmitCode = async (req, res) => {
             driverCode
         ].join("\n");
 
+        const existingSubmission = await Submission.findOne({
+            studentId,
+            problemId: problem._id,
+            code: studentCode
+        });
+
+        if (existingSubmission) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Please modify the code before submitting it again",
+                    {}
+                )
+            );
+        }
+
+
         console.log("Execution code generated successfully");
 
         // Generate unique job ID
@@ -172,25 +189,25 @@ const SubmitCode = async (req, res) => {
             studentId,
             problemId: problem._id,
             language,
-            code : studentCode,
+            code: studentCode,
             status: "QUEUED",
             totalTestCases: problem.testCases.length,
             passedTestCases: 0
         });
 
         console.log("========== SUBMISSION DB DEBUG ==========");
-console.log("Input studentId:", studentId);
-console.log("Input studentId type:", typeof studentId);
-console.log("Mongoose saved studentId:", submission.studentId);
-console.log("Mongoose saved document:", submission.toObject());
+        console.log("Input studentId:", studentId);
+        console.log("Input studentId type:", typeof studentId);
+        console.log("Mongoose saved studentId:", submission.studentId);
+        console.log("Mongoose saved document:", submission.toObject());
 
-const rawSubmission = await Submission.collection.findOne({
-    _id: submission._id,
-});
+        const rawSubmission = await Submission.collection.findOne({
+            _id: submission._id,
+        });
 
-console.log("Raw MongoDB studentId:", rawSubmission?.studentId);
-console.log("Raw MongoDB document:", rawSubmission);
-console.log("==========================================");
+        console.log("Raw MongoDB studentId:", rawSubmission?.studentId);
+        console.log("Raw MongoDB document:", rawSubmission);
+        console.log("==========================================");
 
         console.log("Submission created:", submission._id.toString());
 
@@ -290,64 +307,132 @@ console.log("==========================================");
 };
 
 
+const GetStudentProblemSubmissions = async (req, res) => {
+    try {
+
+        const studentId = GetStudentId(req);
+        const { problemId } = req.params;
+
+        console.log("studentId:", studentId);
+        console.log("problemId:", problemId);
+
+        const submissions = await Submission.find({
+            studentId,
+            problemId
+        });
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Submissions fetched successfully",
+                {
+                    total: submissions.length,
+                    submissions,
+                }
+            )
+        );
+
+    } catch (error) {
+
+        console.error("GetStudentProblemSubmissions Error:", error);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                error.message,
+                {}
+            )
+        );
+    }
+};
+
 const GetAllSubmissions = async (req, res) => {
-  try {
-    const submissions = await Submission.find()
-      .sort({ createdAt: -1 })
-      .populate("studentId", "name email")
-      .populate("problemId", "title titleSlug")
-      .lean();
+    try {
+        const submissions = await Submission.find()
+            .sort({ createdAt: -1 })
+            .populate("studentId", "name email")
+            .populate("problemId", "title titleSlug")
+            .lean();
 
-    console.log("\n========== ALL SUBMISSIONS ==========");
-    console.log("Total submissions:", submissions.length);
+        console.log("\n========== ALL SUBMISSIONS ==========");
+        console.log("Total submissions:", submissions.length);
 
-    submissions.forEach((submission, index) => {
-      console.log(`\nSubmission ${index + 1}`);
-      console.log("Submission ID:", submission._id);
-      console.log("Student ID:", submission.studentId?._id);
-      console.log("Problem:", submission.problemId?.titleSlug);
-      console.log("Language:", submission.language);
-      console.log("Status:", submission.status);
-      console.log(
-        "Passed Test Cases:",
-        `${submission.passedTestCases}/${submission.totalTestCases}`
-      );
-      console.log("Execution Time:", submission.executionTime);
-      console.log("Memory Used:", submission.memoryUsed);
-      console.log("Exit Code:", submission.exitCode);
-      console.log("Error:", submission.errorMessage);
-      console.log("Created At:", submission.createdAt);
-      console.log("Completed At:", submission.completedAt);
-    });
+        submissions.forEach((submission, index) => {
+            console.log(`\nSubmission ${index + 1}`);
+            console.log("Submission ID:", submission._id);
+            console.log("Student ID:", submission.studentId?._id);
+            console.log("Problem:", submission.problemId?.titleSlug);
+            console.log("Language:", submission.language);
+            console.log("Status:", submission.status);
+            console.log(
+                "Passed Test Cases:",
+                `${submission.passedTestCases}/${submission.totalTestCases}`
+            );
+            console.log("Execution Time:", submission.executionTime);
+            console.log("Memory Used:", submission.memoryUsed);
+            console.log("Exit Code:", submission.exitCode);
+            console.log("Error:", submission.errorMessage);
+            console.log("Created At:", submission.createdAt);
+            console.log("Completed At:", submission.completedAt);
+        });
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        "Submissions fetched successfully",
-        {
-          total: submissions.length,
-          submissions,
-        }
-      )
-    );
-  } catch (error) {
-    console.error("GetAllSubmissions error:", error.message);
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Submissions fetched successfully",
+                {
+                    total: submissions.length,
+                    submissions,
+                }
+            )
+        );
+    } catch (error) {
+        console.error("GetAllSubmissions error:", error.message);
 
-    return res.status(500).json(
-      new ApiError(
-        500,
-        "Failed to fetch submissions",
-        {}
-      )
-    );
-  }
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Failed to fetch submissions",
+                {}
+            )
+        );
+    }
+};
+
+const DeleteAllSubmissions = async (req, res) => {
+    try {
+        const result = await Submission.deleteMany({});
+
+        console.log("\n========== DELETE ALL SUBMISSIONS ==========");
+        console.log("Total submissions deleted:", result.deletedCount);
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "All submissions deleted successfully",
+                {
+                    deletedCount: result.deletedCount,
+                }
+            )
+        );
+    } catch (error) {
+        console.error("DeleteAllSubmissions error:", error.message);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Failed to delete submissions",
+                {}
+            )
+        );
+    }
 };
 
 
 
-
-
 export {
-    SubmitCode ,
-    GetAllSubmissions
+    SubmitCode,
+    GetAllSubmissions,
+    DeleteAllSubmissions,
+    GetStudentProblemSubmissions
 }

@@ -1,6 +1,8 @@
 import Problem from "../models/problem.model.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
+import Solved from "../models/solved.model.js";
+import { GetStudentId } from "../../utils/studentDetails.js";
 
 const AddProblem = async (req, res) => {
     try {
@@ -918,7 +920,6 @@ const UpdateProblem = async (req, res) => {
     }
 };
 
-
 const GetProblem = async (req, res) => {
     try {
         const { slug } = req.params;
@@ -957,7 +958,184 @@ const GetProblem = async (req, res) => {
     }
 };
 
+const GetProblemsSheet = async (req, res) => {
 
+    try {
+
+        const studentId = GetStudentId(req);
+
+        const problems = await Problem.find(
+            { isActive: true },
+            {
+                title: 1,
+                slug: 1,
+                topic: 1,
+                difficulty: 1,
+                companies: 1,
+                order: 1
+            }
+        )
+            .sort({ order: 1 })
+            .lean();
+
+        const statusMap = new Map();
+
+        console.log("Student ID:", studentId);
+
+        if (studentId) {
+
+            const solvedRecords = await Solved.find(
+                { studentId },
+                {
+                    problemId: 1,
+                    status: 1
+                }
+            ).lean();
+
+            console.log("Solved Records:", solvedRecords);
+
+            for (const record of solvedRecords) {
+
+                statusMap.set(
+                    record.problemId.toString(),
+                    record.status
+                );
+            }
+        }
+
+        // Topic order
+        const topicOrder = {
+            INTRODUCTION: 1,
+            BASICS: 2,
+            CONDITIONALS: 3,
+            LOOPS: 4,
+            FUNCTIONS: 5,
+
+            ARRAY: 6,
+            STRING: 7,
+            MATRIX: 8,
+
+            TIME_SPACE_COMPLEXITY: 9,
+
+            SEARCHING: 10,
+            SORTING: 11,
+            BINARY_SEARCH: 12,
+            HASHING: 13,
+
+            TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM: 14,
+            OOP: 15,
+
+
+            LINKED_LIST: 16,
+
+            STACK: 17,
+            QUEUE: 18,
+            DEQUE: 19,
+
+            HEAP: 20,
+
+            RECURSION: 21,
+            BACKTRACKING: 22,
+
+            TREE: 23,
+            BINARY_SEARCH_TREE: 24,
+            TRIE: 25,
+
+            GREEDY: 26,
+            DIVIDE_AND_CONQUER: 27,
+
+            GRAPH: 28,
+
+            DYNAMIC_PROGRAMMING: 29,
+
+            BIT_MANIPULATION: 30,
+            MATH: 31
+        };
+
+        // Difficulty order
+        const difficultyOrder = {
+            EASY: 1,
+            MEDIUM: 2,
+            HARD: 3
+        };
+
+        const groupedProblems = {};
+
+        // Group problems by topic
+        for (const problem of problems) {
+
+            if (!groupedProblems[problem.topic]) {
+                groupedProblems[problem.topic] = [];
+            }
+
+            groupedProblems[problem.topic].push({
+                id: problem._id,
+                title: problem.title,
+                slug: problem.slug,
+                difficulty: problem.difficulty,
+                companies: problem.companies || [],
+
+                status:
+                    statusMap.get(problem._id.toString()) ||
+                    "NOT_SOLVED",
+
+                order: problem.order
+            });
+        }
+
+        // Sort problems inside each topic
+        // EASY -> MEDIUM -> HARD -> order
+        for (const topic of Object.keys(groupedProblems)) {
+
+            groupedProblems[topic].sort((a, b) => {
+
+                const difficultyDifference =
+                    difficultyOrder[a.difficulty] -
+                    difficultyOrder[b.difficulty];
+
+                if (difficultyDifference !== 0) {
+                    return difficultyDifference;
+                }
+
+                return a.order - b.order;
+            });
+        }
+
+        // Create final response in fixed topic order
+        const orderedProblems = {};
+
+        Object.keys(topicOrder).forEach((topic) => {
+
+            if (groupedProblems[topic]) {
+                orderedProblems[topic] =
+                    groupedProblems[topic].map(
+                        ({ order, ...problem }) => problem
+                    );
+            }
+
+        });
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Problems sheet fetched successfully",
+                orderedProblems
+            )
+        );
+
+    } catch (error) {
+
+        console.error("GetProblemsSheet Error:", error);
+
+        return res.status(500).json(
+            new ApiError(
+                500,
+                "Internal Server Error",
+                error.message
+            )
+        );
+    }
+};
 
 const GetProblemByTopic = async (req, res) => {
     try {
@@ -1127,8 +1305,9 @@ const DeleteProblem = async (req, res) => {
 
 export {
     AddProblem,
-    UpdateProblem ,
-    GetProblem ,
-    GetProblemByTopic ,
+    UpdateProblem,
+    GetProblem,
+    GetProblemsSheet,
+    GetProblemByTopic,
     DeleteProblem
 }

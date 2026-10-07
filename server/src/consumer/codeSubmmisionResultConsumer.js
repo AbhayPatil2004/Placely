@@ -1,8 +1,9 @@
-
 import { getChannel } from "../config/rabbitmq.js";
 
 import Submission from "../DSA/models/submission.model.js";
 import { SendToStudent } from "../websocket/webManager.js";
+import Solved from "../DSA/models/solved.model.js";
+import Problem from "../DSA/models/problem.model.js";
 
 const CODE_SUBMISSION_RESULT_QUEUE_NAME =
   "code-submission-result.queue";
@@ -10,7 +11,7 @@ const CODE_SUBMISSION_RESULT_QUEUE_NAME =
 const FINAL_STATUSES = [
   "ACCEPTED",
   "WRONG_ANSWER",
-  "COMPILATION_ERROR",
+  "COMPILE_ERROR",
   "RUNTIME_ERROR",
   "TIME_LIMIT_EXCEEDED",
   "MEMORY_LIMIT_EXCEEDED",
@@ -20,7 +21,7 @@ const FINAL_STATUSES = [
 const ALLOWED_VERDICTS = [
   "ACCEPTED",
   "WRONG_ANSWER",
-  "COMPILATION_ERROR",
+  "COMPILE_ERROR",
   "RUNTIME_ERROR",
   "TIME_LIMIT_EXCEEDED",
   "MEMORY_LIMIT_EXCEEDED",
@@ -35,7 +36,9 @@ const StartCodeSubmissionResultConsumer = async () => {
 
   await channel.assertQueue(
     CODE_SUBMISSION_RESULT_QUEUE_NAME,
-    { durable: true }
+    {
+      durable: true,
+    }
   );
 
   channel.prefetch(1);
@@ -51,11 +54,17 @@ const StartCodeSubmissionResultConsumer = async () => {
 
       let result;
 
-      // Parse the RabbitMQ message.
+      // Parse RabbitMQ message
       try {
-        result = JSON.parse(message.content.toString());
+        result = JSON.parse(
+          message.content.toString()
+        );
       } catch (error) {
-        console.error("Invalid result JSON:", error.message);
+        console.error(
+          "Invalid result JSON:",
+          error.message
+        );
+
         channel.nack(message, false, false);
         return;
       }
@@ -67,7 +76,8 @@ const StartCodeSubmissionResultConsumer = async () => {
           verdict,
           totalTestCases,
           passedTestCases,
-          failedTestCases,
+          testCasesResult,
+          stdout,
           stderr,
           exitCode,
           executionTime,
@@ -76,7 +86,7 @@ const StartCodeSubmissionResultConsumer = async () => {
           completedAt,
         } = result;
 
-        // Validate required identifiers.
+        // Validate required identifiers
         if (!submissionId || !studentId) {
           console.error(
             "Result is missing submissionId or studentId"
@@ -86,9 +96,12 @@ const StartCodeSubmissionResultConsumer = async () => {
           return;
         }
 
-        console.log("Student Id before Saving Code" , studentId  )
+        console.log(
+          "Student Id before Saving Code:",
+          studentId
+        );
 
-        // Find the submission without using jobId.
+        // Find submission
         const submission = await Submission.findOne({
           _id: submissionId,
           studentId,
@@ -100,13 +113,16 @@ const StartCodeSubmissionResultConsumer = async () => {
             submissionId
           );
 
-          // Acknowledge to avoid repeatedly processing this message.
           channel.ack(message);
           return;
         }
 
-        // Ignore duplicate results for finalized submissions.
-        if (FINAL_STATUSES.includes(submission.status)) {
+        // Ignore duplicate results
+        if (
+          FINAL_STATUSES.includes(
+            submission.status
+          )
+        ) {
           console.log(
             "Submission already finalized:",
             submissionId
@@ -116,14 +132,24 @@ const StartCodeSubmissionResultConsumer = async () => {
           return;
         }
 
-        // Validate the execution verdict.
-        if (!ALLOWED_VERDICTS.includes(verdict)) {
-          throw new Error("Invalid submission verdict");
+        // Validate verdict
+        if (
+          !ALLOWED_VERDICTS.includes(verdict)
+        ) {
+          throw new Error(
+            `Invalid submission verdict: ${verdict}`
+          );
         }
 
-        const total = Number(totalTestCases);
-        const passed = Number(passedTestCases);
+        const total = Number(
+          totalTestCases
+        );
 
+        const passed = Number(
+          passedTestCases
+        );
+
+        // Validate test-case counts
         if (
           !Number.isInteger(total) ||
           !Number.isInteger(passed) ||
@@ -131,58 +157,187 @@ const StartCodeSubmissionResultConsumer = async () => {
           passed < 0 ||
           passed > total
         ) {
-          throw new Error("Invalid test-case counts");
+          throw new Error(
+            "Invalid test-case counts"
+          );
         }
 
+        // Validate testCasesResult
+        const safeTestCasesResult =
+          Array.isArray(testCasesResult)
+            ? testCasesResult.map(
+              (testCase) => ({
+                testCase: String(
+                  testCase?.testCase ?? ""
+                ),
+
+                expectedOutput: String(
+                  testCase?.expectedOutput ?? ""
+                ),
+
+                actualOutput: String(
+                  testCase?.actualOutput ?? ""
+                ),
+
+                logs: String(
+                  testCase?.logs ?? ""
+                ),
+
+                status:
+                  testCase?.status ===
+                    "passed"
+                    ? "passed"
+                    : "wrong_answer",
+              })
+            )
+            : [];
+
+        // Validate result count
+        if (
+          safeTestCasesResult.length !==
+          total
+        ) {
+          throw new Error(
+            "Invalid testCasesResult count"
+          );
+        }
+
+        // ACCEPTED must pass every test case
         if (
           verdict === "ACCEPTED" &&
-          (total < 1 || passed !== total)
+          (total < 1 ||
+            passed !== total)
         ) {
-          throw new Error("Inconsistent ACCEPTED result");
+          throw new Error(
+            "Inconsistent ACCEPTED result"
+          );
         }
 
-        // Only expose failed-test details explicitly marked public.
-        const safeFailedTestCases = Array.isArray(failedTestCases)
-          ? failedTestCases
-              .filter(
-                (testCase) => testCase?.isPublic === true
-              )
-              .map((testCase) => ({
-                testCase: testCase.testCase,
-                expectedOutput: String(
-                  testCase.expectedOutput ?? ""
-                ),
-                actualOutput: String(
-                  testCase.actualOutput ?? ""
-                ),
-              }))
-          : [];
+        const problem = await Submission.findById( submissionId );
 
-        // Save the result in MongoDB.
+        console.log("Submission found:", problem);
+
+        if (!problem) {
+          console.log("❌ Submission not found:", submissionId);
+          return;
+        }
+
+        const { problemId } = problem;
+
+        console.log("📌 Problem ID:", problemId);
+        console.log("👤 Student ID:", studentId);
+        console.log("🏆 Verdict:", verdict);
+        console.log("🧪 Passed Test Cases:", passedTestCases);
+        console.log("🧪 Total Test Cases:", totalTestCases);
+
+        const solvedStatus = await Solved.findOne({
+          studentId,
+          problemId
+        }).select("status");
+
+        const currentStatus = solvedStatus?.status;
+
+        console.log("📊 Existing Solved Status:", currentStatus);
+
+        if (verdict === "ACCEPTED" && currentStatus !== "SOLVED") {
+
+          console.log("✅ Marking problem as SOLVED");
+
+          await Solved.findOneAndUpdate(
+            {
+              studentId,
+              problemId
+            },
+            {
+              status: "SOLVED"
+            },
+            {
+              upsert: true,
+              new: true
+            }
+          );
+
+          console.log("✅ Solved status updated successfully");
+
+        } else if (
+          currentStatus !== "SOLVED" &&
+          (
+            passedTestCases > totalTestCases / 2 ||
+            verdict === "TIME_LIMIT_EXCEEDED" ||
+            verdict === "MEMORY_LIMIT_EXCEEDED"
+          )
+        ) {
+
+          console.log("⚠️ Marking problem as ATTEMPTED");
+
+          console.log(
+            "Reason:",
+            passedTestCases > totalTestCases / 2
+              ? "More than 50% test cases passed"
+              : verdict
+          );
+
+          await Solved.findOneAndUpdate(
+            {
+              studentId,
+              problemId
+            },
+            {
+              status: "ATTEMPTED"
+            },
+            {
+              upsert: true,
+              new: true
+            }
+          );
+
+          console.log("⚠️ Attempted status updated successfully");
+
+        } else {
+
+          console.log("ℹ️ No status update required");
+        }
+        // Save result in MongoDB
         const updatedSubmission =
           await Submission.findOneAndUpdate(
             {
               _id: submissionId,
               studentId,
-              status: { $nin: FINAL_STATUSES },
+              status: {
+                $nin: FINAL_STATUSES,
+              },
             },
             {
               status: verdict,
-              totalTestCases: total,
-              passedTestCases: passed,
-              failedTestCases: safeFailedTestCases,
 
-              // Never save raw driver stdout: it may contain
-              // hidden test-case information.
+              totalTestCases: total,
+
+              passedTestCases: passed,
+
+              testCasesResult:
+                safeTestCasesResult,
+
+              // Do not store raw driver stdout
               stdout: "",
+
               stderr: stderr ?? "",
-              exitCode: exitCode ?? -1,
-              executionTime: executionTime ?? null,
-              memoryUsed: memoryUsed ?? null,
-              errorMessage: errorMessage ?? "",
-              completedAt: completedAt
-                ? new Date(completedAt)
-                : new Date(),
+
+              exitCode:
+                exitCode ?? -1,
+
+              executionTime:
+                executionTime ?? 0,
+
+              memoryUsed:
+                memoryUsed ?? 0,
+
+              errorMessage:
+                errorMessage ?? "",
+
+              completedAt:
+                completedAt
+                  ? new Date(completedAt)
+                  : new Date(),
             },
             {
               new: true,
@@ -190,21 +345,8 @@ const StartCodeSubmissionResultConsumer = async () => {
             }
           );
 
-          console.log("========== FINALIZATION DB DEBUG ==========");
-console.log("Updated studentId:", updatedSubmission?.studentId);
-
-const rawFinalSubmission = await Submission.collection.findOne({
-    _id: submissionId,
-});
-
-console.log(
-    "Raw MongoDB studentId after finalization:",
-    rawFinalSubmission?.studentId
-);
-
-console.log("==========================================");
-
-        // Another result may have finalized the submission first.
+        // Another consumer/result may have
+        // finalized the submission first
         if (!updatedSubmission) {
           console.log(
             "Submission was already finalized:",
@@ -215,38 +357,106 @@ console.log("==========================================");
           return;
         }
 
-        // Send the sanitized result to the student over WebSocket.
+        console.log(
+          "\n========== FINALIZATION DB DEBUG =========="
+        );
+
+        console.log(
+          "Updated studentId:",
+          updatedSubmission.studentId
+        );
+
+        console.log(
+          "Total test cases:",
+          updatedSubmission.totalTestCases
+        );
+
+        console.log(
+          "Passed test cases:",
+          updatedSubmission.passedTestCases
+        );
+
+        console.log(
+          "Test cases result:",
+          updatedSubmission.testCasesResult
+        );
+
+        console.log(
+          "=========================================="
+        );
+
+        // Send result to student
         const websocketResult = {
           type: "CODE_SUBMISSION_RESULT",
-          submissionId: updatedSubmission._id.toString(),
-          problemId: updatedSubmission.problemId.toString(),
-          language: updatedSubmission.language,
-          status: updatedSubmission.status,
-          totalTestCases: updatedSubmission.totalTestCases,
-          passedTestCases: updatedSubmission.passedTestCases,
-          failedTestCases: safeFailedTestCases,
-          stderr: updatedSubmission.stderr,
-          exitCode: updatedSubmission.exitCode,
-          executionTime: updatedSubmission.executionTime,
-          memoryUsed: updatedSubmission.memoryUsed,
-          errorMessage: updatedSubmission.errorMessage,
-          completedAt: updatedSubmission.completedAt,
+
+          submissionId:
+            updatedSubmission._id.toString(),
+
+          problemId:
+            updatedSubmission.problemId.toString(),
+
+          language:
+            updatedSubmission.language,
+
+          status:
+            updatedSubmission.status,
+
+          totalTestCases:
+            updatedSubmission.totalTestCases,
+
+          passedTestCases:
+            updatedSubmission.passedTestCases,
+
+          testCasesResult:
+            updatedSubmission.testCasesResult,
+
+          stderr:
+            updatedSubmission.stderr,
+
+          exitCode:
+            updatedSubmission.exitCode,
+
+          executionTime:
+            updatedSubmission.executionTime,
+
+          memoryUsed:
+            updatedSubmission.memoryUsed,
+
+          errorMessage:
+            updatedSubmission.errorMessage,
+
+          completedAt:
+            updatedSubmission.completedAt,
         };
 
-        SendToStudent(studentId, websocketResult);
+        SendToStudent(
+          studentId,
+          websocketResult
+        );
 
         console.log(
           "\n========== SUBMISSION FINALIZED =========="
         );
-        console.log("Submission ID:", submissionId);
-        console.log("Student ID:", studentId);
-        console.log("Verdict:", updatedSubmission.status);
+
+        console.log(
+          "Submission ID:",
+          submissionId
+        );
+
+        console.log(
+          "Student ID:",
+          studentId
+        );
+
+        console.log(
+          "Verdict:",
+          updatedSubmission.status
+        );
 
         console.log(
           `Passed: ${updatedSubmission.passedTestCases}/${updatedSubmission.totalTestCases}`
         );
 
-        // Acknowledge after processing the result.
         channel.ack(message);
       } catch (error) {
         console.error(
@@ -254,11 +464,16 @@ console.log("==========================================");
           error.message
         );
 
-        // Configure a dead-letter queue for rejected messages.
-        channel.nack(message, false, false);
+        channel.nack(
+          message,
+          false,
+          false
+        );
       }
     },
-    { noAck: false }
+    {
+      noAck: false,
+    }
   );
 };
 

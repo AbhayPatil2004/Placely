@@ -29,19 +29,18 @@ const submissionSchema = new mongoose.Schema(
 
         stdout: {
             type: String,
-            default: ""
+            default: "",
         },
 
         stderr: {
             type: String,
-            default: ""
+            default: "",
         },
 
         exitCode: {
             type: Number,
-            default: null
+            default: null,
         },
-
 
         status: {
             type: String,
@@ -71,39 +70,36 @@ const submissionSchema = new mongoose.Schema(
             default: 0,
         },
 
-        failedTestCases: [
+        testCasesResult: [
             {
-                testCase: Number,
-                expectedOutput: String,
-                actualOutput: String,
+                testCase: {
+                    type: String,
+                    required: true,
+                },
+
+                expectedOutput: {
+                    type: String,
+                    required: true,
+                },
+
+                actualOutput: {
+                    type: String,
+                    required: true,
+                },
+
+                logs: {
+                    type: String,
+                    default: "",
+                },
+
+                status: {
+                    type: String,
+                    enum: ["passed", "wrong_answer"],
+                    required: true,
+                },
             },
         ],
 
-        executionTime: {
-            type: Number,
-            default: 0,
-        },
-
-        memoryUsed: {
-            type: Number,
-            default: 0,
-        },
-
-        errorMessage: {
-            type: String,
-            default: "",
-        },
-
-        totalTestCases: {
-            type: Number,
-            default: 0,
-        },
-
-        passedTestCases: {
-            type: Number,
-            default: 0,
-        },
-        
         executionTime: {
             type: Number,
             default: 0,
@@ -129,7 +125,9 @@ const submissionSchema = new mongoose.Schema(
             default: null,
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+    }
 );
 
 submissionSchema.index({

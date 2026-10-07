@@ -53,7 +53,7 @@ const executePy = async (code, input = "") => {
             HostConfig: {
                 Binds: [`${workDir}:/app`],
                 NetworkMode: "none",
-                Memory: 256 * 1024 * 1024,
+                Memory: 128 * 1024 * 1024,
                 NanoCpus: 1_000_000_000,
                 PidsLimit: 50
             }
@@ -176,6 +176,18 @@ const executePy = async (code, input = "") => {
         console.log("[9] Memory used:", memoryUsed, "KB");
 
         // 9. Timeout result
+
+        if( memoryUsed > 128 * 1024  ){
+            return {
+                status: "memory_limit_exceeded",
+                stdout,
+                stderr: "Memory limit exceeded: 128 MB",
+                exitCode: 137,
+                executionTime,
+                memoryUsed
+            };
+        }
+
         if (timedOut) {
             return {
                 status: "timeout",
