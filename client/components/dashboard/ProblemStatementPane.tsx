@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Building2 } from "lucide-react";
+import {Building2 } from "lucide-react";
 import { siFacebook, siGoogle, siMeta } from "simple-icons";
 import type { SimpleIcon } from "simple-icons";
 import type { PracticeProblem } from "@/data/dsaData";
