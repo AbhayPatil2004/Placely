@@ -13,6 +13,7 @@ export function EditorToolbar({
   onRun,
   onSubmit,
   isRunning,
+  isSubmitting,
 }: {
   language: EditorLanguage;
   isResetConfirmOpen: boolean;
@@ -22,6 +23,7 @@ export function EditorToolbar({
   onRun: () => void;
   onSubmit: () => void;
   isRunning: boolean;
+  isSubmitting: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-graphite px-4 py-3">
@@ -73,10 +75,12 @@ export function EditorToolbar({
         <button
           type="button"
           onClick={onSubmit}
-          className="inline-flex items-center gap-2 rounded-buttons bg-amethyst px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-lavender hover:text-black focus:outline-none focus:ring-2 focus:ring-lavender"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          className="inline-flex items-center gap-2 rounded-buttons bg-amethyst px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-lavender hover:text-black focus:outline-none focus:ring-2 focus:ring-lavender disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Send className="size-4" />
-          <span>Submit</span>
+          {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}
+          <span>{isSubmitting ? "Submitting..." : "Submit"}</span>
         </button>
       </div>
     </div>
