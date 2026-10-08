@@ -3,6 +3,139 @@ import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
 import Solved from "../models/solved.model.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
+import basicQuestions from "../../../../problems/DSA/basic.js";
+
+const GetAllProblems = async (req, res) => {
+
+    try {
+        const problems = await Problem.find()
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Problem fetched successfully",
+                problems
+            )
+        );
+    }
+    catch (error) {
+        console.error("GetProblem Error:", error);
+
+        return res.status(500).json(
+            new ApiError(500, "Internal Server Error", {})
+        );
+    }
+}
+
+const AddMultipleProblems = async () => {
+
+    try {
+
+        const questions = basicQuestions;
+
+        if (!Array.isArray(questions) || questions.length === 0) {
+            console.log("No questions found to upload.");
+            return;
+        }
+
+        // ----------------------------------------------------
+        // Check duplicate slugs inside the JSON itself
+        // ----------------------------------------------------
+
+        const slugCount = new Map();
+
+        for (const question of questions) {
+            slugCount.set(
+                question.slug,
+                (slugCount.get(question.slug) || 0) + 1
+            );
+        }
+
+        const duplicateSlugsInFile = [
+            ...slugCount.entries()
+        ]
+            .filter(([slug, count]) => count > 1)
+            .map(([slug]) => slug);
+
+        if (duplicateSlugsInFile.length > 0) {
+
+            console.log(
+                "Duplicate slugs found inside JSON:",
+                duplicateSlugsInFile
+            );
+
+            return;
+        }
+
+        // ----------------------------------------------------
+        // Insert all questions
+        // ordered:false means one duplicate will not stop
+        // the remaining questions from being inserted.
+        // ----------------------------------------------------
+
+        const result = await Problem.insertMany(questions, {
+            ordered: false
+        });
+
+        console.log(
+            `✅ ${result.length} questions uploaded successfully.`
+        );
+
+    }
+    catch (error) {
+
+        // ----------------------------------------------------
+        // Duplicate slug error
+        // ----------------------------------------------------
+
+        if (error.code === 11000) {
+
+            const insertedCount =
+                error.result?.insertedCount ??
+                error.insertedDocs?.length ??
+                0;
+
+            const duplicateSlugs = [];
+
+            if (error.writeErrors) {
+
+                for (const writeError of error.writeErrors) {
+
+                    const slug =
+                        writeError.err?.keyValue?.slug;
+
+                    if (slug) {
+                        duplicateSlugs.push(slug);
+                    }
+                }
+            }
+
+            console.log(
+                `⚠️ ${insertedCount} questions uploaded.`
+            );
+
+            console.log(
+                `⚠️ ${duplicateSlugs.length} duplicate questions skipped.`
+            );
+
+            console.log(
+                "Duplicate slugs:",
+                [...new Set(duplicateSlugs)]
+            );
+
+            return;
+        }
+
+        // ----------------------------------------------------
+        // Other errors
+        // ----------------------------------------------------
+
+        console.log(
+            "Error while uploading questions:",
+            error
+        );
+    }
+};
 
 const AddProblem = async (req, res) => {
     try {
@@ -81,15 +214,70 @@ const AddProblem = async (req, res) => {
 
         // Topic validation
         const validTopics = [
-            "INTRODUCTION", "VARIABLES", "DATA_TYPES", "INPUT_OUTPUT",
-            "OPERATORS", "CONDITIONALS", "LOOPS", "FUNCTIONS",
-            "ARRAY", "STRING", "MATRIX", "TIME_SPACE_COMPLEXITY",
-            "RECURSION", "OOP", "SEARCHING", "SORTING", "BINARY_SEARCH",
-            "HASHING", "TWO_POINTER", "SLIDING_WINDOW", "PREFIX_SUM",
-            "LINKED_LIST", "STACK", "QUEUE", "DEQUE", "BACKTRACKING",
-            "HEAP", "TREE", "BINARY_SEARCH_TREE", "TRIE", "GREEDY",
-            "DIVIDE_AND_CONQUER", "GRAPH", "DYNAMIC_PROGRAMMING",
-            "BIT_MANIPULATION", "MATH"
+
+            // Programming Fundamentals
+            "INTRODUCTION",
+            "BASICS",
+            "CONDITIONALS",
+            "LOOPS",
+            "FUNCTIONS",
+
+            // Basic Data Structures
+            "ARRAY",
+            "STRING",
+            "MATRIX",
+
+            // Basic Algorithmic Concepts
+            "TIME_SPACE_COMPLEXITY",
+
+            // Searching & Sorting
+            "SEARCHING",
+            "SORTING",
+            "BINARY_SEARCH",
+            "HASHING",
+
+            // Object Oriented Programming
+            "OOP",
+
+            // Array Patterns
+            "TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM",
+
+            // Linked Data Structures
+            "LINKED_LIST",
+
+            // Stack / Queue
+            "STACK",
+            "QUEUE",
+            "DEQUE",
+
+            // Heap
+            "HEAP",
+
+            // Recursive / Exponential
+            "RECURSION",
+            "BACKTRACKING",
+
+            // Trees
+            "TREE",
+            "BINARY_SEARCH_TREE",
+            "TRIE",
+
+            // Greedy
+            "GREEDY",
+
+            // Divide and Conquer
+            "DIVIDE_AND_CONQUER",
+
+            // Graphs
+            "GRAPH",
+
+            // Dynamic Programming
+            "DYNAMIC_PROGRAMMING",
+
+            // Other Important Topics
+            "BIT_MANIPULATION",
+            "MATH"
+
         ];
 
         if (!validTopics.includes(topic)) {
@@ -425,39 +613,64 @@ const UpdateProblem = async (req, res) => {
         if (topic !== undefined) {
             const validTopics = [
                 "INTRODUCTION",
-                "VARIABLES",
-                "DATA_TYPES",
-                "INPUT_OUTPUT",
-                "OPERATORS",
+                "BASICS",
                 "CONDITIONALS",
                 "LOOPS",
                 "FUNCTIONS",
+
+                // Basic Data Structures
                 "ARRAY",
                 "STRING",
                 "MATRIX",
+
+                // Basic Algorithmic Concepts
                 "TIME_SPACE_COMPLEXITY",
-                "RECURSION",
-                "OOP",
+
+                // Searching & Sorting
                 "SEARCHING",
                 "SORTING",
                 "BINARY_SEARCH",
                 "HASHING",
-                "TWO_POINTER",
-                "SLIDING_WINDOW",
-                "PREFIX_SUM",
+
+                // Object Oriented Programming
+                "OOP",
+
+                // Array Patterns
+                "TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM",
+
+                // Linked Data Structures
                 "LINKED_LIST",
+
+                // Stack / Queue
                 "STACK",
                 "QUEUE",
                 "DEQUE",
+
+                // Heap
                 "HEAP",
+
+                // Recursive / Exponential
+                "RECURSION",
+                "BACKTRACKING",
+
+                // Trees
                 "TREE",
                 "BINARY_SEARCH_TREE",
                 "TRIE",
+
+                // Greedy
                 "GREEDY",
-                "BACKTRACKING",
+
+                // Divide and Conquer
                 "DIVIDE_AND_CONQUER",
+
+                // Graphs
                 "GRAPH",
+
+                // Dynamic Programming
                 "DYNAMIC_PROGRAMMING",
+
+                // Other Important Topics
                 "BIT_MANIPULATION",
                 "MATH"
             ];
@@ -964,6 +1177,10 @@ const GetProblemsSheet = async (req, res) => {
 
         const studentId = GetStudentId(req);
 
+        // ============================================================
+        // Get all active problems
+        // ============================================================
+
         const problems = await Problem.find(
             { isActive: true },
             {
@@ -977,6 +1194,12 @@ const GetProblemsSheet = async (req, res) => {
         )
             .sort({ order: 1 })
             .lean();
+
+        console.log("Total Active Problems:", problems.length);
+
+        // ============================================================
+        // Get student's solved status
+        // ============================================================
 
         const statusMap = new Map();
 
@@ -1003,10 +1226,14 @@ const GetProblemsSheet = async (req, res) => {
             }
         }
 
-        // Topic order
+        // ============================================================
+        // Topic Order
+        // ============================================================
+
         const topicOrder = {
+
             INTRODUCTION: 1,
-            BASICS: 2,
+            BASIC: 2,
             CONDITIONALS: 3,
             LOOPS: 4,
             FUNCTIONS: 5,
@@ -1023,8 +1250,8 @@ const GetProblemsSheet = async (req, res) => {
             HASHING: 13,
 
             TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM: 14,
-            OOP: 15,
 
+            OOP: 15,
 
             LINKED_LIST: 16,
 
@@ -1052,16 +1279,24 @@ const GetProblemsSheet = async (req, res) => {
             MATH: 31
         };
 
-        // Difficulty order
+        // ============================================================
+        // Difficulty Order
+        // ============================================================
+
         const difficultyOrder = {
-            EASY: 1,
-            MEDIUM: 2,
-            HARD: 3
+
+            BASIC: 1,
+            EASY: 2,
+            MEDIUM: 3,
+            HARD: 4
         };
+
+        // ============================================================
+        // Group Problems By Topic
+        // ============================================================
 
         const groupedProblems = {};
 
-        // Group problems by topic
         for (const problem of problems) {
 
             if (!groupedProblems[problem.topic]) {
@@ -1069,29 +1304,42 @@ const GetProblemsSheet = async (req, res) => {
             }
 
             groupedProblems[problem.topic].push({
+
                 id: problem._id,
+
                 title: problem.title,
+
                 slug: problem.slug,
+
                 difficulty: problem.difficulty,
+
                 companies: problem.companies || [],
 
                 status:
                     statusMap.get(problem._id.toString()) ||
                     "NOT_SOLVED",
 
-                order: problem.order
+                order: problem.order ?? 0
             });
         }
 
-        // Sort problems inside each topic
-        // EASY -> MEDIUM -> HARD -> order
+        // ============================================================
+        // Sort Problems Inside Each Topic
+        // BASIC -> EASY -> MEDIUM -> HARD -> order
+        // ============================================================
+
         for (const topic of Object.keys(groupedProblems)) {
 
             groupedProblems[topic].sort((a, b) => {
 
+                const difficultyA =
+                    difficultyOrder[a.difficulty] ?? 999;
+
+                const difficultyB =
+                    difficultyOrder[b.difficulty] ?? 999;
+
                 const difficultyDifference =
-                    difficultyOrder[a.difficulty] -
-                    difficultyOrder[b.difficulty];
+                    difficultyA - difficultyB;
 
                 if (difficultyDifference !== 0) {
                     return difficultyDifference;
@@ -1101,19 +1349,43 @@ const GetProblemsSheet = async (req, res) => {
             });
         }
 
-        // Create final response in fixed topic order
+        // ============================================================
+        // Create Final Response In Fixed Topic Order
+        // ============================================================
+
         const orderedProblems = {};
 
-        Object.keys(topicOrder).forEach((topic) => {
+        Object.keys(topicOrder)
+            .sort((a, b) => topicOrder[a] - topicOrder[b])
+            .forEach((topic) => {
 
-            if (groupedProblems[topic]) {
-                orderedProblems[topic] =
-                    groupedProblems[topic].map(
-                        ({ order, ...problem }) => problem
-                    );
-            }
+                if (groupedProblems[topic]) {
 
-        });
+                    orderedProblems[topic] =
+                        groupedProblems[topic].map(
+                            ({ order, ...problem }) => problem
+                        );
+                }
+            });
+
+        // ============================================================
+        // Optional: Detect topics that are not in topicOrder
+        // ============================================================
+
+        const unknownTopics = Object.keys(groupedProblems)
+            .filter(topic => !topicOrder[topic]);
+
+        if (unknownTopics.length > 0) {
+
+            console.warn(
+                "Topics missing from topicOrder:",
+                unknownTopics
+            );
+        }
+
+        // ============================================================
+        // Response
+        // ============================================================
 
         return res.status(200).json(
             new ApiResponse(
@@ -1125,7 +1397,10 @@ const GetProblemsSheet = async (req, res) => {
 
     } catch (error) {
 
-        console.error("GetProblemsSheet Error:", error);
+        console.error(
+            "GetProblemsSheet Error:",
+            error
+        );
 
         return res.status(500).json(
             new ApiError(
@@ -1302,12 +1577,40 @@ const DeleteProblem = async (req, res) => {
     }
 };
 
+const DeleteAllProblems = async (req, res) => {
+    try {
+        const result = await Problem.deleteMany({});
+        if (result.deletedCount === 0) {
+            return res.status(404).json(
+                new ApiError(404, "No problems found to delete", {}
+
+                )
+            );
+        }
+        return res.status(200).json(
+            new ApiResponse(200, "All problems deleted successfully", { deletedCount: result.deletedCount }
+
+            )
+        );
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(
+            new ApiError(500, "Internal Server Error", error
+
+            )
+        );
+    }
+};
+
 
 export {
+    GetAllProblems,
     AddProblem,
+    AddMultipleProblems,
     UpdateProblem,
     GetProblem,
     GetProblemsSheet,
     GetProblemByTopic,
-    DeleteProblem
+    DeleteProblem ,
+    DeleteAllProblems
 }

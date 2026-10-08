@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-// -------------------------
+// ============================================================
 // Example Schema
-// -------------------------
+// ============================================================
+
 const exampleSchema = new mongoose.Schema(
     {
         input: {
@@ -20,22 +21,27 @@ const exampleSchema = new mongoose.Schema(
             default: ""
         }
     },
-    { _id: false }
+    {
+        _id: false
+    }
 );
 
 
-// -------------------------
+// ============================================================
 // Test Case Schema
-// -------------------------
+// ============================================================
+
 const testCaseSchema = new mongoose.Schema(
     {
+        // Can be string, number, array, object, matrix, etc.
         input: {
-            type: String,
+            type: mongoose.Schema.Types.Mixed,
             required: true
         },
 
+        // Can be string, number, array, object, etc.
         expectedOutput: {
-            type: String,
+            type: mongoose.Schema.Types.Mixed,
             required: true
         },
 
@@ -44,13 +50,16 @@ const testCaseSchema = new mongoose.Schema(
             default: false
         }
     },
-    { _id: false }
+    {
+        _id: false
+    }
 );
 
 
-// -------------------------
+// ============================================================
 // Starter Code Schema
-// -------------------------
+// ============================================================
+
 const starterCodeSchema = new mongoose.Schema(
     {
         cpp: {
@@ -73,26 +82,54 @@ const starterCodeSchema = new mongoose.Schema(
             required: true
         }
     },
-    { _id: false }
+    {
+        _id: false
+    }
 );
+
+
+// ============================================================
+// Driver Code Schema
+// ============================================================
 
 const driverCodeSchema = new mongoose.Schema(
     {
-        cpp: { type: String, required: true },
-        java: { type: String, required: true },
-        javascript: { type: String, required: true },
-        python: { type: String, required: true }
+        cpp: {
+            type: String,
+            required: true
+        },
+
+        java: {
+            type: String,
+            required: true
+        },
+
+        javascript: {
+            type: String,
+            required: true
+        },
+
+        python: {
+            type: String,
+            required: true
+        }
     },
-    { _id: false }
+    {
+        _id: false
+    }
 );
 
 
-// -------------------------
+// ============================================================
 // Problem Schema
-// -------------------------
+// ============================================================
+
 const problemSchema = new mongoose.Schema(
     {
+        // ========================================================
         // Basic Information
+        // ========================================================
+
         title: {
             type: String,
             required: true,
@@ -113,126 +150,114 @@ const problemSchema = new mongoose.Schema(
         },
 
 
+        // ========================================================
         // DSA Classification
+        // ========================================================
+
         topic: {
             type: String,
-            enum: [
 
-                // =========================
-                // PROGRAMMING FUNDAMENTALS
-                // =========================
+            // enum: [
+            //     // -------------------------
+            //     // Programming Fundamentals
+            //     // -------------------------
+            //     "INTRODUCTION",
+            //     "BASIC",
+            //     "CONDITIONALS",
+            //     "LOOPS",
+            //     "FUNCTIONS",
 
-                "INTRODUCTION",
-                "BASICS",
-                "CONDITIONALS",
-                "LOOPS",
-                "FUNCTIONS",
+            //     // -------------------------
+            //     // Basic Data Structures
+            //     // -------------------------
+            //     "ARRAY",
+            //     "STRING",
+            //     "MATRIX",
 
-                // =========================
-                // BASIC DATA STRUCTURES
-                // =========================
+            //     // -------------------------
+            //     // Basic Algorithmic Concepts
+            //     // -------------------------
+            //     "TIME_SPACE_COMPLEXITY",
 
-                "ARRAY",
-                "STRING",
-                "MATRIX",
+            //     // -------------------------
+            //     // Searching & Sorting
+            //     // -------------------------
+            //     "SEARCHING",
+            //     "SORTING",
+            //     "BINARY_SEARCH",
+            //     "HASHING",
 
-                // =========================
-                // BASIC ALGORITHMIC CONCEPTS
-                // =========================
+            //     // -------------------------
+            //     // Object Oriented Programming
+            //     // -------------------------
+            //     "OOP",
 
-                "TIME_SPACE_COMPLEXITY",
+            //     // -------------------------
+            //     // Array Patterns
+            //     // -------------------------
+            //     "TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM",
 
-                // =========================
-                // SEARCHING & SORTING
-                // =========================
+            //     // -------------------------
+            //     // Linked List
+            //     // -------------------------
+            //     "LINKED_LIST",
 
-                "SEARCHING",
-                "SORTING",
-                "BINARY_SEARCH",
-                "HASHING",
+            //     // -------------------------
+            //     // Stack / Queue
+            //     // -------------------------
+            //     "STACK",
+            //     "QUEUE",
+            //     "DEQUE",
 
-                // =========================
-                // OBJECT ORIENTED PROGRAMMING
-                // =========================
+            //     // -------------------------
+            //     // Heap
+            //     // -------------------------
+            //     "HEAP",
 
-                "OOP",
+            //     // -------------------------
+            //     // Recursion / Backtracking
+            //     // -------------------------
+            //     "RECURSION",
+            //     "BACKTRACKING",
 
-                // =========================
-                // ARRAY PATTERNS
-                // =========================
+            //     // -------------------------
+            //     // Trees
+            //     // -------------------------
+            //     "TREE",
+            //     "BINARY_SEARCH_TREE",
+            //     "TRIE",
 
-                "TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM",
+            //     // -------------------------
+            //     // Greedy
+            //     // -------------------------
+            //     "GREEDY",
 
-                // =========================
-                // LINKED DATA STRUCTURES
-                // =========================
+            //     // -------------------------
+            //     // Divide and Conquer
+            //     // -------------------------
+            //     "DIVIDE_AND_CONQUER",
 
-                "LINKED_LIST",
+            //     // -------------------------
+            //     // Graphs
+            //     // -------------------------
+            //     "GRAPH",
 
-                // =========================
-                // STACK / QUEUE
-                // =========================
+            //     // -------------------------
+            //     // Dynamic Programming
+            //     // -------------------------
+            //     "DYNAMIC_PROGRAMMING",
 
-                "STACK",
-                "QUEUE",
-                "DEQUE",
+            //     // -------------------------
+            //     // Other
+            //     // -------------------------
+            //     "BIT_MANIPULATION",
+            //     "MATH"
+            // ],
 
-                // =========================
-                // HEAP
-                // =========================
-
-                "HEAP",
-
-                // =========================
-                // RECURSIVE / EXPONENTIAL
-                // =========================
-
-                "RECURSION",
-                "BACKTRACKING",
-
-                // =========================
-                // TREES
-                // =========================
-
-                "TREE",
-                "BINARY_SEARCH_TREE",
-                "TRIE",
-
-                // =========================
-                // GREEDY
-                // =========================
-
-                "GREEDY",
-
-                // =========================
-                // DIVIDE AND CONQUER
-                // =========================
-
-                "DIVIDE_AND_CONQUER",
-
-                // =========================
-                // GRAPHS
-                // =========================
-
-                "GRAPH",
-
-                // =========================
-                // DYNAMIC PROGRAMMING
-                // =========================
-
-                "DYNAMIC_PROGRAMMING",
-
-                // =========================
-                // OTHER IMPORTANT TOPICS
-                // =========================
-
-                "BIT_MANIPULATION",
-                "MATH"
-
-            ],
             required: true,
             index: true
         },
+
 
         subTopics: {
             type: [String],
@@ -244,46 +269,69 @@ const problemSchema = new mongoose.Schema(
             default: []
         },
 
+
+        // ========================================================
+        // Problem Pattern
+        // ========================================================
+
         pattern: {
             type: [String],
-            enum: [
-                "BRUTE_FORCE",
-                "HASHING",
-                "TWO_POINTER",
-                "SLIDING_WINDOW",
-                "PREFIX_SUM",
-                "BINARY_SEARCH",
-                "SORTING",
-                "FAST_SLOW_POINTER",
-                "MONOTONIC_STACK",
-                "STACK",
-                "QUEUE",
-                "HEAP",
-                "GREEDY",
-                "RECURSION",
-                "BACKTRACKING",
-                "DIVIDE_AND_CONQUER",
-                "BIT_MANIPULATION",
-                "GRAPH_TRAVERSAL",
-                "BFS",
-                "DFS",
-                "TOPOLOGICAL_SORT",
-                "UNION_FIND",
-                "TRIE",
-                "DYNAMIC_PROGRAMMING"
-            ],
+
+            // enum: [
+            //     "BASIC_CALCULATION",
+            //     "BRUTE_FORCE",
+            //     "HASHING",
+            //     "TWO_POINTER",
+            //     "SLIDING_WINDOW",
+            //     "PREFIX_SUM",
+            //     "BINARY_SEARCH",
+            //     "SORTING",
+            //     "FAST_SLOW_POINTER",
+            //     "MONOTONIC_STACK",
+            //     "STACK",
+            //     "QUEUE",
+            //     "HEAP",
+            //     "GREEDY",
+            //     "RECURSION",
+            //     "BACKTRACKING",
+            //     "DIVIDE_AND_CONQUER",
+            //     "BIT_MANIPULATION",
+            //     "GRAPH_TRAVERSAL",
+            //     "BFS",
+            //     "DFS",
+            //     "TOPOLOGICAL_SORT",
+            //     "UNION_FIND",
+            //     "TRIE",
+            //     "DYNAMIC_PROGRAMMING"
+            // ],
+
             default: []
         },
 
+
+        // ========================================================
+        // Difficulty
+        // ========================================================
+
         difficulty: {
             type: String,
-            enum: ["EASY", "MEDIUM", "HARD"],
+
+            enum: [
+                "BASIC" ,
+                "EASY",
+                "MEDIUM",
+                "HARD"
+            ],
+
             required: true,
             index: true
         },
 
 
+        // ========================================================
         // Problem Details
+        // ========================================================
+
         inputFormat: {
             type: String,
             default: ""
@@ -305,30 +353,49 @@ const problemSchema = new mongoose.Schema(
         },
 
 
+        // ========================================================
         // Coding
+        // ========================================================
+
         starterCode: {
             type: starterCodeSchema,
             required: true
         },
+
         driverCode: {
             type: driverCodeSchema,
             required: true,
+
+            // Hidden from normal queries.
+            // Admin/submission logic can explicitly select it.
             select: false
         },
+
+
+        // ========================================================
+        // Test Cases
+        // ========================================================
 
         testCases: {
             type: [testCaseSchema],
             default: []
         },
 
+
+        // ========================================================
+        // Supported Languages
+        // ========================================================
+
         supportedLanguages: {
             type: [String],
+
             enum: [
                 "cpp",
                 "java",
                 "javascript",
                 "python"
             ],
+
             default: [
                 "cpp",
                 "java",
@@ -337,6 +404,10 @@ const problemSchema = new mongoose.Schema(
             ]
         },
 
+
+        // ========================================================
+        // Expected Complexity
+        // ========================================================
 
         expectedTimeComplexity: {
             type: String,
@@ -347,18 +418,32 @@ const problemSchema = new mongoose.Schema(
             type: String,
             default: ""
         },
+
+
+        // ========================================================
+        // Companies
+        // ========================================================
+
         companies: {
-            type: [String]
+            type: [String],
+            default: []
         },
 
+
+        // ========================================================
         // Ordering
+        // ========================================================
+
         order: {
             type: Number,
             default: 0
         },
 
 
+        // ========================================================
         // Problem Status
+        // ========================================================
+
         isActive: {
             type: Boolean,
             default: true,
@@ -372,9 +457,9 @@ const problemSchema = new mongoose.Schema(
 );
 
 
-// -------------------------
+// ============================================================
 // Indexes
-// -------------------------
+// ============================================================
 
 problemSchema.index({
     topic: 1,
@@ -385,6 +470,11 @@ problemSchema.index({
     topic: 1,
     order: 1
 });
+
+
+// ============================================================
+// Model
+// ============================================================
 
 const Problem = mongoose.model("Problem", problemSchema);
 
