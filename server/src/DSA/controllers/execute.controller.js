@@ -1,41 +1,38 @@
+
 import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
 import crypto from "crypto";
-import { getChannel } from "../../config/rabbitmq.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
-const CODE_EXECUTION_QUEUE_NAME = "code-execution.v2.queue";
+import { getChannel } from "../../config/rabbitmq.js";
+// import { CODE_EXECUTION_QUEUE_NAME } from "../../../../code-execution-service/src/config/rabbitmq.js";
 
+const CODE_EXECUTION_QUEUE_NAME = "code-execution.queue";
 
 const ExecuteCode = async (req, res) => {
-
     try {
+        const { code, input, language } = req.body;
 
-        const { code, input, language } = req.body;    
-        
-        // Validate code
-        if (!code) {
+        if (typeof code !== "string" || !code.trim()) {
             return res.status(400).json(
                 new ApiError(400, "Code is required", {})
             );
         }
 
-        // Validate language
         if (!["cpp", "java", "js", "py"].includes(language)) {
             return res.status(400).json(
-                new ApiError(400, "Please choose correct language", {})
+                new ApiError(400, "Please choose a correct language", {})
             );
         }
 
         const channel = getChannel();
+        const studentId = GetStudentId(req);
 
-        console.log(GetStudentId(req))
-        
         const job = {
             jobId: crypto.randomUUID(),
-            studentId : GetStudentId(req) ,
+            studentId,
             code,
             language,
-            input
+            input: input ?? "",
         };
 
         channel.sendToQueue(
@@ -43,7 +40,8 @@ const ExecuteCode = async (req, res) => {
             Buffer.from(JSON.stringify(job)),
             {
                 persistent: true,
-                contentType: "application/json"
+                contentType: "application/json",
+                messageId: job.jobId,
             }
         );
 
@@ -51,28 +49,16 @@ const ExecuteCode = async (req, res) => {
             new ApiResponse(
                 200,
                 "Code execution request has been sent successfully",
-                {
-                    jobId: job.jobId
-                }
+                { jobId: job.jobId }
             )
         );
-
     } catch (error) {
+        console.error("ExecuteCode error:", error.message);
 
         return res.status(500).json(
-            new ApiError(
-                500,
-                "Internal Server Error",
-                error
-            )
+            new ApiError(500, "Internal Server Error", {})
         );
     }
 };
 
-
-
-
-
-export {
-    ExecuteCode
-}
+export { ExecuteCode };

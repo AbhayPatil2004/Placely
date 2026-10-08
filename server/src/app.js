@@ -10,6 +10,7 @@ import connectDB from "./config/mongo.js";
 // import { PrismaClient } from "@prisma/client";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
 import StartCodeResultConsumer from "./consumer/codeResult.consumer.js";
+import StartCodeSubmissionResultConsumer from "./consumer/codeSubmmisionResultConsumer.js";
 import ApiError from "./utils/apiError.js";
 import ApiResponse from "./utils/apiResponse.js";
 
@@ -20,9 +21,8 @@ import Problem from './DSA/routes/problem.route.js'
 import Code from "./DSA/routes/execute.route.js"
 import Student from "./student/routes/Student.route.js"
 import Core from "./Core/Routes/core.routes.js"
-
-
-
+import Submit from "./DSA/routes/submission.route.js"
+import Solved from "./DSA/routes/solved.route.js"
 
 dotenv.config({
     path: fileURLToPath(new URL("../.env", import.meta.url)),
@@ -39,6 +39,7 @@ const app = express();
 await connectDB();
 await connectRabbitMQ();
 await StartCodeResultConsumer()
+await StartCodeSubmissionResultConsumer()
 
 
 app.use(
@@ -65,6 +66,9 @@ app.use("/api/problem" , Problem )
 app.use("/api/code" , Code )
 app.use("/api/student" , Student)
 app.use("/api/core", Core)
+app.use("/api/submit" , Submit )
+app.use("/api/solved" , Solved )
+
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app)

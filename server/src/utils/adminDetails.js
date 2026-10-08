@@ -1,13 +1,13 @@
 const GetAdminId = ( req ) => {
-    return req.user.userId ;
+    return req.user?.userId || null ;
 } 
 
 const GetAdminName = ( req )  => {
-    return req.user.fullname ;
+    return req.user?.fullname || null ;
 }
 
 const GetAdminEmail = ( req ) => {
-    return req.user.email ;
+    return req.user?.email || null ;
 }
 
 export {
