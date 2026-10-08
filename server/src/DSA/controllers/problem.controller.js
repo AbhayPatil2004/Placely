@@ -1,12 +1,11 @@
 import Problem from "../models/problem.model.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
-
+import Solved from "../models/solved.model.js";
+import { GetStudentId } from "../../utils/studentDetails.js";
 
 const AddProblem = async (req, res) => {
-
     try {
-
         const {
             title,
             slug,
@@ -21,6 +20,7 @@ const AddProblem = async (req, res) => {
             constraints,
             examples,
             starterCode,
+            driverCode,
             testCases,
             supportedLanguages,
             expectedTimeComplexity,
@@ -30,20 +30,17 @@ const AddProblem = async (req, res) => {
             isActive
         } = req.body;
 
-
-        // -----------------------------------
         // Required fields
-        // -----------------------------------
-
         if (
-            !title ||
-            !slug ||
-            !problemStatement ||
+            !title?.trim() ||
+            !slug?.trim() ||
+            !problemStatement?.trim() ||
             !topic ||
             !difficulty ||
-            !examples ||
             !starterCode ||
-            !testCases ||
+            !driverCode ||
+            !Array.isArray(examples) ||
+            !Array.isArray(testCases) ||
             order === undefined ||
             order === null
         ) {
@@ -56,123 +53,59 @@ const AddProblem = async (req, res) => {
             );
         }
 
-
-        // -----------------------------------
         // Array validation
-        // -----------------------------------
-
         if (
             !Array.isArray(subTopics) ||
             !Array.isArray(tags) ||
             !Array.isArray(pattern) ||
             !Array.isArray(constraints) ||
-            !Array.isArray(examples) ||
-            !Array.isArray(testCases) ||
             !Array.isArray(supportedLanguages)
         ) {
             return res.status(400).json(
                 new ApiError(
                     400,
-                    "subTopics, tags, pattern, constraints, examples, testCases and supportedLanguages must be arrays",
+                    "subTopics, tags, pattern, constraints and supportedLanguages must be arrays",
                     {}
                 )
             );
         }
 
-
-        // -----------------------------------
         // Difficulty validation
-        // -----------------------------------
-
-        const validDifficulties = [
-            "EASY",
-            "MEDIUM",
-            "HARD"
-        ];
+        const validDifficulties = ["EASY", "MEDIUM", "HARD"];
 
         if (!validDifficulties.includes(difficulty)) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Please provide a correct difficulty",
-                    {}
-                )
+                new ApiError(400, "Please provide a correct difficulty", {})
             );
         }
 
-
-        // -----------------------------------
         // Topic validation
-        // -----------------------------------
-
         const validTopics = [
-            "ARRAY",
-            "STRING",
-            "MATRIX",
-            "HASHING",
-            "SORTING",
-            "BINARY_SEARCH",
-            "TWO_POINTER",
-            "SLIDING_WINDOW",
-            "PREFIX_SUM",
-            "RECURSION",
-            "BACKTRACKING",
-            "LINKED_LIST",
-            "STACK",
-            "QUEUE",
-            "DEQUE",
-            "HEAP",
-            "TREE",
-            "BINARY_SEARCH_TREE",
-            "TRIE",
-            "GRAPH",
-            "GREEDY",
-            "DIVIDE_AND_CONQUER",
-            "DYNAMIC_PROGRAMMING",
-            "BIT_MANIPULATION",
-            "MATH"
+            "INTRODUCTION", "VARIABLES", "DATA_TYPES", "INPUT_OUTPUT",
+            "OPERATORS", "CONDITIONALS", "LOOPS", "FUNCTIONS",
+            "ARRAY", "STRING", "MATRIX", "TIME_SPACE_COMPLEXITY",
+            "RECURSION", "OOP", "SEARCHING", "SORTING", "BINARY_SEARCH",
+            "HASHING", "TWO_POINTER", "SLIDING_WINDOW", "PREFIX_SUM",
+            "LINKED_LIST", "STACK", "QUEUE", "DEQUE", "BACKTRACKING",
+            "HEAP", "TREE", "BINARY_SEARCH_TREE", "TRIE", "GREEDY",
+            "DIVIDE_AND_CONQUER", "GRAPH", "DYNAMIC_PROGRAMMING",
+            "BIT_MANIPULATION", "MATH"
         ];
 
         if (!validTopics.includes(topic)) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Please provide a correct topic",
-                    {}
-                )
+                new ApiError(400, "Please provide a correct topic", {})
             );
         }
 
-
-        // -----------------------------------
         // Pattern validation
-        // -----------------------------------
-
         const validPatterns = [
-            "BRUTE_FORCE",
-            "HASHING",
-            "TWO_POINTER",
-            "SLIDING_WINDOW",
-            "PREFIX_SUM",
-            "BINARY_SEARCH",
-            "SORTING",
-            "FAST_SLOW_POINTER",
-            "MONOTONIC_STACK",
-            "STACK",
-            "QUEUE",
-            "HEAP",
-            "GREEDY",
-            "RECURSION",
-            "BACKTRACKING",
-            "DIVIDE_AND_CONQUER",
-            "BIT_MANIPULATION",
-            "GRAPH_TRAVERSAL",
-            "BFS",
-            "DFS",
-            "TOPOLOGICAL_SORT",
-            "UNION_FIND",
-            "TRIE",
-            "DYNAMIC_PROGRAMMING"
+            "BRUTE_FORCE", "HASHING", "TWO_POINTER", "SLIDING_WINDOW",
+            "PREFIX_SUM", "BINARY_SEARCH", "SORTING", "FAST_SLOW_POINTER",
+            "MONOTONIC_STACK", "STACK", "QUEUE", "HEAP", "GREEDY",
+            "RECURSION", "BACKTRACKING", "DIVIDE_AND_CONQUER",
+            "BIT_MANIPULATION", "GRAPH_TRAVERSAL", "BFS", "DFS",
+            "TOPOLOGICAL_SORT", "UNION_FIND", "TRIE", "DYNAMIC_PROGRAMMING"
         ];
 
         const invalidPatterns = pattern.filter(
@@ -181,27 +114,27 @@ const AddProblem = async (req, res) => {
 
         if (invalidPatterns.length > 0) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Please provide valid patterns",
-                    {
-                        invalidPatterns
-                    }
-                )
+                new ApiError(400, "Please provide valid patterns", {
+                    invalidPatterns
+                })
             );
         }
 
+        // Supported language validation
+        const validLanguages = ["cpp", "java", "javascript", "python"];
 
-        // -----------------------------------
-        // Supported languages validation
-        // -----------------------------------
-
-        const validLanguages = [
-            "cpp",
-            "java",
-            "javascript",
-            "python"
-        ];
+        if (
+            supportedLanguages.length === 0 ||
+            new Set(supportedLanguages).size !== supportedLanguages.length
+        ) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "At least one supported language is required; duplicates are not allowed",
+                    {}
+                )
+            );
+        }
 
         const invalidLanguages = supportedLanguages.filter(
             language => !validLanguages.includes(language)
@@ -209,66 +142,60 @@ const AddProblem = async (req, res) => {
 
         if (invalidLanguages.length > 0) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Please choose valid programming languages",
-                    {
-                        invalidLanguages
-                    }
-                )
+                new ApiError(400, "Please choose valid programming languages", {
+                    invalidLanguages
+                })
             );
         }
 
-
-        // -----------------------------------
-        // Starter Code validation
-        // -----------------------------------
-
-        if (
-            typeof starterCode !== "object" ||
-            starterCode === null ||
-            Array.isArray(starterCode)
-        ) {
-            return res.status(400).json(
-                new ApiError(
-                    400,
-                    "starterCode must be an object",
-                    {}
-                )
-            );
-        }
-
-
-        const requiredStarterLanguages = [
-            "cpp",
-            "java",
-            "javascript",
-            "python"
-        ];
-
-        for (const language of requiredStarterLanguages) {
-
+        // Validate language-code objects
+        const validateLanguageCode = (code, fieldName) => {
             if (
-                typeof starterCode[language] !== "string" ||
-                starterCode[language].trim() === ""
+                !code ||
+                typeof code !== "object" ||
+                Array.isArray(code)
             ) {
-                return res.status(400).json(
-                    new ApiError(
-                        400,
-                        `Starter code for ${language} is required`,
-                        {}
-                    )
-                );
+                return `${fieldName} must be an object`;
             }
+
+            for (const language of supportedLanguages) {
+                if (
+                    typeof code[language] !== "string" ||
+                    !code[language].trim()
+                ) {
+                    return `${fieldName} for ${language} is required`;
+                }
+            }
+
+            return null;
+        };
+
+        // Student starter code validation
+        const starterCodeError = validateLanguageCode(
+            starterCode,
+            "Starter code"
+        );
+
+        if (starterCodeError) {
+            return res.status(400).json(
+                new ApiError(400, starterCodeError, {})
+            );
         }
 
+        // Backend driver code validation
+        const driverCodeError = validateLanguageCode(
+            driverCode,
+            "Driver code"
+        );
 
-        // -----------------------------------
+        if (driverCodeError) {
+            return res.status(400).json(
+                new ApiError(400, driverCodeError, {})
+            );
+        }
+
         // Examples validation
-        // -----------------------------------
-
         for (const example of examples) {
-
             if (
                 !example ||
                 typeof example !== "object" ||
@@ -278,21 +205,15 @@ const AddProblem = async (req, res) => {
                 return res.status(400).json(
                     new ApiError(
                         400,
-                        "Each example must contain input and output",
+                        "Each example must contain string input and output",
                         {}
                     )
                 );
             }
-
         }
 
-
-        // -----------------------------------
-        // Test Cases validation
-        // -----------------------------------
-
+        // Test cases validation
         for (const testCase of testCases) {
-
             if (
                 !testCase ||
                 typeof testCase !== "object" ||
@@ -302,19 +223,34 @@ const AddProblem = async (req, res) => {
                 return res.status(400).json(
                     new ApiError(
                         400,
-                        "Each test case must contain input and expectedOutput",
+                        "Each test case must contain string input and expectedOutput",
                         {}
                     )
                 );
             }
 
+            if (
+                testCase.isPublic !== undefined &&
+                typeof testCase.isPublic !== "boolean"
+            ) {
+                return res.status(400).json(
+                    new ApiError(
+                        400,
+                        "testCase.isPublic must be a boolean",
+                        {}
+                    )
+                );
+            }
         }
 
+        // At least one test case is required
+        if (testCases.length === 0) {
+            return res.status(400).json(
+                new ApiError(400, "At least one test case is required", {})
+            );
+        }
 
-        // -----------------------------------
         // Order validation
-        // -----------------------------------
-
         if (
             typeof order !== "number" ||
             !Number.isInteger(order) ||
@@ -329,13 +265,11 @@ const AddProblem = async (req, res) => {
             );
         }
 
-
-        // -----------------------------------
         // Duplicate problem check
-        // -----------------------------------
+        const normalizedSlug = slug.toLowerCase().trim();
 
         const alreadyExists = await Problem.findOne({
-            slug: slug.toLowerCase().trim()
+            slug: normalizedSlug
         });
 
         if (alreadyExists) {
@@ -348,59 +282,30 @@ const AddProblem = async (req, res) => {
             );
         }
 
-
-        // -----------------------------------
         // Create problem
-        // -----------------------------------
-
         const problem = await Problem.create({
-
             title: title.trim(),
-
-            slug: slug.toLowerCase().trim(),
-
+            slug: normalizedSlug,
             problemStatement,
-
             topic,
-
             subTopics,
-
             tags,
-
             pattern,
-
             difficulty,
-
             inputFormat,
-
             outputFormat,
-
             constraints,
-
             examples,
-
             starterCode,
-
+            driverCode,
             testCases,
-
             supportedLanguages,
-
             expectedTimeComplexity,
-
             expectedSpaceComplexity,
-
             companies,
-
             order,
-
             ...(isActive === undefined ? {} : { isActive })
-
         });
-
-
-        // -----------------------------------
-        // Response
-        // -----------------------------------
 
         return res.status(201).json(
             new ApiResponse(
@@ -409,14 +314,8 @@ const AddProblem = async (req, res) => {
                 problem
             )
         );
-
-    }
-
-    catch (error) {
-
-        // MongoDB duplicate slug error
+    } catch (error) {
         if (error.code === 11000) {
-
             return res.status(400).json(
                 new ApiError(
                     400,
@@ -424,17 +323,12 @@ const AddProblem = async (req, res) => {
                     {}
                 )
             );
-
         }
 
-        console.error(error);
+        console.error("AddProblem Error:", error);
 
         return res.status(500).json(
-            new ApiError(
-                500,
-                "Internal Server Error",
-                error
-            )
+            new ApiError(500, "Internal Server Error", {})
         );
     }
 };
@@ -443,13 +337,9 @@ const UpdateProblem = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        if (!slug) {
+        if (!slug?.trim()) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Problem slug is required",
-                    {}
-                )
+                new ApiError(400, "Problem slug is required", {})
             );
         }
 
@@ -459,11 +349,7 @@ const UpdateProblem = async (req, res) => {
 
         if (!problem) {
             return res.status(404).json(
-                new ApiError(
-                    404,
-                    "Problem not found",
-                    {}
-                )
+                new ApiError(404, "Problem not found", {})
             );
         }
 
@@ -481,45 +367,62 @@ const UpdateProblem = async (req, res) => {
             constraints,
             examples,
             starterCode,
+            driverCode,
             testCases,
             supportedLanguages,
             expectedTimeComplexity,
             expectedSpaceComplexity,
             companies,
-            order
+            order,
+            isActive
         } = req.body;
 
+        // ==========================================
+        // VALIDATE REQUIRED STRING FIELDS
+        // ==========================================
+
+        if (
+            title !== undefined &&
+            (typeof title !== "string" || !title.trim())
+        ) {
+            return res.status(400).json(
+                new ApiError(400, "Title must be a non-empty string", {})
+            );
+        }
+
+        if (
+            problemStatement !== undefined &&
+            (typeof problemStatement !== "string" ||
+                !problemStatement.trim())
+        ) {
+            return res.status(400).json(
+                new ApiError(
+                    400,
+                    "Problem statement must be a non-empty string",
+                    {}
+                )
+            );
+        }
 
         // ==========================================
         // VALIDATE DIFFICULTY
         // ==========================================
 
         if (difficulty !== undefined) {
-
-            const validDifficulties = [
-                "EASY",
-                "MEDIUM",
-                "HARD"
-            ];
+            const validDifficulties = ["EASY", "MEDIUM", "HARD"];
 
             if (!validDifficulties.includes(difficulty)) {
                 return res.status(400).json(
-                    new ApiError(
-                        400,
-                        "Please provide a correct difficulty",
-                        {}
-                    )
+                    new ApiError(400, "Please provide a correct difficulty", {})
                 );
             }
         }
-
 
         // ==========================================
         // VALIDATE TOPIC
         // ==========================================
 
         if (topic !== undefined) {
-
             const validTopics = [
                 "INTRODUCTION",
                 "VARIABLES",
@@ -561,18 +464,13 @@ const UpdateProblem = async (req, res) => {
 
             if (!validTopics.includes(topic)) {
                 return res.status(400).json(
-                    new ApiError(
-                        400,
-                        "Please provide a correct topic",
-                        {}
-                    )
+                    new ApiError(400, "Please provide a correct topic", {})
                 );
             }
         }
 
-
         // ==========================================
-        // VALIDATE ARRAYS
+        // VALIDATE ARRAY FIELDS
         // ==========================================
 
         const arrayFields = {
@@ -582,32 +480,23 @@ const UpdateProblem = async (req, res) => {
             constraints,
             examples,
             testCases,
-            supportedLanguages
+            supportedLanguages,
+            companies
         };
 
         for (const [field, value] of Object.entries(arrayFields)) {
-
-            if (
-                value !== undefined &&
-                !Array.isArray(value)
-            ) {
+            if (value !== undefined && !Array.isArray(value)) {
                 return res.status(400).json(
-                    new ApiError(
-                        400,
-                        `${field} must be an array`,
-                        {}
-                    )
+                    new ApiError(400, `${field} must be an array`, {})
                 );
             }
         }
 
-
         // ==========================================
-        // VALIDATE PATTERN
+        // VALIDATE PATTERNS
         // ==========================================
 
         if (pattern !== undefined) {
-
             const validPatterns = [
                 "BRUTE_FORCE",
                 "HASHING",
@@ -641,33 +530,41 @@ const UpdateProblem = async (req, res) => {
 
             if (invalidPatterns.length > 0) {
                 return res.status(400).json(
-                    new ApiError(
-                        400,
-                        "Please provide valid patterns",
-                        { invalidPatterns }
-                    )
+                    new ApiError(400, "Please provide valid patterns", {
+                        invalidPatterns
+                    })
                 );
             }
         }
 
+        // ==========================================
+        // VALIDATE SUPPORTED LANGUAGES
+        // ==========================================
 
-        // ==========================================
-        // VALIDATE LANGUAGES
-        // ==========================================
+        const validLanguages = [
+            "cpp",
+            "java",
+            "javascript",
+            "python"
+        ];
 
         if (supportedLanguages !== undefined) {
-
-            const validLanguages = [
-                "cpp",
-                "java",
-                "javascript",
-                "python"
-            ];
-
-            const invalidLanguages =
-                supportedLanguages.filter(
-                    language => !validLanguages.includes(language)
+            if (
+                supportedLanguages.length === 0 ||
+                new Set(supportedLanguages).size !== supportedLanguages.length
+            ) {
+                return res.status(400).json(
+                    new ApiError(
+                        400,
+                        "At least one supported language is required; duplicates are not allowed",
+                        {}
+                    )
                 );
+            }
+
+            const invalidLanguages = supportedLanguages.filter(
+                language => !validLanguages.includes(language)
+            );
 
             if (invalidLanguages.length > 0) {
                 return res.status(400).json(
@@ -680,60 +577,106 @@ const UpdateProblem = async (req, res) => {
             }
         }
 
+        // Use the updated languages if supplied; otherwise, use existing ones.
+        const languagesToValidate =
+            supportedLanguages ?? problem.supportedLanguages;
 
         // ==========================================
-        // VALIDATE STARTER CODE
+        // VALIDATE STARTER CODE AND DRIVER CODE
         // ==========================================
+
+        const validateLanguageCode = (code, fieldName) => {
+            if (
+                !code ||
+                typeof code !== "object" ||
+                Array.isArray(code)
+            ) {
+                return `${fieldName} must be an object`;
+            }
+
+            for (const language of languagesToValidate) {
+                if (
+                    typeof code[language] !== "string" ||
+                    !code[language].trim()
+                ) {
+                    return `${fieldName} for ${language} is required`;
+                }
+            }
+
+            return null;
+        };
 
         if (starterCode !== undefined) {
+            const starterCodeError = validateLanguageCode(
+                starterCode,
+                "Starter code"
+            );
+
+            if (starterCodeError) {
+                return res.status(400).json(
+                    new ApiError(400, starterCodeError, {})
+                );
+            }
+        }
+
+        // Backend-only driver code validation
+        if (driverCode !== undefined) {
+            const driverCodeError = validateLanguageCode(
+                driverCode,
+                "Driver code"
+            );
+
+            if (driverCodeError) {
+                return res.status(400).json(
+                    new ApiError(400, driverCodeError, {})
+                );
+            }
+        }
+
+        // If supported languages change, make sure existing code
+        // templates are available for every newly supported language.
+        for (const language of languagesToValidate) {
+            const effectiveStarterCode =
+                starterCode ?? problem.starterCode;
+
+            const effectiveDriverCode =
+                driverCode ?? problem.driverCode;
 
             if (
-                typeof starterCode !== "object" ||
-                starterCode === null ||
-                Array.isArray(starterCode)
+                !effectiveStarterCode ||
+                typeof effectiveStarterCode[language] !== "string" ||
+                !effectiveStarterCode[language].trim()
             ) {
                 return res.status(400).json(
                     new ApiError(
                         400,
-                        "starterCode must be an object",
+                        `Starter code for ${language} is required`,
                         {}
                     )
                 );
             }
 
-            const requiredStarterLanguages = [
-                "cpp",
-                "java",
-                "javascript",
-                "python"
-            ];
-
-            for (const language of requiredStarterLanguages) {
-
-                if (
-                    typeof starterCode[language] !== "string" ||
-                    starterCode[language].trim() === ""
-                ) {
-                    return res.status(400).json(
-                        new ApiError(
-                            400,
-                            `Starter code for ${language} is required`,
-                            {}
-                        )
-                    );
-                }
+            if (
+                !effectiveDriverCode ||
+                typeof effectiveDriverCode[language] !== "string" ||
+                !effectiveDriverCode[language].trim()
+            ) {
+                return res.status(400).json(
+                    new ApiError(
+                        400,
+                        `Driver code for ${language} is required`,
+                        {}
+                    )
+                );
             }
         }
-
 
         // ==========================================
         // VALIDATE EXAMPLES
         // ==========================================
 
         if (examples !== undefined) {
-
             for (const example of examples) {
-
                 if (
                     !example ||
                     typeof example !== "object" ||
@@ -743,7 +686,7 @@ const UpdateProblem = async (req, res) => {
                     return res.status(400).json(
                         new ApiError(
                             400,
-                            "Each example must contain input and output",
+                            "Each example must contain string input and output",
                             {}
                         )
                     );
@@ -751,15 +694,12 @@ const UpdateProblem = async (req, res) => {
             }
         }
 
-
         // ==========================================
         // VALIDATE TEST CASES
         // ==========================================
 
         if (testCases !== undefined) {
-
             for (const testCase of testCases) {
-
                 if (
                     !testCase ||
                     typeof testCase !== "object" ||
@@ -769,21 +709,42 @@ const UpdateProblem = async (req, res) => {
                     return res.status(400).json(
                         new ApiError(
                             400,
-                            "Each test case must contain input and expectedOutput",
+                            "Each test case must contain string input and expectedOutput",
+                            {}
+                        )
+                    );
+                }
+
+                if (
+                    testCase.isPublic !== undefined &&
+                    typeof testCase.isPublic !== "boolean"
+                ) {
+                    return res.status(400).json(
+                        new ApiError(
+                            400,
+                            "testCase.isPublic must be a boolean",
                             {}
                         )
                     );
                 }
             }
-        }
 
+            if (testCases.length === 0) {
+                return res.status(400).json(
+                    new ApiError(
+                        400,
+                        "At least one test case is required",
+                        {}
+                    )
+                );
+            }
+        }
 
         // ==========================================
         // VALIDATE ORDER
         // ==========================================
 
         if (order !== undefined) {
-
             if (
                 typeof order !== "number" ||
                 !Number.isInteger(order) ||
@@ -799,15 +760,33 @@ const UpdateProblem = async (req, res) => {
             }
         }
 
+        // ==========================================
+        // VALIDATE ACTIVE STATUS
+        // ==========================================
+
+        if (
+            isActive !== undefined &&
+            typeof isActive !== "boolean"
+        ) {
+            return res.status(400).json(
+                new ApiError(400, "isActive must be a boolean", {})
+            );
+        }
 
         // ==========================================
         // CHECK NEW SLUG
         // ==========================================
 
-        if (newSlug !== undefined) {
+        let formattedSlug;
 
-            const formattedSlug =
-                newSlug.toLowerCase().trim();
+        if (newSlug !== undefined) {
+            if (typeof newSlug !== "string" || !newSlug.trim()) {
+                return res.status(400).json(
+                    new ApiError(400, "newSlug must be a non-empty string", {})
+                );
+            }
+
+            formattedSlug = newSlug.toLowerCase().trim();
 
             const slugExists = await Problem.findOne({
                 slug: formattedSlug,
@@ -825,7 +804,6 @@ const UpdateProblem = async (req, res) => {
             }
         }
 
-
         // ==========================================
         // CREATE UPDATE OBJECT
         // ==========================================
@@ -835,8 +813,8 @@ const UpdateProblem = async (req, res) => {
         if (title !== undefined)
             updateData.title = title.trim();
 
-        if (newSlug !== undefined)
-            updateData.slug = newSlug.toLowerCase().trim();
+        if (formattedSlug !== undefined)
+            updateData.slug = formattedSlug;
 
         if (problemStatement !== undefined)
             updateData.problemStatement = problemStatement;
@@ -871,6 +849,10 @@ const UpdateProblem = async (req, res) => {
         if (starterCode !== undefined)
             updateData.starterCode = starterCode;
 
+        // NEW: Update backend driver code
+        if (driverCode !== undefined)
+            updateData.driverCode = driverCode;
+
         if (testCases !== undefined)
             updateData.testCases = testCases;
 
@@ -878,12 +860,10 @@ const UpdateProblem = async (req, res) => {
             updateData.supportedLanguages = supportedLanguages;
 
         if (expectedTimeComplexity !== undefined)
-            updateData.expectedTimeComplexity =
-                expectedTimeComplexity;
+            updateData.expectedTimeComplexity = expectedTimeComplexity;
 
         if (expectedSpaceComplexity !== undefined)
-            updateData.expectedSpaceComplexity =
-                expectedSpaceComplexity;
+            updateData.expectedSpaceComplexity = expectedSpaceComplexity;
 
         if (companies !== undefined)
             updateData.companies = companies;
@@ -891,21 +871,27 @@ const UpdateProblem = async (req, res) => {
         if (order !== undefined)
             updateData.order = order;
 
+        if (isActive !== undefined)
+            updateData.isActive = isActive;
 
-        // ==========================================
-        // UPDATE
-        // ==========================================
-
-        const updatedProblem =
-            await Problem.findByIdAndUpdate(
-                problem._id,
-                { $set: updateData },
-                {
-                    new: true,
-                    runValidators: true
-                }
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json(
+                new ApiError(400, "No valid fields provided for update", {})
             );
+        }
 
+        // ==========================================
+        // UPDATE PROBLEM
+        // ==========================================
+
+        const updatedProblem = await Problem.findByIdAndUpdate(
+            problem._id,
+            { $set: updateData },
+            {
+                new: true,
+                runValidators: true
+            }
+        ).select("+driverCode");
 
         return res.status(200).json(
             new ApiResponse(
@@ -916,7 +902,6 @@ const UpdateProblem = async (req, res) => {
         );
 
     } catch (error) {
-
         if (error.code === 11000) {
             return res.status(400).json(
                 new ApiError(
@@ -927,46 +912,32 @@ const UpdateProblem = async (req, res) => {
             );
         }
 
-        console.error(error);
+        console.error("UpdateProblem Error:", error);
 
         return res.status(500).json(
-            new ApiError(
-                500,
-                "Internal Server Error",
-                error
-            )
+            new ApiError(500, "Internal Server Error", {})
         );
     }
 };
 
 const GetProblem = async (req, res) => {
-
     try {
-
         const { slug } = req.params;
 
         if (!slug) {
             return res.status(400).json(
-                new ApiError(
-                    400,
-                    "Problem slug is required",
-                    {}
-                )
+                new ApiError(400, "Problem slug is required", {})
             );
         }
 
         const problem = await Problem.findOne({
             slug: slug.toLowerCase().trim(),
             isActive: true
-        });
+        }).select("-driverCode");
 
         if (!problem) {
             return res.status(404).json(
-                new ApiError(
-                    404,
-                    "Problem not found",
-                    {}
-                )
+                new ApiError(404, "Problem not found", {})
             );
         }
 
@@ -979,56 +950,235 @@ const GetProblem = async (req, res) => {
         );
 
     } catch (error) {
+        console.error("GetProblem Error:", error);
 
-        console.error(error);
+        return res.status(500).json(
+            new ApiError(500, "Internal Server Error", {})
+        );
+    }
+};
+
+const GetProblemsSheet = async (req, res) => {
+
+    try {
+
+        const studentId = GetStudentId(req);
+
+        const problems = await Problem.find(
+            { isActive: true },
+            {
+                title: 1,
+                slug: 1,
+                topic: 1,
+                difficulty: 1,
+                companies: 1,
+                order: 1
+            }
+        )
+            .sort({ order: 1 })
+            .lean();
+
+        const statusMap = new Map();
+
+        console.log("Student ID:", studentId);
+
+        if (studentId) {
+
+            const solvedRecords = await Solved.find(
+                { studentId },
+                {
+                    problemId: 1,
+                    status: 1
+                }
+            ).lean();
+
+            console.log("Solved Records:", solvedRecords);
+
+            for (const record of solvedRecords) {
+
+                statusMap.set(
+                    record.problemId.toString(),
+                    record.status
+                );
+            }
+        }
+
+        // Topic order
+        const topicOrder = {
+            INTRODUCTION: 1,
+            BASICS: 2,
+            CONDITIONALS: 3,
+            LOOPS: 4,
+            FUNCTIONS: 5,
+
+            ARRAY: 6,
+            STRING: 7,
+            MATRIX: 8,
+
+            TIME_SPACE_COMPLEXITY: 9,
+
+            SEARCHING: 10,
+            SORTING: 11,
+            BINARY_SEARCH: 12,
+            HASHING: 13,
+
+            TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM: 14,
+            OOP: 15,
+
+
+            LINKED_LIST: 16,
+
+            STACK: 17,
+            QUEUE: 18,
+            DEQUE: 19,
+
+            HEAP: 20,
+
+            RECURSION: 21,
+            BACKTRACKING: 22,
+
+            TREE: 23,
+            BINARY_SEARCH_TREE: 24,
+            TRIE: 25,
+
+            GREEDY: 26,
+            DIVIDE_AND_CONQUER: 27,
+
+            GRAPH: 28,
+
+            DYNAMIC_PROGRAMMING: 29,
+
+            BIT_MANIPULATION: 30,
+            MATH: 31
+        };
+
+        // Difficulty order
+        const difficultyOrder = {
+            EASY: 1,
+            MEDIUM: 2,
+            HARD: 3
+        };
+
+        const groupedProblems = {};
+
+        // Group problems by topic
+        for (const problem of problems) {
+
+            if (!groupedProblems[problem.topic]) {
+                groupedProblems[problem.topic] = [];
+            }
+
+            groupedProblems[problem.topic].push({
+                id: problem._id,
+                title: problem.title,
+                slug: problem.slug,
+                difficulty: problem.difficulty,
+                companies: problem.companies || [],
+
+                status:
+                    statusMap.get(problem._id.toString()) ||
+                    "NOT_SOLVED",
+
+                order: problem.order
+            });
+        }
+
+        // Sort problems inside each topic
+        // EASY -> MEDIUM -> HARD -> order
+        for (const topic of Object.keys(groupedProblems)) {
+
+            groupedProblems[topic].sort((a, b) => {
+
+                const difficultyDifference =
+                    difficultyOrder[a.difficulty] -
+                    difficultyOrder[b.difficulty];
+
+                if (difficultyDifference !== 0) {
+                    return difficultyDifference;
+                }
+
+                return a.order - b.order;
+            });
+        }
+
+        // Create final response in fixed topic order
+        const orderedProblems = {};
+
+        Object.keys(topicOrder).forEach((topic) => {
+
+            if (groupedProblems[topic]) {
+                orderedProblems[topic] =
+                    groupedProblems[topic].map(
+                        ({ order, ...problem }) => problem
+                    );
+            }
+
+        });
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Problems sheet fetched successfully",
+                orderedProblems
+            )
+        );
+
+    } catch (error) {
+
+        console.error("GetProblemsSheet Error:", error);
 
         return res.status(500).json(
             new ApiError(
                 500,
                 "Internal Server Error",
-                error
+                error.message
             )
         );
     }
 };
 
 const GetProblemByTopic = async (req, res) => {
-
     try {
-
         const { topic, difficulty } = req.query;
 
         const filter = {
             isActive: true
         };
 
-
-        // -----------------------------------
-        // Topic filter
-        // -----------------------------------
-
+        // Validate and apply topic filter
         if (topic) {
-            filter.topic = topic.toUpperCase().trim();
-        }
+            const selectedTopic = topic.toUpperCase().trim();
 
-
-        // -----------------------------------
-        // Difficulty filter
-        // -----------------------------------
-
-        if (difficulty) {
-
-            const validDifficulties = [
-                "EASY",
-                "MEDIUM",
-                "HARD"
+            const validTopics = [
+                "INTRODUCTION", "VARIABLES", "DATA_TYPES",
+                "INPUT_OUTPUT", "OPERATORS", "CONDITIONALS",
+                "LOOPS", "FUNCTIONS", "ARRAY", "STRING",
+                "MATRIX", "TIME_SPACE_COMPLEXITY", "RECURSION",
+                "OOP", "SEARCHING", "SORTING", "BINARY_SEARCH",
+                "HASHING", "TWO_POINTER", "SLIDING_WINDOW",
+                "PREFIX_SUM", "LINKED_LIST", "STACK", "QUEUE",
+                "DEQUE", "BACKTRACKING", "HEAP", "TREE",
+                "BINARY_SEARCH_TREE", "TRIE", "GREEDY",
+                "DIVIDE_AND_CONQUER", "GRAPH",
+                "DYNAMIC_PROGRAMMING", "BIT_MANIPULATION", "MATH"
             ];
 
-            const selectedDifficulty =
-                difficulty.toUpperCase().trim();
+            if (!validTopics.includes(selectedTopic)) {
+                return res.status(400).json(
+                    new ApiError(400, "Invalid topic", {})
+                );
+            }
+
+            filter.topic = selectedTopic;
+        }
+
+        // Validate and apply difficulty filter
+        if (difficulty) {
+            const selectedDifficulty = difficulty.toUpperCase().trim();
+
+            const validDifficulties = ["EASY", "MEDIUM", "HARD"];
 
             if (!validDifficulties.includes(selectedDifficulty)) {
-
                 return res.status(400).json(
                     new ApiError(
                         400,
@@ -1041,38 +1191,25 @@ const GetProblemByTopic = async (req, res) => {
             filter.difficulty = selectedDifficulty;
         }
 
-
-        // -----------------------------------
-        // Get and sort problems
-        // -----------------------------------
-
         const problems = await Problem.aggregate([
-
             {
                 $match: filter
             },
-
             {
                 $addFields: {
                     difficultyOrder: {
                         $switch: {
                             branches: [
                                 {
-                                    case: {
-                                        $eq: ["$difficulty", "EASY"]
-                                    },
+                                    case: { $eq: ["$difficulty", "EASY"] },
                                     then: 1
                                 },
                                 {
-                                    case: {
-                                        $eq: ["$difficulty", "MEDIUM"]
-                                    },
+                                    case: { $eq: ["$difficulty", "MEDIUM"] },
                                     then: 2
                                 },
                                 {
-                                    case: {
-                                        $eq: ["$difficulty", "HARD"]
-                                    },
+                                    case: { $eq: ["$difficulty", "HARD"] },
                                     then: 3
                                 }
                             ],
@@ -1081,22 +1218,19 @@ const GetProblemByTopic = async (req, res) => {
                     }
                 }
             },
-
             {
                 $sort: {
                     difficultyOrder: 1,
                     order: 1
                 }
             },
-
             {
                 $project: {
+                    driverCode: 0,
                     difficultyOrder: 0
                 }
             }
-
         ]);
-
 
         return res.status(200).json(
             new ApiResponse(
@@ -1106,17 +1240,11 @@ const GetProblemByTopic = async (req, res) => {
             )
         );
 
-    }
-    catch (error) {
-
-        console.error(error);
+    } catch (error) {
+        console.error("GetProblemByTopic Error:", error);
 
         return res.status(500).json(
-            new ApiError(
-                500,
-                "Internal Server Error",
-                error
-            )
+            new ApiError(500, "Internal Server Error", {})
         );
     }
 };
@@ -1177,8 +1305,9 @@ const DeleteProblem = async (req, res) => {
 
 export {
     AddProblem,
-    UpdateProblem ,
-    GetProblem ,
-    GetProblemByTopic ,
+    UpdateProblem,
+    GetProblem,
+    GetProblemsSheet,
+    GetProblemByTopic,
     DeleteProblem
 }

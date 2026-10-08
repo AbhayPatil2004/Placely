@@ -1,0 +1,363 @@
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+@problemId = 6ac3af14defbc7efea34c6ae
+
+############################################################
+# GET ALL SUBMISSIONS
+############################################################
+
+### Get All Submissions
+GET {{baseUrl}}/api/submit/all
+Cookie: accessToken={{StudentAccessToken}}
+
+# getStudentProblemSubmissions
+GET {{baseUrl}}/api/submit/getStudentProblemSubmissions/6ac3af14defbc7efea34c6ae
+Cookie: accessToken={{StudentAccessToken}}
+
+### DELETE All Submissions
+DELETE {{baseUrl}}/api/submit/all
+Cookie: accessToken={{StudentAccessToken}}
+
+############################################################
+# ACCEPTED - CORRECT SOLUTIONS
+############################################################
+
+### C++ Accepted
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class  Solution { public: int search(vector<int>& nums, int target) { cout << \"Target: \" << target << endl; int left = 0, right = nums.size() - 1; while (left <= right) { int mid = left + (right - left) / 2; cout << \"Mid: \" << mid << endl; if (nums[mid] == target) return mid; if (nums[mid] < target) left = mid + 1; else right = mid - 1; } return -1; } };"
+}
+
+### Java Accepted
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class  Solution  { public int search(int[] nums, int target) { System.out.println(\"Searching for target: \" + target); int left = 0, right = nums.length - 1; while (left <= right) { int mid = left + (right - left) / 2; System.out.println(\"Checking index: \" + mid); if (nums[mid] == target) { System.out.println(\"Target found at index: \" + mid); return mid; } if (nums[mid] < target) left = mid + 1; else right = mid - 1; } System.out.println(\"Target not found\"); return -1; } }"
+}
+
+### JavaScript Accepted
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var   search = function(nums, target) { console.log(\"Searching for target: \" + target); let left = 0, right = nums.length - 1; while (left <= right) { const mid = Math.floor(left + (right - left) / 2); console.log(\"Checking index: \" + mid); if (nums[mid] === target) { console.log(\"Target found at index: \" + mid); return mid; } if (nums[mid] < target) left = mid + 1; else right = mid - 1; } console.log(\"Target not found\"); return -1; };"
+}
+
+
+### Python Accepted
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class    Solution:\n     def search(self, nums, target):\n        print(\"Searching for target:\", target)\n        left = 0\n        right = len(nums) - 1\n        while left <= right:\n            mid = left + (right - left) // 2\n            print(\"Checking index:\", mid)\n            if nums[mid] == target:\n                print(\"Target found at index:\", mid)\n                return mid\n            if nums[mid] < target:\n                left = mid + 1\n            else:\n                right = mid - 1\n        print(\"Target not found\")\n        return -1"
+}
+
+
+############################################################
+# WRONG ANSWER - WA
+############################################################
+
+### C++ Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { return 0; } };"
+}
+
+### Java Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { return 0; } }"
+}
+
+### JavaScript Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { return 0; };"
+}
+
+### Python Wrong Answer
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target):\n        return 0"
+}
+
+
+############################################################
+# COMPILE ERROR - CE
+############################################################
+
+### C++ Compile Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { return 0 } };"
+}
+
+### Java Compile Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { return 0 } }"
+}
+
+### JavaScript Syntax Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { return 0 "
+}
+
+### Python Syntax Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target)\n        return 0"
+}
+
+
+############################################################
+# RUNTIME ERROR - RTE
+############################################################
+
+### C++ Runtime Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { int x = nums.at(999999); return x; } };"
+}
+
+### Java Runtime Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { int[] data = new int[1]; return data[999999]; } }"
+}
+
+### JavaScript Runtime Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { throw new Error('Intentional runtime error'); };"
+}
+
+### Python Runtime Error
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target):\n        raise RuntimeError('Intentional runtime error')"
+}
+
+
+############################################################
+# TIME LIMIT EXCEEDED - TLE
+############################################################
+
+### C++ TLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { while (true) {} return -1; } };"
+}
+
+### Java TLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { while (true) {} } }"
+}
+
+### JavaScript TLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { while (true) {} };"
+}
+
+### Python TLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target):\n        while True:\n            pass"
+}
+
+
+############################################################
+# MEMORY LIMIT EXCEEDED - MLE
+############################################################
+
+### C++ MLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { vector<int> data; while (true) { data.resize(data.size() + 1000000); } return -1; } };"
+}
+
+### Java MLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { java.util.ArrayList<byte[]> data = new java.util.ArrayList<>(); while (true) { data.add(new byte[10000000]); } } }"
+}
+
+### JavaScript MLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { const data = []; while (true) { data.push(new Array(1000000).fill(0)); } };"
+}
+
+### Python MLE
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target):\n        data = []\n        while True:\n            data.append(bytearray(10000000))"
+}
+
+
+############################################################
+# DEBUG OUTPUT TESTS
+# Verify stdout parsing does not break evaluation
+############################################################
+
+### C++ Debug Output - cout
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "cpp",
+  "studentCode": "class Solution { public: int search(vector<int>& nums, int target) { cout << \"Debug message\" << endl; int left = 0, right = nums.size() - 1; while (left <= right) { int mid = left + (right - left) / 2; if (nums[mid] == target) return mid; if (nums[mid] < target) left = mid + 1; else right = mid - 1; } return -1; } };"
+}
+
+### Java Debug Output - System.out.println
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "java",
+  "studentCode": "class Solution { public int search(int[] nums, int target) { System.out.println(\"Debug message\"); int left = 0, right = nums.length - 1; while (left <= right) { int mid = left + (right - left) / 2; if (nums[mid] == target) return mid; if (nums[mid] < target) left = mid + 1; else right = mid - 1; } return -1; } }"
+}
+
+### JavaScript Debug Output - console.log
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "js",
+  "studentCode": "var search = function(nums, target) { console.log('Debug message'); let left = 0, right = nums.length - 1; while (left <= right) { const mid = Math.floor(left + (right - left) / 2); if (nums[mid] === target) return mid; if (nums[mid] < target) left = mid + 1; else right = mid - 1; } return -1; };"
+}
+
+### Python Debug Output - print
+POST {{baseUrl}}/api/submit/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+  "problemId": "{{problemId}}",
+  "language": "py",
+  "studentCode": "class Solution:\n    def search(self, nums, target):\n        print('Debug message')\n        left = 0\n        right = len(nums) - 1\n        while left <= right:\n            mid = left + (right - left) // 2\n            if nums[mid] == target:\n                return mid\n            if nums[mid] < target:\n                left = mid + 1\n            else:\n                right = mid - 1\n        return -1"
+}

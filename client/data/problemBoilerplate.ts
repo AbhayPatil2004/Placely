@@ -1,4 +1,15 @@
-export const problemBoilerplate = {
+export const editorLanguages = ["Java", "C++", "Python", "JavaScript"] as const;
+
+export type EditorLanguage = (typeof editorLanguages)[number];
+
+export const monacoLanguageByEditorLanguage: Record<EditorLanguage, string> = {
+  Java: "java",
+  "C++": "cpp",
+  Python: "python",
+  JavaScript: "javascript",
+};
+
+export const problemBoilerplate: Record<EditorLanguage, string> = {
   Java: `import java.util.*;
 
 class Solution {
@@ -22,5 +33,3 @@ public:
   // code here
 }`,
 } as const;
-
-export type EditorLanguage = keyof typeof problemBoilerplate;

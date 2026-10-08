@@ -76,6 +76,16 @@ const starterCodeSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const driverCodeSchema = new mongoose.Schema(
+    {
+        cpp: { type: String, required: true },
+        java: { type: String, required: true },
+        javascript: { type: String, required: true },
+        python: { type: String, required: true }
+    },
+    { _id: false }
+);
+
 
 // -------------------------
 // Problem Schema
@@ -113,10 +123,7 @@ const problemSchema = new mongoose.Schema(
                 // =========================
 
                 "INTRODUCTION",
-                "VARIABLES",
-                "DATA_TYPES",
-                "INPUT_OUTPUT",
-                "OPERATORS",
+                "BASICS",
                 "CONDITIONALS",
                 "LOOPS",
                 "FUNCTIONS",
@@ -134,13 +141,6 @@ const problemSchema = new mongoose.Schema(
                 // =========================
 
                 "TIME_SPACE_COMPLEXITY",
-                "RECURSION",
-
-                // =========================
-                // OBJECT ORIENTED PROGRAMMING
-                // =========================
-
-                "OOP",
 
                 // =========================
                 // SEARCHING & SORTING
@@ -149,15 +149,19 @@ const problemSchema = new mongoose.Schema(
                 "SEARCHING",
                 "SORTING",
                 "BINARY_SEARCH",
+                "HASHING",
+
+                // =========================
+                // OBJECT ORIENTED PROGRAMMING
+                // =========================
+
+                "OOP",
 
                 // =========================
                 // ARRAY PATTERNS
                 // =========================
 
-                "HASHING",
-                "TWO_POINTER",
-                "SLIDING_WINDOW",
-                "PREFIX_SUM",
+                "TWO_POINTER_SLIDING_WINDOW_PREFIX_SUM",
 
                 // =========================
                 // LINKED DATA STRUCTURES
@@ -174,16 +178,17 @@ const problemSchema = new mongoose.Schema(
                 "DEQUE",
 
                 // =========================
-                // RECURSIVE / EXPONENTIAL
-                // =========================
-
-                "BACKTRACKING",
-
-                // =========================
                 // HEAP
                 // =========================
 
                 "HEAP",
+
+                // =========================
+                // RECURSIVE / EXPONENTIAL
+                // =========================
+
+                "RECURSION",
+                "BACKTRACKING",
 
                 // =========================
                 // TREES
@@ -223,6 +228,7 @@ const problemSchema = new mongoose.Schema(
 
                 "BIT_MANIPULATION",
                 "MATH"
+
             ],
             required: true,
             index: true
@@ -304,6 +310,11 @@ const problemSchema = new mongoose.Schema(
             type: starterCodeSchema,
             required: true
         },
+        driverCode: {
+            type: driverCodeSchema,
+            required: true,
+            select: false
+        },
 
         testCases: {
             type: [testCaseSchema],
@@ -374,9 +385,6 @@ problemSchema.index({
     topic: 1,
     order: 1
 });
-
-
-
 
 const Problem = mongoose.model("Problem", problemSchema);
 

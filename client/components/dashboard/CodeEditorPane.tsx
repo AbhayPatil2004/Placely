@@ -3,21 +3,28 @@
 import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import type { OnChange, OnMount } from "@monaco-editor/react";
 import { EditorToolbar } from "./EditorToolbar";
-import { problemBoilerplate, type EditorLanguage } from "@/data/problemBoilerplate";
+import {
+  monacoLanguageByEditorLanguage,
+  problemBoilerplate,
+  type EditorLanguage,
+} from "@/data/problemBoilerplate";
 import type { ProblemLanguage } from "@/services/problemService";
-import { CodeExecutionPanel } from "./CodeExecutionPanel";
-import { useCodeExecution } from "@/hooks/useCodeExecution";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
-const monacoLanguage: Record<EditorLanguage, string> = {
-  Java: "java",
-  "C++": "cpp",
-  Python: "python",
-  JavaScript: "javascript",
-};
-
-export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<ProblemLanguage, string>> }) {
+export function CodeEditorPane({
+  starterCode,
+  onRun,
+  onSubmit,
+  isRunning,
+  isSubmitting,
+}: {
+  starterCode?: Partial<Record<ProblemLanguage, string>>;
+  onRun: (code: string, language: EditorLanguage) => void;
+  onSubmit: (studentCode: string, language: EditorLanguage) => void;
+  isRunning: boolean;
+  isSubmitting: boolean;
+}) {
   const [language, setLanguage] = useState<EditorLanguage>("JavaScript");
   const initialCode = {
     Java: starterCode?.java ?? problemBoilerplate.Java,
@@ -26,11 +33,8 @@ export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<P
     JavaScript: starterCode?.javascript ?? problemBoilerplate.JavaScript,
   };
   const [codeByLanguage, setCodeByLanguage] = useState<Record<EditorLanguage, string>>(initialCode);
-  const [input, setInput] = useState("");
-  const [notice, setNotice] = useState("");
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
-  const { execution, connectionStatus, isBusy, run } = useCodeExecution();
 
   const code = codeByLanguage[language];
   const editorOptions = useMemo(() => ({
@@ -68,16 +72,11 @@ export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<P
   };
 
   const handleRun = () => {
-    setNotice("");
-    void run({
-      code: editorRef.current?.getValue() ?? codeByLanguage[language],
-      language,
-      input,
-    });
+    onRun(editorRef.current?.getValue() ?? codeByLanguage[language], language);
   };
 
   const handleSubmit = () => {
-    setNotice("Problem submission is not available yet; the current backend only runs code.");
+    onSubmit(editorRef.current?.getValue() ?? codeByLanguage[language], language);
   };
 
   return (
@@ -90,13 +89,14 @@ export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<P
         onResetConfirm={setIsResetConfirmOpen}
         onRun={handleRun}
         onSubmit={handleSubmit}
-        isRunning={isBusy}
+        isRunning={isRunning}
+        isSubmitting={isSubmitting}
       />
       <div className="min-h-[240px] min-w-0 flex-1">
         <Suspense fallback={<div className="h-full min-h-[360px] animate-pulse bg-abyss p-5 font-mono text-sm text-muted-gray">Loading editor...</div>}>
           <MonacoEditor
             height="100%"
-            language={monacoLanguage[language]}
+            language={monacoLanguageByEditorLanguage[language]}
             theme="placely-dark"
             value={code}
             onChange={handleCodeChange}
@@ -105,13 +105,6 @@ export function CodeEditorPane({ starterCode }: { starterCode?: Partial<Record<P
           />
         </Suspense>
       </div>
-      <CodeExecutionPanel
-        input={input}
-        onInputChange={setInput}
-        execution={execution}
-        notice={notice}
-        connectionStatus={connectionStatus}
-      />
     </section>
   );
 }

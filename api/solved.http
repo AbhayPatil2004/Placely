@@ -1,0 +1,7 @@
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+
+
+#GetStudentSolvedproblems 
+GET {{baseUrl}}/api/solved/problem
+Cookie: accessToken={{StudentAccessToken}}
