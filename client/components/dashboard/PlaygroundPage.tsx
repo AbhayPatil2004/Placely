@@ -24,7 +24,7 @@ int main() {
 }`,
 };
 
-const statusLabels: Record<"idle" | "connecting" | "running" | "success" | "runtime_error" | "compile_error" | "timeout" | "error" | "network_error", string> = {
+const statusLabels: Record<"idle" | "connecting" | "running" | "success" | "runtime_error" | "compile_error" | "timeout" | "memory_limit_exceeded" | "error" | "network_error", string> = {
   idle: "Ready",
   connecting: "Connecting",
   running: "Running",
@@ -32,6 +32,7 @@ const statusLabels: Record<"idle" | "connecting" | "running" | "success" | "runt
   runtime_error: "Runtime error",
   compile_error: "Compilation error",
   timeout: "Execution timed out",
+  memory_limit_exceeded: "Memory limit exceeded",
   error: "Execution failed",
   network_error: "Connection error",
 };
@@ -267,7 +268,9 @@ function PlaygroundIDE() {
                 ) : null}
                 {stderr ? (
                   <div className="mt-3">
-                    <p className="text-muted-gray">Diagnostics</p>
+                    <p className="text-muted-gray">
+                      {execution.status === "compile_error" ? "Compiler output" : "Diagnostics"}
+                    </p>
                     <pre className="whitespace-pre-wrap break-words text-error-red">{stderr}</pre>
                   </div>
                 ) : null}

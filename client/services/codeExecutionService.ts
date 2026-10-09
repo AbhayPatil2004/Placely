@@ -2,7 +2,13 @@ import type { EditorLanguage } from "@/data/problemBoilerplate";
 import { apiRequest } from "@/lib/api/client";
 
 export type BackendLanguage = "cpp" | "java" | "js" | "py";
-export type ExecutionOutcome = "success" | "runtime_error" | "compile_error" | "timeout" | "error";
+export type ExecutionOutcome =
+  | "success"
+  | "runtime_error"
+  | "compile_error"
+  | "timeout"
+  | "memory_limit_exceeded"
+  | "error";
 
 export type ExecutionResult = {
   status: ExecutionOutcome;
@@ -17,6 +23,7 @@ export type ExecutionResultMessage = {
   status?: string;
   language?: string;
   result: ExecutionResult | null;
+  error?: string | null;
 };
 
 const backendLanguageByEditorLanguage: Record<EditorLanguage, BackendLanguage> = {
@@ -104,6 +111,7 @@ export function parseExecutionMessage(data: unknown):
     "runtime_error",
     "compile_error",
     "timeout",
+    "memory_limit_exceeded",
     "error",
   ];
   const result: ExecutionResult | null = rawResult
@@ -125,6 +133,7 @@ export function parseExecutionMessage(data: unknown):
       ...(typeof message.status === "string" ? { status: message.status } : {}),
       ...(typeof message.language === "string" ? { language: message.language } : {}),
       result,
+      ...(typeof message.error === "string" ? { error: message.error } : {}),
     },
   };
 }

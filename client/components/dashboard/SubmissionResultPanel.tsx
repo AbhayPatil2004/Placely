@@ -24,6 +24,7 @@ const executionStatusLabels: Record<ExecutionState["status"], string> = {
   runtime_error: "Runtime Error",
   compile_error: "Compilation Error",
   timeout: "Time Limit Exceeded",
+  memory_limit_exceeded: "Memory Limit Exceeded",
   error: "Execution Error",
   network_error: "Connection Error",
 };
@@ -45,12 +46,48 @@ function DataBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatTestCaseInput(value: unknown): string {
+  if (typeof value === "string") return value;
+
+  const formatStructuredValue = (current: unknown, depth: number): string => {
+    if (Array.isArray(current)) {
+      if (current.every((item) => item === null || typeof item !== "object")) {
+        return `[ ${current.map(formatStructuredValueItem).join(", ")} ]`;
+      }
+      const indentation = "  ".repeat(depth + 1);
+      const closingIndentation = "  ".repeat(depth);
+      return `[\n${indentation}${current
+        .map((item) => formatStructuredValue(item, depth + 1))
+        .join(`,\n${indentation}`)}\n${closingIndentation}]`;
+    }
+
+    if (current !== null && typeof current === "object") {
+      const entries = Object.entries(current);
+      if (entries.length === 0) return "{}";
+      const indentation = "  ".repeat(depth + 1);
+      const closingIndentation = "  ".repeat(depth);
+      return `{\n${indentation}${entries
+        .map(([key, item]) => `${JSON.stringify(key)}: ${formatStructuredValue(item, depth + 1)}`)
+        .join(`,\n${indentation}`)}\n${closingIndentation}}`;
+    }
+
+    return JSON.stringify(current) ?? String(current);
+  };
+
+  const formatStructuredValueItem = (item: unknown) =>
+    item !== null && typeof item === "object"
+      ? formatStructuredValue(item, 0)
+      : JSON.stringify(item) ?? String(item);
+
+  return formatStructuredValue(value, 0);
+}
+
 function SubmissionDetails({
   submission,
-  publicTestCaseIndexes,
+  testCaseInputs,
 }: {
   submission: SubmissionState;
-  publicTestCaseIndexes: ReadonlySet<number>;
+  testCaseInputs?: readonly unknown[];
 }) {
   const result = submission.result;
   if (!result) return null;
@@ -71,7 +108,7 @@ function SubmissionDetails({
         </div>
       </div>
 
-      {(result.executionTime > 0 || result.memoryUsed > 0) && (
+      {(result.executionTime > 0 || (result.memoryUsed !== null && result.memoryUsed > 0) || result.exitCode !== null) && (
         <dl className="grid grid-cols-2 gap-3 rounded-buttons border border-graphite bg-abyss/50 p-3">
           {result.executionTime > 0 && (
             <div>
@@ -79,10 +116,16 @@ function SubmissionDetails({
               <dd className="mt-1 text-sm font-medium text-bright-gray">{result.executionTime} ms</dd>
             </div>
           )}
-          {result.memoryUsed > 0 && (
+          {result.memoryUsed !== null && result.memoryUsed > 0 && (
             <div>
               <dt className="text-xs text-muted-gray">Memory</dt>
               <dd className="mt-1 text-sm font-medium text-bright-gray">{result.memoryUsed}</dd>
+            </div>
+          )}
+          {result.exitCode !== null && (
+            <div>
+              <dt className="text-xs text-muted-gray">Exit code</dt>
+              <dd className="mt-1 text-sm font-medium text-bright-gray">{result.exitCode}</dd>
             </div>
           )}
         </dl>
@@ -98,31 +141,25 @@ function SubmissionDetails({
           </div>
           <div className="space-y-1">
             {result.testCasesResult.map((testCase, index) => {
-              const isPublic = publicTestCaseIndexes.has(index);
               const passed = testCase.status === "passed";
-              const name = isPublic ? `Test Case ${index + 1}` : "Hidden Test Case";
+              const input = testCaseInputs && index < testCaseInputs.length
+                ? formatTestCaseInput(testCaseInputs[index])
+                : testCase.testCase;
 
               return (
                 <details key={`result-test-${index}`} className="group rounded-buttons border border-transparent open:border-graphite open:bg-abyss/40">
                   <summary className="flex cursor-pointer list-none items-center gap-2 rounded-buttons px-2.5 py-2 text-sm hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavender [&::-webkit-details-marker]:hidden">
                     <StatusIcon success={passed} />
                     <span className={`min-w-0 flex-1 truncate ${passed ? "text-medium-gray" : "text-bright-gray"}`}>
-                      {name}
+                      <span className="mr-1.5 text-muted-gray">Input:</span>
+                      <code>{input}</code>
                     </span>
-                    {!isPublic && <span className="text-[11px] text-muted-gray">Details hidden</span>}
                   </summary>
-                  {isPublic && (
-                    <div className="space-y-3 px-3 pb-3 pt-1">
-                      <DataBlock label="Input" value={testCase.testCase} />
-                      {!passed && (
-                        <>
-                          <DataBlock label="Expected Output" value={testCase.expectedOutput} />
-                          <DataBlock label="Your Output" value={testCase.actualOutput} />
-                        </>
-                      )}
-                      {testCase.logs.trim() && <DataBlock label="Logs" value={testCase.logs} />}
-                    </div>
-                  )}
+                  <div className="space-y-3 px-3 pb-3 pt-1">
+                    <DataBlock label="Output" value={testCase.actualOutput} />
+                    <DataBlock label="Expected" value={testCase.expectedOutput} />
+                    {testCase.logs.trim() && <DataBlock label="Logs" value={testCase.logs} />}
+                  </div>
                 </details>
               );
             })}
@@ -130,14 +167,20 @@ function SubmissionDetails({
         </section>
       )}
 
-      {(result.errorMessage || result.stderr) && (
+      {(result.stdout || result.errorMessage || result.stderr) && (
         <section aria-label="Submission diagnostics">
           <h3 className="mb-2 border-b border-graphite pb-2 text-sm font-semibold text-bright-gray">
             {result.status === "COMPILE_ERROR" ? "Compiler Output" : "Diagnostics"}
           </h3>
           <div className="space-y-3">
+            {result.stdout && <DataBlock label="Standard output" value={result.stdout} />}
             {result.errorMessage && <DataBlock label="Error" value={result.errorMessage} />}
-            {result.stderr && <DataBlock label="Output" value={result.stderr} />}
+            {result.stderr && (
+              <DataBlock
+                label={result.status === "COMPILE_ERROR" ? "Compiler output" : "Standard error"}
+                value={result.stderr}
+              />
+            )}
           </div>
         </section>
       )}
@@ -154,7 +197,7 @@ export function SubmissionResultPanel({
   isRunning,
   submission,
   isSubmitting,
-  publicTestCaseIndexes,
+  testCaseInputs,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -164,7 +207,7 @@ export function SubmissionResultPanel({
   isRunning: boolean;
   submission: SubmissionState;
   isSubmitting: boolean;
-  publicTestCaseIndexes: ReadonlySet<number>;
+  testCaseInputs?: readonly unknown[];
 }) {
   const isSubmission = mode === "submission";
   const isPending = isSubmission ? isSubmitting : isRunning;
@@ -174,6 +217,7 @@ export function SubmissionResultPanel({
     "runtime_error",
     "compile_error",
     "timeout",
+    "memory_limit_exceeded",
     "error",
     "network_error",
   ].includes(execution.status);
@@ -234,7 +278,7 @@ export function SubmissionResultPanel({
         ) : hasSubmissionResult ? (
           <SubmissionDetails
             submission={submission}
-            publicTestCaseIndexes={publicTestCaseIndexes}
+            testCaseInputs={testCaseInputs}
           />
         ) : hasExecutionResult ? (
           <section className="space-y-4" aria-label="Execution details">
