@@ -4,7 +4,35 @@
 @StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
 
 ############################################################
-# 1. ADD PROBLEM
+# . ADD Multiple PROBLEM
+############################################################
+
+POST {{baseUrl}}/api/problem/multiple
+Content-Type: application/json
+Cookie: accessToken={{AdminAccessToken}}
+
+###########################################################
+# . GET All PROBLEM
+############################################################
+
+GET {{baseUrl}}/api/problem/all
+
+
+###########################################################
+# . GET PROBLEM
+############################################################
+
+GET {{baseUrl}}/api/problem/calculate-total-and-average-of-three-numbers
+
+############################################################
+# . GET Problem Sheet
+############################################################
+
+GET {{baseUrl}}/api/problem/sheet
+Cookie: accessToken={{StudentAccessToken}}
+
+############################################################
+# . ADD PROBLEM
 ############################################################
 
 POST {{baseUrl}}/api/problem
@@ -111,25 +139,6 @@ Cookie: accessToken={{AdminAccessToken}}
   "order": 2
 }
 
-
-
-
-############################################################
-# 2. GET PROBLEM
-############################################################
-
-GET {{baseUrl}}/api/problem/binary-search
-
-
-############################################################
-# 2. GET Problem Sheet
-############################################################
-
-GET {{baseUrl}}/api/problem/sheet
-Cookie: accessToken={{StudentAccessToken}}
-
-
-
 ############################################################
 # 3. GET EASY ARRAY PROBLEMS
 ############################################################
@@ -156,4 +165,11 @@ Cookie: accessToken={{AdminAccessToken}}
 ############################################################
 
 DELETE {{baseUrl}}/api/problem/two-sum
+Cookie: accessToken={{AdminAccessToken}}
+
+###########################################################
+# 5. DELETE ALL PROBLEM
+############################################################
+
+DELETE {{baseUrl}}/api/problem/all
 Cookie: accessToken={{AdminAccessToken}}

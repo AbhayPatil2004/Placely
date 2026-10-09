@@ -23,6 +23,7 @@ export type ExecutionStatus =
   | "runtime_error"
   | "compile_error"
   | "timeout"
+  | "memory_limit_exceeded"
   | "error"
   | "network_error";
 
@@ -63,14 +64,18 @@ export function useCodeExecution() {
   const requestPendingRef = useRef(false);
   const runPendingRef = useRef(false);
   const runSequenceRef = useRef(0);
-  const bufferedResultsRef = useRef(new Map<string, ExecutionResult | null>());
+  const bufferedResultsRef = useRef(new Map<string, { result: ExecutionResult | null; error?: string | null }>());
   const currentSubmissionIdRef = useRef<string | null>(null);
   const submissionRequestPendingRef = useRef(false);
   const submissionSequenceRef = useRef(0);
   const bufferedSubmissionResultsRef = useRef(new Map<string, SubmissionResult>());
   const mountedRef = useRef(false);
 
-  const finishWithResult = useCallback((jobId: string, result: ExecutionResult | null) => {
+  const finishWithResult = useCallback((
+    jobId: string,
+    result: ExecutionResult | null,
+    error?: string | null,
+  ) => {
     if (!mountedRef.current || currentJobIdRef.current !== jobId) return;
 
     currentJobIdRef.current = null;
@@ -80,7 +85,7 @@ export function useCodeExecution() {
     if (!result) {
       setExecution({
         status: "error",
-        message: "The execution service returned no result.",
+        message: error || "The execution service returned no result.",
         result: null,
         jobId,
       });
@@ -163,14 +168,14 @@ export function useCodeExecution() {
 
     if (parsed.type !== "CODE_EXECUTION_RESULT") return;
 
-    const { jobId, result } = parsed.message;
+    const { jobId, result, error } = parsed.message;
     if (currentJobIdRef.current === jobId) {
-      finishWithResult(jobId, result);
+      finishWithResult(jobId, result, error);
       return;
     }
 
     if (requestPendingRef.current) {
-      bufferedResultsRef.current.set(jobId, result);
+      bufferedResultsRef.current.set(jobId, { result, error });
       if (bufferedResultsRef.current.size > 5) {
         const oldestJobId = bufferedResultsRef.current.keys().next().value;
         if (oldestJobId) bufferedResultsRef.current.delete(oldestJobId);
@@ -337,9 +342,9 @@ export function useCodeExecution() {
       setExecution({ status: "running", message: "Running...", result: null, jobId });
 
       if (bufferedResultsRef.current.has(jobId)) {
-        const earlyResult = bufferedResultsRef.current.get(jobId) ?? null;
+        const earlyResult = bufferedResultsRef.current.get(jobId);
         bufferedResultsRef.current.delete(jobId);
-        finishWithResult(jobId, earlyResult);
+        finishWithResult(jobId, earlyResult?.result ?? null, earlyResult?.error);
       } else {
         bufferedResultsRef.current.clear();
       }

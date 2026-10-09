@@ -27,12 +27,25 @@ export type SubmissionResult = {
   totalTestCases: number;
   passedTestCases: number;
   testCasesResult: SubmissionTestCaseResult[];
+  stdout: string;
   stderr: string;
-  exitCode: number;
+  exitCode: number | null;
   executionTime: number;
-  memoryUsed: number;
+  memoryUsed: number | null;
   errorMessage: string;
-  completedAt: string;
+  completedAt: string | null;
+};
+
+export type SubmissionHistoryEntry = {
+  submissionId: string;
+  problemId: string;
+  language: string;
+  code: string;
+  status: SubmissionStatus | "PENDING" | "QUEUED" | "RUNNING";
+  totalTestCases: number;
+  passedTestCases: number;
+  submittedAt: string | null;
+  completedAt: string | null;
 };
 
 export type SubmissionState = {
@@ -57,6 +70,8 @@ const submissionStatuses: SubmissionStatus[] = [
   "RUNTIME_ERROR",
   "SYSTEM_ERROR",
 ];
+const acceptedSubmissionStatuses = [...submissionStatuses, "COMPILATION_ERROR"];
+const historyStatuses = [...acceptedSubmissionStatuses, "PENDING", "QUEUED", "RUNNING"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -93,6 +108,54 @@ export async function submitProblemCode({
   return response;
 }
 
+export async function getStudentProblemSubmissions(problemId: string): Promise<SubmissionHistoryEntry[]> {
+  const response = await apiRequest<{ total: number; submissions: unknown[] }>(
+    `/api/submit/getStudentProblemSubmissions/${encodeURIComponent(problemId)}`,
+  );
+
+  if (!Array.isArray(response.submissions)) {
+    throw new Error("The submission history response is invalid.");
+  }
+
+  return response.submissions.map((submission, index) => {
+    if (
+      !isRecord(submission) ||
+      typeof submission._id !== "string" ||
+      typeof submission.problemId !== "string" ||
+      typeof submission.language !== "string" ||
+      typeof submission.code !== "string" ||
+      typeof submission.status !== "string" ||
+      !historyStatuses.includes(submission.status as SubmissionStatus | "COMPILATION_ERROR" | "PENDING" | "QUEUED" | "RUNNING") ||
+      typeof submission.totalTestCases !== "number" ||
+      typeof submission.passedTestCases !== "number"
+    ) {
+      throw new Error(`Submission history entry ${index + 1} is invalid.`);
+    }
+
+    return {
+      submissionId: submission._id,
+      problemId: submission.problemId,
+      language: submission.language,
+      code: submission.code,
+      status: submission.status === "COMPILATION_ERROR"
+        ? "COMPILE_ERROR"
+        : submission.status as SubmissionHistoryEntry["status"],
+      totalTestCases: submission.totalTestCases,
+      passedTestCases: submission.passedTestCases,
+      submittedAt: typeof submission.submittedAt === "string"
+        ? submission.submittedAt
+        : typeof submission.createdAt === "string"
+          ? submission.createdAt
+          : null,
+      completedAt: typeof submission.completedAt === "string" ? submission.completedAt : null,
+    };
+  }).sort((first, second) => {
+    const firstDate = first.submittedAt ? Date.parse(first.submittedAt) : 0;
+    const secondDate = second.submittedAt ? Date.parse(second.submittedAt) : 0;
+    return secondDate - firstDate;
+  });
+}
+
 export function parseSubmissionResultMessage(data: unknown): SubmissionResult | null {
   if (typeof data !== "string") return null;
 
@@ -110,7 +173,7 @@ export function parseSubmissionResultMessage(data: unknown): SubmissionResult | 
     typeof parsed.problemId !== "string" ||
     typeof parsed.language !== "string" ||
     typeof parsed.status !== "string" ||
-    !submissionStatuses.includes(parsed.status as SubmissionStatus) ||
+    !acceptedSubmissionStatuses.includes(parsed.status as SubmissionStatus | "COMPILATION_ERROR") ||
     typeof parsed.totalTestCases !== "number" ||
     !Number.isInteger(parsed.totalTestCases) ||
     typeof parsed.passedTestCases !== "number" ||
@@ -119,12 +182,13 @@ export function parseSubmissionResultMessage(data: unknown): SubmissionResult | 
     parsed.passedTestCases < 0 ||
     parsed.passedTestCases > parsed.totalTestCases ||
     !Array.isArray(parsed.testCasesResult) ||
+    typeof parsed.stdout !== "string" ||
     typeof parsed.stderr !== "string" ||
-    typeof parsed.exitCode !== "number" ||
+    !(typeof parsed.exitCode === "number" || parsed.exitCode === null) ||
     typeof parsed.executionTime !== "number" ||
-    typeof parsed.memoryUsed !== "number" ||
+    !(typeof parsed.memoryUsed === "number" || parsed.memoryUsed === null) ||
     typeof parsed.errorMessage !== "string" ||
-    typeof parsed.completedAt !== "string"
+    !(typeof parsed.completedAt === "string" || parsed.completedAt === null)
   ) {
     return null;
   }
@@ -163,10 +227,13 @@ export function parseSubmissionResultMessage(data: unknown): SubmissionResult | 
     submissionId: parsed.submissionId,
     problemId: parsed.problemId,
     language: parsed.language,
-    status: parsed.status as SubmissionStatus,
+    status: parsed.status === "COMPILATION_ERROR"
+      ? "COMPILE_ERROR"
+      : parsed.status as SubmissionStatus,
     totalTestCases: parsed.totalTestCases,
     passedTestCases: parsed.passedTestCases,
     testCasesResult,
+    stdout: parsed.stdout,
     stderr: parsed.stderr,
     exitCode: parsed.exitCode,
     executionTime: parsed.executionTime,

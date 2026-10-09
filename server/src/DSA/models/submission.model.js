@@ -54,6 +54,7 @@ const submissionSchema = new mongoose.Schema(
                 "MEMORY_LIMIT_EXCEEDED",
                 "RUNTIME_ERROR",
                 "COMPILE_ERROR",
+                "COMPILATION_ERROR",
                 "SYSTEM_ERROR",
             ],
             default: "PENDING",
