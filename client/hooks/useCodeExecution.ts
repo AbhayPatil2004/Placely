@@ -8,6 +8,12 @@ import {
   parseExecutionMessage,
   type ExecutionResult,
 } from "@/services/codeExecutionService";
+import {
+  parseSubmissionResultMessage,
+  submitProblemCode,
+  type SubmissionResult,
+  type SubmissionState,
+} from "@/services/submissionService";
 
 export type ExecutionStatus =
   | "idle"
@@ -36,8 +42,16 @@ const initialState: ExecutionState = {
   jobId: null,
 };
 
+const initialSubmissionState: SubmissionState = {
+  status: "idle",
+  message: "",
+  result: null,
+  submissionId: null,
+};
+
 export function useCodeExecution() {
   const [execution, setExecution] = useState<ExecutionState>(initialState);
+  const [submission, setSubmission] = useState<SubmissionState>(initialSubmissionState);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const socketRef = useRef<WebSocket | null>(null);
   const connectedRef = useRef(false);
@@ -50,6 +64,10 @@ export function useCodeExecution() {
   const runPendingRef = useRef(false);
   const runSequenceRef = useRef(0);
   const bufferedResultsRef = useRef(new Map<string, ExecutionResult | null>());
+  const currentSubmissionIdRef = useRef<string | null>(null);
+  const submissionRequestPendingRef = useRef(false);
+  const submissionSequenceRef = useRef(0);
+  const bufferedSubmissionResultsRef = useRef(new Map<string, SubmissionResult>());
   const mountedRef = useRef(false);
 
   const finishWithResult = useCallback((jobId: string, result: ExecutionResult | null) => {
@@ -77,7 +95,33 @@ export function useCodeExecution() {
     });
   }, []);
 
+  const finishWithSubmissionResult = useCallback((result: SubmissionResult) => {
+    if (!mountedRef.current || currentSubmissionIdRef.current !== result.submissionId) return;
+
+    currentSubmissionIdRef.current = null;
+    submissionRequestPendingRef.current = false;
+    setSubmission({
+      status: result.status,
+      message: "",
+      result,
+      submissionId: result.submissionId,
+    });
+  }, []);
+
   const handleSocketMessage = useCallback((data: unknown) => {
+    const submissionResult = parseSubmissionResultMessage(data);
+    if (submissionResult) {
+      if (currentSubmissionIdRef.current === submissionResult.submissionId) {
+        finishWithSubmissionResult(submissionResult);
+      } else if (submissionRequestPendingRef.current) {
+        bufferedSubmissionResultsRef.current.set(
+          submissionResult.submissionId,
+          submissionResult,
+        );
+      }
+      return;
+    }
+
     const parsed = parseExecutionMessage(data);
 
     if (parsed.type === "CONNECTED") {
@@ -105,6 +149,15 @@ export function useCodeExecution() {
           jobId: null,
         });
       }
+      if (currentSubmissionIdRef.current || submissionRequestPendingRef.current) {
+        currentSubmissionIdRef.current = null;
+        submissionRequestPendingRef.current = false;
+        setSubmission({
+          ...initialSubmissionState,
+          status: "error",
+          message: "The submission service returned an invalid response.",
+        });
+      }
       return;
     }
 
@@ -123,7 +176,7 @@ export function useCodeExecution() {
         if (oldestJobId) bufferedResultsRef.current.delete(oldestJobId);
       }
     }
-  }, [finishWithResult]);
+  }, [finishWithResult, finishWithSubmissionResult]);
 
   const connect = useCallback((): Promise<void> => {
     const existingSocket = socketRef.current;
@@ -182,16 +235,36 @@ export function useCodeExecution() {
       resolveConnectionRef.current = null;
       rejectConnectionRef.current = null;
 
-      if (currentJobIdRef.current || requestPendingRef.current) {
+      if (
+        currentJobIdRef.current ||
+        requestPendingRef.current ||
+        currentSubmissionIdRef.current ||
+        submissionRequestPendingRef.current
+      ) {
+        const hadPendingExecution =
+          currentJobIdRef.current !== null || requestPendingRef.current;
+        const hadPendingSubmission =
+          currentSubmissionIdRef.current !== null || submissionRequestPendingRef.current;
         currentJobIdRef.current = null;
         requestPendingRef.current = false;
         runPendingRef.current = false;
-        setExecution({
-          status: "network_error",
-          message: "Connection lost while waiting for the result. Run the code again to retry.",
-          result: null,
-          jobId: null,
-        });
+        currentSubmissionIdRef.current = null;
+        submissionRequestPendingRef.current = false;
+        if (hadPendingSubmission) {
+          setSubmission({
+            ...initialSubmissionState,
+            status: "network_error",
+            message: "Connection lost while waiting for the submission result. Submit again to retry.",
+          });
+        }
+        if (hadPendingExecution) {
+          setExecution({
+            status: "network_error",
+            message: "Connection lost while waiting for the result. Run the code again to retry.",
+            result: null,
+            jobId: null,
+          });
+        }
       }
     };
 
@@ -201,14 +274,19 @@ export function useCodeExecution() {
   useEffect(() => {
     mountedRef.current = true;
     const bufferedResults = bufferedResultsRef.current;
+    const bufferedSubmissionResults = bufferedSubmissionResultsRef.current;
 
     return () => {
       mountedRef.current = false;
       runSequenceRef.current += 1;
+      submissionSequenceRef.current += 1;
       currentJobIdRef.current = null;
       requestPendingRef.current = false;
       runPendingRef.current = false;
       bufferedResults.clear();
+      currentSubmissionIdRef.current = null;
+      submissionRequestPendingRef.current = false;
+      bufferedSubmissionResults.clear();
       if (connectionTimeoutRef.current !== null) {
         window.clearTimeout(connectionTimeoutRef.current);
         connectionTimeoutRef.current = null;
@@ -294,10 +372,90 @@ export function useCodeExecution() {
     }
   }, [connect, finishWithResult]);
 
+  const submit = useCallback(async ({
+    problemId,
+    studentCode,
+    language,
+  }: {
+    problemId: string;
+    studentCode: string;
+    language: EditorLanguage;
+  }) => {
+    if (submissionRequestPendingRef.current || currentSubmissionIdRef.current) return;
+    if (!problemId) {
+      setSubmission({
+        ...initialSubmissionState,
+        status: "error",
+        message: "This problem is missing its identifier and cannot be submitted.",
+      });
+      return;
+    }
+    if (!studentCode.trim()) {
+      setSubmission({
+        ...initialSubmissionState,
+        status: "error",
+        message: "Enter code before submitting.",
+      });
+      return;
+    }
+
+    submissionRequestPendingRef.current = true;
+    currentSubmissionIdRef.current = null;
+    bufferedSubmissionResultsRef.current.clear();
+    const submissionSequence = ++submissionSequenceRef.current;
+    setSubmission({ ...initialSubmissionState, status: "submitting", message: "Submitting code..." });
+
+    try {
+      await connect();
+      if (submissionSequence !== submissionSequenceRef.current || !mountedRef.current) return;
+
+      const queuedSubmission = await submitProblemCode({ problemId, studentCode, language });
+      if (submissionSequence !== submissionSequenceRef.current || !mountedRef.current) return;
+
+      submissionRequestPendingRef.current = false;
+      currentSubmissionIdRef.current = queuedSubmission.submissionId;
+      setSubmission({
+        status: "queued",
+        message: "Submission queued. Waiting for test results...",
+        result: null,
+        submissionId: queuedSubmission.submissionId,
+      });
+
+      const earlyResult = bufferedSubmissionResultsRef.current.get(queuedSubmission.submissionId);
+      if (earlyResult) {
+        bufferedSubmissionResultsRef.current.clear();
+        finishWithSubmissionResult(earlyResult);
+      }
+    } catch (error) {
+      if (submissionSequence !== submissionSequenceRef.current || !mountedRef.current) return;
+
+      submissionRequestPendingRef.current = false;
+      currentSubmissionIdRef.current = null;
+      bufferedSubmissionResultsRef.current.clear();
+      const isNetworkError =
+        (error instanceof ApiError && error.status === 0) ||
+        (error instanceof Error && error.message.toLowerCase().includes("connect"));
+
+      setSubmission({
+        ...initialSubmissionState,
+        status: isNetworkError ? "network_error" : "error",
+        message:
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Submission failed. Please try again.",
+      });
+    }
+  }, [connect, finishWithSubmissionResult]);
+
   return {
     execution,
     connectionStatus,
     isBusy: execution.status === "connecting" || execution.status === "running",
+    submission,
+    isSubmitting: submission.status === "submitting" || submission.status === "queued",
     run,
+    submit,
   };
 }

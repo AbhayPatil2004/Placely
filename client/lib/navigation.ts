@@ -15,7 +15,7 @@ export type NavigationItem = {
 };
 
 export type NavigationGroup = {
-  label: string;
+  label?: string;
   items: NavigationItem[];
 };
 
@@ -51,6 +51,12 @@ export const navigationGroups: NavigationGroup[] = [
         href: "/aptitude",
         icon: ChartNoAxesCombined,
         description: "Sharpen your problem solving",
+      },
+      {
+        label: "Playground",
+        href: "/ide",
+        icon: Code2,
+        description: "Write and run standalone code",
       },
     ],
   },

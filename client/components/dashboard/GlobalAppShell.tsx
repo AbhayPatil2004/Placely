@@ -15,11 +15,11 @@ export function GlobalAppShell({ children }: Readonly<{ children: React.ReactNod
     return children;
   }
 
-  return <div className="min-h-screen bg-abyss text-bright-gray">
+  return <div className="relative z-0 min-h-screen bg-abyss text-bright-gray">
     <Sidebar collapsed={false} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-    <div className="md:pl-64">
+    <div className="relative z-0 md:pl-64">
       <AppHeader onMenuClick={() => setMobileOpen(true)} />
-      <main className="min-h-[calc(100vh-4rem)] px-4 py-6 md:px-8 md:py-8">
+      <main className="relative z-0 min-h-[calc(100vh-4rem)] px-4 py-6 md:px-8 md:py-8">
         <div className="mx-auto w-full max-w-[1120px]">{children}</div>
       </main>
     </div>

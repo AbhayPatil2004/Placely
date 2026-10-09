@@ -9,8 +9,8 @@ export function AppHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   return <header className="sticky top-0 z-30 flex h-16 items-center border-b border-graphite/80 bg-abyss/95 px-4 backdrop-blur md:px-6">
-    <button type="button" aria-label="Open navigation" onClick={onMenuClick} className="mr-3 rounded-buttons p-2 text-medium-gray hover:bg-surface hover:text-white md:hidden"><Menu className="size-4" /></button>
-    <div className="text-sm text-muted-gray"><span className="text-white">Dashboard</span></div>
+    <button type="button" aria-label="Open navigation" onClick={onMenuClick} className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-buttons text-medium-gray hover:bg-surface hover:text-white md:hidden"><Menu className="size-4" /></button>
+    <div className="min-w-0 text-sm text-muted-gray"><span className="truncate text-white">Dashboard</span></div>
     <div className="ml-auto flex items-center gap-1">
       <button type="button" aria-label="Toggle theme" className="rounded-buttons p-2 text-medium-gray hover:bg-surface hover:text-white"><Moon className="size-4" /></button>
       <button type="button" aria-label="Notifications" className="rounded-buttons p-2 text-medium-gray hover:bg-surface hover:text-white"><Bell className="size-4" /></button>
