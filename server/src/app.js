@@ -17,7 +17,7 @@ import ApiResponse from "./utils/apiResponse.js";
 
 import StudentAuth from "./auth/routes/student.auth.route.js";
 import AdminAuth from "./auth/routes/admin.auth.routes.js";
-import TpoAuth from "./auth/routes/tpo.auth.routes.js";
+// import TpoAuth from "./auth/routes/tpo.auth.routes.js";
 import Problem from './DSA/routes/problem.route.js'
 import Code from "./DSA/routes/execute.route.js"
 import Profile from "./student/routes/profile.route.js"
@@ -25,7 +25,7 @@ import Core from "./Core/Routes/core.routes.js"
 import Submit from "./DSA/routes/submission.route.js"
 import Run from "./DSA/routes/run.route.js"
 import Solved from "./DSA/routes/solved.route.js"
-import Progress from './progress/routes/learning.route.js'
+import Progress from './progress/routes/progress.route.js'
 
 dotenv.config({
     path: fileURLToPath(new URL("../.env", import.meta.url)),
@@ -65,7 +65,7 @@ app.use(cookieParser());
 
 app.use("/api/auth/student", StudentAuth);
 app.use("/api/auth/admin", AdminAuth);
-app.use("/api/auth/tpo", TpoAuth);
+// app.use("/api/auth/tpo", TpoAuth);
 app.use("/api/problem" , Problem )
 app.use("/api/code" , Code )
 app.use("/api/student" , Profile )
