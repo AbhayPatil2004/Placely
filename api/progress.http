@@ -1,0 +1,32 @@
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+
+############################################################
+# LEARNING PROGRESS APIs
+############################################################
+
+### Get Complete Learning Progress
+GET {{baseUrl}}/api/progress
+Cookie: accessToken={{StudentAccessToken}}
+
+
+### Get Progress of a Specific Subject
+GET {{baseUrl}}/api/progress/subject
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "subject": "Computer Networks"
+}
+
+
+### Add / Update Learning Progress
+POST {{baseUrl}}/api/progress
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "subject": "Computer Networks",
+    "topicId": 1,
+    "topic": "OSI Model"
+}

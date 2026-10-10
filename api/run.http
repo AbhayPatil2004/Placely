@@ -1,0 +1,368 @@
+@baseUrl = {{$dotenv BASEURL}}
+@StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
+@problemId = 6ac796734e3de34b9a9ee62c
+
+
+############################################################
+# ACCEPTED - AC
+############################################################
+
+### C++ Accepted
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class  Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c; int average = total / 3; return {total, average}; } };"
+}
+
+
+### Java Accepted
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class  Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c; int average = total / 3; return new int[]{total, average}; } }"
+}
+
+
+### JavaScript Accepted
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var  calculateTotalAndAverage = function(a, b, c) { const total = a + b + c; const average = Math.floor(total / 3); return [total, average]; };"
+}
+
+
+### Python Accepted
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class  Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        total = a + b + c\n        average = total // 3\n        return [total, average]"
+}
+
+
+############################################################
+# WRONG ANSWER - WA
+############################################################
+
+### C++ Wrong Answer
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c; int average = total / 2; return {total, average}; } };"
+}
+
+
+### Java Wrong Answer
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c; int average = total / 2; return new int[]{total, average}; } }"
+}
+
+
+### JavaScript Wrong Answer
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { const total = a + b + c; const average = Math.floor(total / 2); return [total, average]; };"
+}
+
+
+### Python Wrong Answer
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        total = a + b + c\n        average = total // 2\n        return [total, average]"
+}
+
+
+############################################################
+# COMPILE ERROR - CE
+############################################################
+
+### C++ Compile Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class  Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c return {total, total / 3}; } };"
+}
+
+
+### Java Compile Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { int total = a + b + c; int average = total / 3 return new int[]{total, average}; } }"
+}
+
+
+### JavaScript Syntax Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { const total = a + b + c; return [total, total / 3]"
+}
+
+
+### Python Syntax Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c)\n        total = a + b + c\n        return [total, total // 3]"
+}
+
+
+############################################################
+# RUNTIME ERROR - RTE
+############################################################
+
+### C++ Runtime Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { vector<int> data; return {data.at(999999), 0}; } };"
+}
+
+
+### Java Runtime Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { int[] data = new int[1]; int x = data[999999]; return new int[]{x, 0}; } }"
+}
+
+
+### JavaScript Runtime Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { throw new Error('Intentional runtime error'); };"
+}
+
+
+### Python Runtime Error
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        raise RuntimeError('Intentional runtime error')"
+}
+
+
+############################################################
+# TIME LIMIT EXCEEDED - TLE
+############################################################
+
+### C++ TLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { while (true) {} return {}; } };"
+}
+
+
+### Java TLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { while (true) {} return new int[]{}; } }"
+}
+
+
+### JavaScript TLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { while (true) {} return []; };"
+}
+
+
+### Python TLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        while True:\n            pass\n        return []"
+}
+
+
+############################################################
+# MEMORY LIMIT EXCEEDED - MLE
+############################################################
+
+### C++ MLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { vector<vector<int>> data; while (true) { data.push_back(vector<int>(1000000, 1)); } return {}; } };"
+}
+
+
+### Java MLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { java.util.ArrayList<byte[]> data = new java.util.ArrayList<>(); while (true) { data.add(new byte[10000000]); } } }"
+}
+
+
+### JavaScript MLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { const data = []; while (true) { data.push(new Array(1000000).fill(0)); } };"
+}
+
+
+### Python MLE
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        data = []\n        while True:\n            data.append(bytearray(10000000))"
+}
+
+
+############################################################
+# DEBUG OUTPUT TESTS
+# Verify stdout parsing does not break evaluation
+############################################################
+
+### C++ Debug Output - cout
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "cpp",
+    "studentCode": "class Solution { public: vector<int> calculateTotalAndAverage(int a, int b, int c) { cout << \"Calculating total and average\" << endl; int total = a + b + c; cout << \"Total: \" << total << endl; int average = total / 3; return {total, average}; } };"
+}
+
+
+### Java Debug Output - System.out.println
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "java",
+    "studentCode": "class Solution { public int[] calculateTotalAndAverage(int a, int b, int c) { System.out.println(\"Calculating total and average\"); int total = a + b + c; System.out.println(\"Total: \" + total); int average = total / 3; return new int[]{total, average}; } }"
+}
+
+
+### JavaScript Debug Output - console.log
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "js",
+    "studentCode": "var calculateTotalAndAverage = function(a, b, c) { console.log('Calculating total and average'); const total = a + b + c; console.log('Total:', total); const average = Math.floor(total / 3); return [total, average]; };"
+}
+
+
+### Python Debug Output - print
+POST {{baseUrl}}/api/run/code
+Content-Type: application/json
+Cookie: accessToken={{StudentAccessToken}}
+
+{
+    "problemId": "{{problemId}}",
+    "language": "py",
+    "studentCode": "class Solution:\n    def calculateTotalAndAverage(self, a, b, c):\n        print('Calculating total and average')\n        total = a + b + c\n        print('Total:', total)\n        average = total // 3\n        return [total, average]"
+}
