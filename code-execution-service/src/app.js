@@ -7,6 +7,8 @@ import {
     startCodeSubmissionConsumer
 } from './consumers/code-submission.consumer.js'
 
+import { startCodeRunConsumer } from "./consumers/code-run.consumer.js";
+
 dotenv.config();
 
 const startCodeExecutionService = async () => {
@@ -18,6 +20,8 @@ const startCodeExecutionService = async () => {
         await startCodeExecutionConsumer();
 
         await startCodeSubmissionConsumer() ;
+
+        await startCodeRunConsumer()
 
         console.log(
             "Placely Code Execution Service is running"

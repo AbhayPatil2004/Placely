@@ -21,6 +21,11 @@ export const CODE_SUBMISSION_QUEUE_NAME = "code-submission.queue";
 export const CODE_SUBMISSION_RESULT_QUEUE_NAME =
     "code-submission-result.queue";
 
+// Code run queues    
+export const CODE_RUN_QUEUE_NAME = "code-run.queue";
+export const CODE_RUN_RESULT_QUEUE_NAME =
+    "code-run-result.queue";
+
 // Connect to RabbitMQ
 export const connectRabbitMQ = async () => {
     try {
@@ -54,6 +59,15 @@ export const connectRabbitMQ = async () => {
 
         // Code submission queue
         await channel.assertQueue(CODE_SUBMISSION_QUEUE_NAME, {
+            durable: true,
+        });
+
+        // Code submission result queue
+        await channel.assertQueue(CODE_RUN_QUEUE_NAME, {
+            durable: true,
+        });
+
+        await channel.assertQueue(CODE_RUN_RESULT_QUEUE_NAME, {
             durable: true,
         });
 
