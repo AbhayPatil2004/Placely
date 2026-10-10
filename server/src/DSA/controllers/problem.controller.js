@@ -1154,6 +1154,8 @@ const GetProblem = async (req, res) => {
             );
         }
 
+        console.log(problem)
+
         return res.status(200).json(
             new ApiResponse(
                 200,

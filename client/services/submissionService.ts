@@ -218,7 +218,7 @@ export function parseSubmissionResultMessage(data: unknown): SubmissionResult | 
 
   if (
     testCasesResult.length !== parsed.testCasesResult.length ||
-    testCasesResult.length !== parsed.totalTestCases
+    testCasesResult.length > parsed.totalTestCases
   ) {
     return null;
   }

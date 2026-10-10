@@ -31,10 +31,10 @@ function formatDate(value: string | null) {
 
 function StatusBadge({ status }: { status: SubmissionHistoryEntry["status"] }) {
   const color = status === "ACCEPTED"
-    ? "border-success-green/30 bg-success-green/10 text-success-green"
+    ? "border-green-500/30 bg-green-500/10 text-green-600"
     : status === "PENDING" || status === "QUEUED" || status === "RUNNING"
       ? "border-graphite bg-abyss text-muted-gray"
-      : "border-error-red/30 bg-error-red/10 text-error-red";
+      : "border-red-500/30 bg-red-500/10 text-red-600";
 
   return (
     <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${color}`}>
@@ -133,7 +133,7 @@ export function SubmissionHistoryPanel({
               <div className="flex flex-wrap items-start justify-between gap-3 p-3">
                 <div className="min-w-0">
                   <StatusBadge status={submission.status} />
-                  <p className="mt-2 text-xs text-muted-gray">
+                  <p className="mt-2 text-xs text-green-600">
                     {submission.passedTestCases} / {submission.totalTestCases} test cases passed
                   </p>
                   <p className="mt-1 text-xs text-muted-gray">

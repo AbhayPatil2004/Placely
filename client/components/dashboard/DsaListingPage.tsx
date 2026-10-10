@@ -5,9 +5,10 @@ import { ArrowLeft, Check, ChevronDown, Star } from "lucide-react";
 import { dsaTopics } from "@/data/dsaData";
 import { TopicAccordion } from "@/components/dashboard/TopicAccordion";
 import { useEffect, useMemo, useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { ApiError, apiRequest } from "@/lib/api/client";
 
 type ListingProblem = {
+  _id: string;
   slug: string;
   title: string;
   topic?: string | null;
@@ -15,7 +16,6 @@ type ListingProblem = {
   difficulty?: string | null;
 };
 
-const completedStorageKey = "placely:dsa:practice:completed:v1";
 const revisionStorageKey = "placely:dsa:practice:revision:v1";
 
 const topicOrder = [
@@ -56,10 +56,10 @@ const topicOrderByName = new Map<string, number>(
 );
 
 const difficultyStyles: Record<string, string> = {
-  basic: "border-success-green/30 bg-success-green/10 text-success-green",
-  easy: "border-success-green/30 bg-success-green/10 text-success-green",
-  medium: "border-warning-yellow/30 bg-warning-yellow/10 text-warning-yellow",
-  hard: "border-error-red/30 bg-error-red/10 text-error-red",
+  basic: "border-green-500/30 bg-green-500/10 text-green-500",
+  easy: "border-green-500/30 bg-green-500/10 text-green-500",
+  medium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-600",
+  hard: "border-red-500/30 bg-red-500/10 text-red-600",
 };
 
 function normalizeTopicKey(topic: string) {
@@ -100,9 +100,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
   const [problems, setProblems] = useState<ListingProblem[]>([]);
   const [loading, setLoading] = useState(!learn);
   const [error, setError] = useState("");
-  const [completedSlugs, setCompletedSlugs] = useState<Set<string>>(
-    () => readStoredSlugs(completedStorageKey),
-  );
+  const [solvedProblemIds, setSolvedProblemIds] = useState<Set<string>>(new Set());
   const [revisionSlugs, setRevisionSlugs] = useState<Set<string>>(
     () => readStoredSlugs(revisionStorageKey),
   );
@@ -135,8 +133,15 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
   useEffect(() => {
     if (learn) return;
     let active = true;
-    apiRequest<ListingProblem[]>("/api/problem")
-      .then((nextProblems) => {
+    Promise.all([
+      apiRequest<ListingProblem[]>("/api/problem"),
+      apiRequest<Array<{ problemId: string; status: string }>>("/api/solved/problem")
+        .catch((requestError: unknown) => {
+          if (requestError instanceof ApiError && requestError.status === 404) return [];
+          throw requestError;
+        }),
+    ])
+      .then(([nextProblems, solvedRecords]) => {
         if (active) {
           setProblems(
             [...nextProblems].sort(
@@ -146,10 +151,15 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                 first.title.localeCompare(second.title),
             ),
           );
+          setSolvedProblemIds(new Set(
+            solvedRecords
+              .filter((record) => record.status === "SOLVED")
+              .map((record) => record.problemId),
+          ));
         }
       })
       .catch(() => {
-        if (active) setError("Unable to load practice problems.");
+        if (active) setError("Unable to load practice problems and their submission status.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -203,7 +213,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
           Loading problems...
         </div>
       ) : error ? (
-        <p role="alert" className="rounded-buttons border border-error-red/40 bg-error-red/10 p-4 text-sm text-error-red">
+        <p role="alert" className="rounded-buttons border border-error-red/40 bg-error-red/10 p-4 text-sm text-red-600">
           {error}
         </p>
       ) : problems.length === 0 ? (
@@ -213,13 +223,13 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
       ) : (
         <div className="overflow-hidden rounded-cards border border-graphite bg-surface shadow-subtle">
           {groupedProblems.map(({ topic, problems: topicProblems }, topicIndex) => {
-            const completedCount = topicProblems.filter(({ slug }) => completedSlugs.has(slug)).length;
+            const solvedCount = topicProblems.filter(({ _id }) => solvedProblemIds.has(_id)).length;
             const isExpanded = expandedTopics
               ? expandedTopics.has(topic)
               : topicIndex === 0;
             const panelId = `practice-topic-${topicIndex}`;
             const progress = topicProblems.length
-              ? (completedCount / topicProblems.length) * 100
+              ? (solvedCount / topicProblems.length) * 100
               : 0;
 
             return (
@@ -243,7 +253,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                     aria-label={`${topic} completion`}
                     aria-valuemin={0}
                     aria-valuemax={topicProblems.length}
-                    aria-valuenow={completedCount}
+                    aria-valuenow={solvedCount}
                     className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-graphite sm:block sm:w-24"
                   >
                     <span
@@ -252,7 +262,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                     />
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-medium-gray">
-                    {completedCount} / {topicProblems.length}
+                    {solvedCount} / {topicProblems.length}
                   </span>
                   <ChevronDown
                     aria-hidden="true"
@@ -280,38 +290,23 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                           const label = ["basic", "easy", "medium", "hard"].includes(difficulty)
                             ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
                             : rawDifficulty;
-                          const isCompleted = completedSlugs.has(problem.slug);
+                          const isCompleted = solvedProblemIds.has(problem._id);
                           const isForRevision = revisionSlugs.has(problem.slug);
 
                           return (
                             <tr key={problem.slug} className="transition-colors hover:bg-white/[0.03]">
                               <td className="px-4 py-3.5 sm:px-5">
-                                <label className="inline-flex cursor-pointer items-center justify-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={isCompleted}
-                                    onChange={() =>
-                                      toggleStoredSlug(
-                                        problem.slug,
-                                        completedStorageKey,
-                                        completedSlugs,
-                                        setCompletedSlugs,
-                                      )
-                                    }
-                                    aria-label={`Mark ${problem.title} as ${isCompleted ? "incomplete" : "complete"}`}
-                                    className="peer sr-only"
-                                  />
-                                  <span
-                                    aria-hidden="true"
-                                    className={`flex size-5 items-center justify-center rounded-[5px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-lavender peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface ${
-                                      isCompleted
-                                        ? "border-lavender bg-lavender text-abyss"
-                                        : "border-muted-gray bg-abyss hover:border-bright-gray"
-                                    }`}
-                                  >
-                                    {isCompleted && <Check className="size-3.5" strokeWidth={3} />}
-                                  </span>
-                                </label>
+                                <span
+                                  role="img"
+                                  aria-label={`${problem.title} ${isCompleted ? "solved" : "unsolved"}`}
+                                  className="inline-flex size-5 items-center justify-center"
+                                >
+                                  {isCompleted ? (
+                                    <Check aria-hidden="true" className="size-4 text-green-500" strokeWidth={3} />
+                                  ) : (
+                                    <span aria-hidden="true" className="size-2 rounded-full bg-white" />
+                                  )}
+                                </span>
                               </td>
                               <td className="px-2 py-3.5">
                                 <div className="flex min-w-0 items-center gap-2.5">

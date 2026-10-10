@@ -222,19 +222,7 @@ function PlaygroundIDE() {
             verticalDragRef.current = false;
           }}
         >
-          <div style={{ flexBasis: `${inputPaneHeight}%` }} className="flex min-h-[140px] flex-col border-b border-graphite bg-surface">
-            <div className="flex items-center justify-between border-b border-graphite px-3 py-2">
-              <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-gray">Input</span>
-              <span className="text-[10px] uppercase tracking-[0.12em] text-muted-gray">stdin</span>
-            </div>
-            <textarea
-              aria-label="Program input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Optional input passed to your program"
-              className="min-h-0 w-full flex-1 resize-none bg-abyss px-3 py-3 font-mono text-xs leading-5 text-bright-gray outline-none placeholder:text-muted-gray focus:border-lavender"
-            />
-          </div>
+          
 
           <div
             role="separator"

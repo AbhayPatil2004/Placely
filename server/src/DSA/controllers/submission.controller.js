@@ -6,6 +6,7 @@ import ApiResponse from "../../utils/apiResponse.js";
 import ApiError from "../../utils/apiError.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
 import { getChannel } from "../../config/rabbitmq.js";
+import { CODE_SUBMISSION_QUEUE_NAME } from "../../config/rabbitmq.js";
 
 import {
     cppBoilerCode,
@@ -14,9 +15,6 @@ import {
     pythonBoilerCode
 } from "../utils/boilerCodes.js";
 
-const CODE_SUBMISSION_QUEUE_NAME =
-    process.env.CODE_SUBMISSION_QUEUE_NAME ||
-    "code-submission.queue";
 
 // API language -> language key used in the Problem model
 const languageMap = {
@@ -305,7 +303,6 @@ const SubmitCode = async (req, res) => {
         );
     }
 };
-
 
 const GetStudentProblemSubmissions = async (req, res) => {
     try {

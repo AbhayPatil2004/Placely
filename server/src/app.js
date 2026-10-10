@@ -11,6 +11,7 @@ import connectDB from "./config/mongo.js";
 import { connectRabbitMQ } from "./config/rabbitmq.js";
 import StartCodeResultConsumer from "./consumer/codeResult.consumer.js";
 import StartCodeSubmissionResultConsumer from "./consumer/codeSubmmisionResultConsumer.js";
+import StartCodeRunResultConsumer from "./consumer/codeRunResult.consumer.js";
 import ApiError from "./utils/apiError.js";
 import ApiResponse from "./utils/apiResponse.js";
 
@@ -22,6 +23,7 @@ import Code from "./DSA/routes/execute.route.js"
 import Profile from "./student/routes/profile.route.js"
 import Core from "./Core/Routes/core.routes.js"
 import Submit from "./DSA/routes/submission.route.js"
+import Run from "./DSA/routes/run.route.js"
 import Solved from "./DSA/routes/solved.route.js"
 import Progress from './progress/routes/learning.route.js'
 
@@ -41,6 +43,7 @@ await connectDB();
 await connectRabbitMQ();
 await StartCodeResultConsumer()
 await StartCodeSubmissionResultConsumer()
+await StartCodeRunResultConsumer()
 
 
 app.use(
@@ -68,6 +71,7 @@ app.use("/api/code" , Code )
 app.use("/api/student" , Profile )
 app.use("/api/core", Core)
 app.use("/api/submit" , Submit )
+app.use("/api/run" , Run )
 app.use("/api/solved" , Solved )
 app.use("/api/progress" , Progress )
 
