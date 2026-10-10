@@ -40,8 +40,8 @@ export function ProblemSolvePage({ problem, problemDetails }: { problem: Practic
   const handleRun = useCallback((code: string, language: Parameters<typeof run>[0]["language"]) => {
     setResultMode("execution");
     setIsResultPanelOpen(true);
-    void run({ code, language, input: "" });
-  }, [run]);
+    void run({ code, language, input: "", problemId: problemDetails?._id ?? "" });
+  }, [problemDetails?._id, run]);
 
   const handleSubmit = useCallback((
     studentCode: string,

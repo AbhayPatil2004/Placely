@@ -27,9 +27,9 @@ type ProblemContent = Omit<PracticeProblem, "difficulty"> & {
 };
 
 const difficultyStyles: Record<string, string> = {
-  easy: "border-success-green/30 bg-success-green/10 text-success-green",
-  medium: "border-warning-yellow/30 bg-warning-yellow/10 text-warning-yellow",
-  hard: "border-error-red/30 bg-error-red/10 text-error-red",
+  easy: "border-green-500/30 bg-green-500/10 text-green-600",
+  medium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-600",
+  hard: "border-red-500/30 bg-red-500/10 text-red-600",
 };
 
 const readableEnumLabels: Record<string, string> = {
