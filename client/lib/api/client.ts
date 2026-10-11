@@ -78,6 +78,13 @@ export async function apiRequest<T>(
   }
 
   if (payload && typeof payload === "object" && "data" in payload) {
+    if (
+      typeof payload.data === "string" &&
+      typeof payload.message === "object" &&
+      payload.message !== null
+    ) {
+      return payload.message as T;
+    }
     return (payload.data ?? (payload as T)) as T;
   }
 

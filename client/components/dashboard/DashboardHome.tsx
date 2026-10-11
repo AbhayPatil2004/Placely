@@ -1,12 +1,179 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Code2, Flame, ListChecks, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Tooltip,
+  type ChartOptions,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+import { AlertCircle, ArrowRight, Code2, Flame, ListChecks, UserRound } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { ApiError, apiRequest } from "@/lib/api/client";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+
+type DashboardProblem = {
+  _id: string;
+  difficulty?: string;
+};
+
+type SolvedProblem = {
+  problemId: string;
+  status: string;
+};
+
+type DsaProgress = {
+  total: number;
+  solved: number;
+  byDifficulty: {
+    basic: { solved: number; remaining: number };
+    easy: { solved: number; remaining: number };
+    medium: { solved: number; remaining: number };
+    hard: { solved: number; remaining: number };
+  };
+};
+
+const difficultyLabels = ["Basic", "Easy", "Medium", "Hard"] as const;
+
+const chartOptions: ChartOptions<"bar"> = {
+  indexAxis: "y",
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: {
+        color: "#bcbcbc",
+        usePointStyle: true,
+        pointStyle: "circle",
+        padding: 20,
+      },
+    },
+    tooltip: {
+      callbacks: {
+        label: (context) => ` ${context.dataset.label}: ${context.parsed.x}`,
+      },
+    },
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      stacked: true,
+      ticks: { color: "#a3a3a3", precision: 0 },
+      grid: { color: "#3f3f3f" },
+      title: { display: true, text: "Questions", color: "#a3a3a3" },
+    },
+    y: {
+      stacked: true,
+      ticks: { color: "#eeeeee" },
+      grid: { display: false },
+    },
+  },
+};
 
 export function DashboardHome() {
   const { user } = useAuth();
   const name = user?.fullname?.split(" ")[0] || "there";
+  const [progress, setProgress] = useState<DsaProgress | null>(null);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [progressError, setProgressError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProgress = async () => {
+      try {
+        const [problems, solvedRecords] = await Promise.all([
+          apiRequest<DashboardProblem[]>("/api/problem"),
+          apiRequest<SolvedProblem[]>("/api/solved/problem").catch((error: unknown) => {
+            if (error instanceof ApiError && error.status === 404) return [];
+            throw error;
+          }),
+        ]);
+
+        if (!Array.isArray(problems) || !Array.isArray(solvedRecords)) {
+          throw new Error("The DSA progress response was invalid.");
+        }
+
+        const solvedIds = new Set(
+          solvedRecords
+            .filter((record) => record.status === "SOLVED")
+            .map((record) => record.problemId),
+        );
+        const difficultyCounts = {
+          basic: { solved: 0, remaining: 0 },
+          easy: { solved: 0, remaining: 0 },
+          medium: { solved: 0, remaining: 0 },
+          hard: { solved: 0, remaining: 0 },
+        };
+        let solved = 0;
+
+        for (const problem of problems) {
+          const isSolved = solvedIds.has(problem._id);
+          if (isSolved) solved += 1;
+
+          const difficulty = problem.difficulty?.toLowerCase();
+          if (difficulty && difficulty in difficultyCounts) {
+            const counts = difficultyCounts[difficulty as keyof typeof difficultyCounts];
+            if (isSolved) counts.solved += 1;
+            else counts.remaining += 1;
+          }
+        }
+
+        if (active) {
+          setProgress({
+            total: problems.length,
+            solved,
+            byDifficulty: difficultyCounts,
+          });
+        }
+      } catch (error) {
+        if (active) {
+          setProgressError(
+            error instanceof Error ? error.message : "Unable to load DSA progress.",
+          );
+        }
+      } finally {
+        if (active) setProgressLoading(false);
+      }
+    };
+
+    void loadProgress();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const solvedPercentage = progress && progress.total > 0
+    ? (progress.solved / progress.total) * 100
+    : 0;
+  const chartData = progress
+    ? {
+        labels: [...difficultyLabels],
+        datasets: [
+          {
+            label: "Solved",
+            data: difficultyLabels.map((label) => progress.byDifficulty[label.toLowerCase() as keyof DsaProgress["byDifficulty"]].solved),
+            backgroundColor: "#2dd4bf",
+            borderRadius: 4,
+            barThickness: 18,
+          },
+          {
+            label: "Remaining",
+            data: difficultyLabels.map((label) => progress.byDifficulty[label.toLowerCase() as keyof DsaProgress["byDifficulty"]].remaining),
+            backgroundColor: "#525252",
+            borderRadius: 4,
+            barThickness: 18,
+          },
+        ],
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -28,11 +195,79 @@ export function DashboardHome() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat icon={<ListChecks />} label="Problems Solved" value="0" />
+        <Stat
+          icon={<ListChecks />}
+          label="Problems Solved"
+          value={progressLoading ? "..." : progress ? `${progress.solved} / ${progress.total}` : "—"}
+        />
         <Stat icon={<Flame />} label="Current Streak" value="0 days" />
-        <Stat label="Overall DSA Progress" value="0%" progress />
+        <Stat
+          label="Overall DSA Progress"
+          value={progressLoading ? "..." : progress ? `${Math.round(solvedPercentage)}%` : "—"}
+          progress={progress ? solvedPercentage : undefined}
+        />
         <Stat icon={<UserRound />} label="Profile Completion" value="14%" />
       </div>
+
+      <section
+        aria-labelledby="dsa-distribution-title"
+        className="rounded-cards border border-graphite bg-surface p-5 shadow-subtle"
+      >
+        <div className="mb-5">
+          <p className="text-xs uppercase tracking-wide text-muted-gray">Your progress</p>
+          <h2 id="dsa-distribution-title" className="mt-1 text-base font-semibold text-white">
+            DSA question distribution
+          </h2>
+        </div>
+        {progressLoading ? (
+          <div className="h-64 animate-pulse rounded-buttons bg-abyss" role="status">
+            Loading DSA progress...
+          </div>
+        ) : progressError ? (
+          <div role="alert" className="flex items-start gap-2 rounded-buttons border border-error-red/40 bg-error-red/10 p-4 text-sm text-error-red">
+            <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <p>{progressError}</p>
+          </div>
+        ) : progress && chartData ? (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-center">
+            <div className="rounded-buttons border border-graphite bg-abyss p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-gray">Questions solved</p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums text-white">
+                {progress.solved.toLocaleString()}
+                <span className="ml-1 text-base font-normal text-muted-gray">
+                  / {progress.total.toLocaleString()}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-medium-gray">
+                {progress.total - progress.solved} questions remaining
+              </p>
+              <div
+                role="progressbar"
+                aria-label="Overall DSA progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(solvedPercentage)}
+                className="mt-4 h-2 overflow-hidden rounded-full bg-graphite"
+              >
+                <div
+                  className="h-full rounded-full bg-teal-400 transition-[width]"
+                  style={{ width: `${solvedPercentage}%` }}
+                />
+              </div>
+            </div>
+            <div className="h-64 min-w-0">
+              <Bar
+                data={chartData}
+                options={chartOptions}
+                role="img"
+                aria-label="Solved and remaining DSA questions by difficulty"
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-gray">No DSA questions are available yet.</p>
+        )}
+      </section>
 
       <section className="rounded-cards border border-graphite bg-surface p-5 shadow-subtle">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -145,19 +380,19 @@ function Stat({
   icon?: React.ReactNode;
   label: string;
   value: string;
-  progress?: boolean;
+  progress?: number;
 }) {
   return (
     <div className="rounded-cards border border-graphite bg-surface p-4 shadow-subtle">
       <div className="flex items-center justify-between text-muted-gray">
         {icon ? <span className="size-4">{icon}</span> : <span />}
-        {progress ? <span className="text-lavender">◌</span> : null}
+        {progress !== undefined ? <span className="text-lavender">◌</span> : null}
       </div>
       <p className="mt-4 text-xs uppercase tracking-wide text-muted-gray">{label}</p>
       <p className="mt-1 text-xl font-semibold text-white">{value}</p>
-      {progress ? (
+      {progress !== undefined ? (
         <div className="mt-3 h-1.5 rounded-full bg-graphite">
-          <div className="h-full w-0 rounded-full bg-amethyst" />
+          <div className="h-full rounded-full bg-amethyst" style={{ width: `${progress}%` }} />
         </div>
       ) : null}
     </div>
