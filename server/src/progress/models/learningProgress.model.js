@@ -36,6 +36,7 @@ const subjectProgressSchema = new mongoose.Schema(
                 "DataBase Management System",
                 "Software Engineering",
                 "Operating System",
+                "SQL",
                 "Quantitative Aptitude",
                 "Verbal Aptitude",
                 "Logical Aptitude"

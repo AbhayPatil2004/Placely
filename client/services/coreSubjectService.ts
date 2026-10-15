@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
 
-export type SubjectKey = "oop" | "dbms" | "cn" | "os" | "swe";
+export type SubjectKey = "oop" | "dbms" | "cn" | "os" | "swe" | "sql";
 
 export type LearnQuestion = {
   id: string;

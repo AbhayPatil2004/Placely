@@ -8,7 +8,7 @@ const AddLearningProgress = async (req, res) => {
     try {
         const studentId = GetStudentId(req);
 
-        const { subject, topicId, topic } = req.body;
+        const { subject, topicId, topic, isCompleted = true } = req.body;
 
         // --------------------------------------------------
         // Validate studentId
@@ -42,6 +42,12 @@ const AddLearningProgress = async (req, res) => {
             );
         }
 
+        if (typeof isCompleted !== "boolean") {
+            return res.status(400).json(
+                new ApiError(400, "isCompleted must be a boolean", {})
+            );
+        }
+
         // --------------------------------------------------
         // Validate subject
         // --------------------------------------------------
@@ -52,6 +58,7 @@ const AddLearningProgress = async (req, res) => {
             "DataBase Management System",
             "Software Engineering",
             "Operating System",
+            "SQL",
             "Quantitative Aptitude",
             "Verbal Aptitude",
             "Logical Aptitude"
@@ -95,8 +102,8 @@ const AddLearningProgress = async (req, res) => {
                             {
                                 topicId,
                                 topic,
-                                isCompleted: true,
-                                completedAt: new Date()
+                                isCompleted,
+                                completedAt: isCompleted ? new Date() : null
                             }
                         ]
                     }
@@ -131,8 +138,8 @@ const AddLearningProgress = async (req, res) => {
                     {
                         topicId,
                         topic,
-                        isCompleted: true,
-                        completedAt: new Date()
+                        isCompleted,
+                        completedAt: isCompleted ? new Date() : null
                     }
                 ]
             });
@@ -152,18 +159,24 @@ const AddLearningProgress = async (req, res) => {
         // Check if topic already exists
         // --------------------------------------------------
 
-        const topicExists = learningProgress.subjects[
+        const existingTopic = learningProgress.subjects[
             subjectIndex
-        ].topics.some(
+        ].topics.find(
             (item) => item.topicId.toString() === topicId.toString()
         );
 
-        if (topicExists) {
-            return res.status(409).json(
-                new ApiError(
-                    409,
-                    "Topic progress already exists",
-                    {}
+        if (existingTopic) {
+            existingTopic.topic = topic;
+            existingTopic.isCompleted = isCompleted;
+            existingTopic.completedAt = isCompleted ? new Date() : null;
+
+            await learningProgress.save();
+
+            return res.status(200).json(
+                new ApiResponse(
+                    200,
+                    learningProgress,
+                    "Topic progress updated successfully"
                 )
             );
         }
@@ -175,8 +188,8 @@ const AddLearningProgress = async (req, res) => {
         learningProgress.subjects[subjectIndex].topics.push({
             topicId,
             topic,
-            isCompleted: true,
-            completedAt: new Date()
+            isCompleted,
+            completedAt: isCompleted ? new Date() : null
         });
 
         await learningProgress.save();
@@ -223,11 +236,11 @@ const GetLearningProgress = async (req, res) => {
         });
 
         if (!progress) {
-            return res.status(404).json(
-                new ApiError(
-                    404,
-                    "Please start your learning to track your learning progress",
-                    {}
+            return res.status(200).json(
+                new ApiResponse(
+                    200,
+                    { subjects: [] },
+                    "Progress sent successfully"
                 )
             );
         }

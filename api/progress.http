@@ -41,5 +41,6 @@ Cookie: accessToken={{StudentAccessToken}}
 {
     "subject": "Computer Networks",
     "topicId": 1,
-    "topic": "OSI Model"
+    "topic": "OSI Model",
+    "isCompleted": true
 }
