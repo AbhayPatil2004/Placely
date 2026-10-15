@@ -9,10 +9,11 @@ import { CodingProfiles } from "@/components/profile/CodingProfiles";
 import { HackathonCard } from "@/components/profile/HackathonCard";
 import { ProfileEditSheet } from "@/components/profile/ProfileEditSheet";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ProfileProgressInsights } from "@/components/profile/ProfileProgressInsights";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { ProjectCard } from "@/components/profile/ProjectCard";
 import { ResumeLink } from "@/components/profile/ResumeLink";
-import { SkillsList } from "@/components/profile/SkillsList";
+import { Badge } from "@/components/ui/badge";
 import { useAuth, type AuthUser } from "@/lib/auth-context";
 import { updateProfile, type StudentProfileUpdate } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -98,12 +99,26 @@ export default function ProfilePage() {
     <main className="mx-auto max-w-[1120px] space-y-4 px-4 py-6 font-[system-ui] sm:px-6">
       <ProfileHeader student={user} onEdit={editProfile} />
 
-      <ProfileSection title="Academic details" onEdit={editProfile}>
+      <ProfileSection title="Basic information" onEdit={editProfile}>
         <AcademicDetails student={user} />
+        <div className="mt-6">
+          <p className="mb-3 text-xs font-medium uppercase tracking-[0.12em] text-medium-gray">Skills</p>
+          {user.skills.length ? (
+            <ul className="flex flex-wrap gap-2">
+              {user.skills.filter((skill) => skill.trim()).map((skill) => (
+                <li key={skill}>
+                  <Badge>{skill}</Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-medium-gray">No skills added yet.</p>
+          )}
+        </div>
       </ProfileSection>
 
-      <SkillsList student={user} onEdit={editProfile} />
       <CodingProfiles student={user} onEdit={editProfile} />
+      <ProfileProgressInsights />
 
       <ProfileSection
         title="Projects"

@@ -1,4 +1,4 @@
-import LearningProgress from "../models/learning.model.js";
+import LearningProgress from "../models/learningProgress.model.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
 import ApiError from "../../utils/apiError.js";
 import ApiResponse from "../../utils/apiResponse.js";

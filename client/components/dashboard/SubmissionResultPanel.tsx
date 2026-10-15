@@ -3,6 +3,7 @@
 import { Check, CircleAlert, LoaderCircle, X, XCircle } from "lucide-react";
 import type { ExecutionState } from "@/hooks/useCodeExecution";
 import type { SubmissionState, SubmissionStatus } from "@/services/submissionService";
+import type { CodeRunResult } from "@/services/codeExecutionService";
 
 type ResultMode = "execution" | "submission";
 
@@ -31,15 +32,25 @@ const executionStatusLabels: Record<ExecutionState["status"], string> = {
 
 function StatusIcon({ success, pending = false }: { success: boolean; pending?: boolean }) {
   if (pending) return <LoaderCircle aria-hidden="true" className="size-4 animate-spin text-muted-gray" />;
-  if (success) return <Check aria-hidden="true" className="size-4 text-success-green" />;
-  return <XCircle aria-hidden="true" className="size-4 text-error-red" />;
+  if (success) return <Check aria-hidden="true" className="size-4 text-green-600" />;
+  return <XCircle aria-hidden="true" className="size-4 text-red-600" />;
 }
 
-function DataBlock({ label, value }: { label: string; value: string }) {
+function DataBlock({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "error";
+}) {
   return (
     <div className="min-w-0">
       <h3 className="text-xs text-muted-gray">{label}</h3>
-      <pre className="mt-1 max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-buttons border border-graphite bg-abyss p-2.5 font-mono text-xs leading-5 text-medium-gray">
+      <pre className={`mt-1 max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-buttons border border-graphite bg-abyss p-2.5 font-mono text-xs leading-5 ${
+        tone === "error" ? "text-red-500" : "text-medium-gray"
+      }`}>
         {value}
       </pre>
     </div>
@@ -82,35 +93,51 @@ function formatTestCaseInput(value: unknown): string {
   return formatStructuredValue(value, 0);
 }
 
-function SubmissionDetails({
-  submission,
+function TestCaseDetails({
+  result,
   testCaseInputs,
 }: {
-  submission: SubmissionState;
+  result: SubmissionState["result"] | CodeRunResult;
   testCaseInputs?: readonly unknown[];
 }) {
-  const result = submission.result;
   if (!result) return null;
+
+  const isCodeRun = "jobId" in result;
+  const isCompileOrRuntimeError =
+    isCodeRun && (result.status === "COMPILE_ERROR" || result.status === "RUNTIME_ERROR");
+  const errorDetails = isCompileOrRuntimeError
+    ? [result.errorMessage, result.stderr]
+        .filter((detail, index, details) => detail.trim() && details.indexOf(detail) === index)
+        .join("\n")
+    : "";
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className={`flex items-center gap-2 text-sm font-semibold ${
-            result.status === "ACCEPTED" ? "text-success-green" : "text-error-red"
-          }`}>
-            <StatusIcon success={result.status === "ACCEPTED"} />
-            <span>{submissionStatusLabels[result.status]}</span>
+      {!isCompileOrRuntimeError && (
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className={`flex items-center gap-2 text-sm font-semibold ${
+              result.status === "ACCEPTED" ? "text-green-500" : "text-red-500"
+            }`}>
+              <StatusIcon success={result.status === "ACCEPTED"} />
+              <span>
+                {isCodeRun && result.status === "ACCEPTED"
+                  ? "Success"
+                  : submissionStatusLabels[result.status]}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-green-500">
+              {result.passedTestCases} / {result.totalTestCases} test cases passed
+            </p>
           </div>
-          <p className="mt-1 text-xs text-medium-gray">
-            {result.passedTestCases} / {result.totalTestCases} test cases passed
-          </p>
         </div>
-      </div>
+      )}
 
-      {(result.executionTime > 0 || (result.memoryUsed !== null && result.memoryUsed > 0) || result.exitCode !== null) && (
+      {((result.executionTime !== null && result.executionTime > 0) ||
+        (result.memoryUsed !== null && result.memoryUsed > 0) ||
+        result.exitCode !== null) && (
         <dl className="grid grid-cols-2 gap-3 rounded-buttons border border-graphite bg-abyss/50 p-3">
-          {result.executionTime > 0 && (
+          {result.executionTime !== null && result.executionTime > 0 && (
             <div>
               <dt className="text-xs text-muted-gray">Runtime</dt>
               <dd className="mt-1 text-sm font-medium text-bright-gray">{result.executionTime} ms</dd>
@@ -119,7 +146,7 @@ function SubmissionDetails({
           {result.memoryUsed !== null && result.memoryUsed > 0 && (
             <div>
               <dt className="text-xs text-muted-gray">Memory</dt>
-              <dd className="mt-1 text-sm font-medium text-bright-gray">{result.memoryUsed}</dd>
+              <dd className="mt-1 text-sm font-medium text-bright-gray">{result.memoryUsed} KB</dd>
             </div>
           )}
           {result.exitCode !== null && (
@@ -139,6 +166,11 @@ function SubmissionDetails({
               {result.passedTestCases} / {result.totalTestCases} Passed
             </span>
           </div>
+          {result.testCasesResult.length < result.totalTestCases && (
+            <p className="mb-2 text-xs text-muted-gray">
+              Showing {result.testCasesResult.length} of {result.totalTestCases} detailed test cases.
+            </p>
+          )}
           <div className="space-y-1">
             {result.testCasesResult.map((testCase, index) => {
               const passed = testCase.status === "passed";
@@ -150,7 +182,7 @@ function SubmissionDetails({
                 <details key={`result-test-${index}`} className="group rounded-buttons border border-transparent open:border-graphite open:bg-abyss/40">
                   <summary className="flex cursor-pointer list-none items-center gap-2 rounded-buttons px-2.5 py-2 text-sm hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavender [&::-webkit-details-marker]:hidden">
                     <StatusIcon success={passed} />
-                    <span className={`min-w-0 flex-1 truncate ${passed ? "text-medium-gray" : "text-bright-gray"}`}>
+                    <span className={`min-w-0 flex-1 truncate ${passed ? "text-gray-500" : "text-red-500"}`}>
                       <span className="mr-1.5 text-muted-gray">Input:</span>
                       <code>{input}</code>
                     </span>
@@ -167,18 +199,23 @@ function SubmissionDetails({
         </section>
       )}
 
-      {(result.stdout || result.errorMessage || result.stderr) && (
+      {isCompileOrRuntimeError ? (
+        <section aria-label="Execution error">
+          <DataBlock label="Error" value={errorDetails || "Execution failed."} tone="error" />
+        </section>
+      ) : (result.stdout || result.errorMessage || result.stderr) && (
         <section aria-label="Submission diagnostics">
           <h3 className="mb-2 border-b border-graphite pb-2 text-sm font-semibold text-bright-gray">
             {result.status === "COMPILE_ERROR" ? "Compiler Output" : "Diagnostics"}
           </h3>
           <div className="space-y-3">
             {result.stdout && <DataBlock label="Standard output" value={result.stdout} />}
-            {result.errorMessage && <DataBlock label="Error" value={result.errorMessage} />}
+            {result.errorMessage && <DataBlock label="Error" value={result.errorMessage} tone="error" />}
             {result.stderr && (
               <DataBlock
                 label={result.status === "COMPILE_ERROR" ? "Compiler output" : "Standard error"}
                 value={result.stderr}
+                tone="error"
               />
             )}
           </div>
@@ -232,7 +269,16 @@ export function SubmissionResultPanel({
         : isPending
           ? "Running"
           : "Unable to display result"
-    : executionStatusLabels[execution.status];
+    : execution.result?.problemRun
+      ? execution.result.problemRun.status === "ACCEPTED"
+        ? "Success"
+        : execution.result.problemRun.status === "COMPILE_ERROR" ||
+            execution.result.problemRun.status === "RUNTIME_ERROR"
+          ? "Error"
+        : submissionStatusLabels[execution.result.problemRun.status]
+      : execution.status === "compile_error" || execution.status === "runtime_error"
+        ? "Error"
+      : executionStatusLabels[execution.status];
   const isSuccessful = isSubmission
     ? submission.result?.status === "ACCEPTED"
     : execution.status === "success";
@@ -276,33 +322,45 @@ export function SubmissionResultPanel({
             </div>
           </div>
         ) : hasSubmissionResult ? (
-          <SubmissionDetails
-            submission={submission}
+          <TestCaseDetails
+            result={submission.result}
             testCaseInputs={testCaseInputs}
           />
         ) : hasExecutionResult ? (
-          <section className="space-y-4" aria-label="Execution details">
-            <div className={`flex items-center gap-2 text-sm font-semibold ${
-              isSuccessful ? "text-success-green" : "text-error-red"
-            }`}>
-              <StatusIcon success={isSuccessful} />
-              <span>{currentStatus}</span>
-            </div>
-            <div className="space-y-3">
-              {execution.result?.stdout && (
-                <DataBlock label="Output" value={execution.result.stdout} />
+          execution.result?.problemRun ? (
+            <TestCaseDetails result={execution.result.problemRun} />
+          ) : (
+            <section className="space-y-4" aria-label="Execution details">
+              {execution.status !== "compile_error" && execution.status !== "runtime_error" && (
+                <div className={`flex items-center gap-2 text-sm font-semibold ${
+                  isSuccessful ? "text-success-green" : "text-error-red"
+                }`}>
+                  <StatusIcon success={isSuccessful} />
+                  <span>{currentStatus}</span>
+                </div>
               )}
-              {execution.result?.stderr && (
-                <DataBlock label={execution.status === "compile_error" ? "Compiler Output" : "Diagnostics"} value={execution.result.stderr} />
-              )}
-              {typeof execution.result?.exitCode === "number" && (
-                <p className="text-xs text-muted-gray">Exit code: {execution.result.exitCode}</p>
-              )}
-              {!execution.result?.stdout && !execution.result?.stderr && execution.status === "success" && (
-                <p className="text-sm text-medium-gray">Program executed successfully with no output.</p>
-              )}
-            </div>
-          </section>
+              <div className="space-y-3">
+                {execution.result?.stdout && (
+                  <DataBlock label="Output" value={execution.result.stdout} />
+                )}
+                {(execution.status === "compile_error" || execution.status === "runtime_error") ? (
+                  <DataBlock
+                    label="Error"
+                    value={execution.result?.stderr || "Execution failed."}
+                    tone="error"
+                  />
+                ) : execution.result?.stderr ? (
+                  <DataBlock label="Diagnostics" value={execution.result.stderr} tone="error" />
+                ) : null}
+                {typeof execution.result?.exitCode === "number" && (
+                  <p className="text-xs text-muted-gray">Exit code: {execution.result.exitCode}</p>
+                )}
+                {!execution.result?.stdout && !execution.result?.stderr && execution.status === "success" && (
+                  <p className="text-sm text-medium-gray">Program executed successfully with no output.</p>
+                )}
+              </div>
+            </section>
+          )
         ) : isSubmission && submissionFailed ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-error-red">

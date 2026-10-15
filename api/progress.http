@@ -1,3 +1,4 @@
+
 @baseUrl = {{$dotenv BASEURL}}
 @StudentAccessToken = {{$dotenv STUDENT_TOKEN}}
 
@@ -6,22 +7,34 @@
 ############################################################
 
 ### Get Complete Learning Progress
-GET {{baseUrl}}/api/progress
+GET {{baseUrl}}/api/progress/learning
 Cookie: accessToken={{StudentAccessToken}}
 
 
-### Get Progress of a Specific Subject
-GET {{baseUrl}}/api/progress/subject
-Content-Type: application/json
+############################################################
+# DSA PROGRESS API
+############################################################
+
+### Get DSA Progress
+GET {{baseUrl}}/api/progress/DSA
 Cookie: accessToken={{StudentAccessToken}}
 
-{
-    "subject": "Computer Networks"
-}
+
+############################################################
+# SUBJECT LEARNING PROGRESS APIs
+############################################################
+
+### Get Progress of All Subjects
+GET {{baseUrl}}/api/progress/subject/learning
+Cookie: accessToken={{StudentAccessToken}}
 
 
-### Add / Update Learning Progress
-POST {{baseUrl}}/api/progress
+############################################################
+# ADD / UPDATE LEARNING PROGRESS
+############################################################
+
+### Add or Update Learning Progress
+POST {{baseUrl}}/api/progress/learning
 Content-Type: application/json
 Cookie: accessToken={{StudentAccessToken}}
 

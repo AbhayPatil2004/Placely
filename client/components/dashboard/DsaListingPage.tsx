@@ -2,12 +2,25 @@
 
 import Link from "next/link";
 import { ArrowLeft, Check, ChevronDown, Star } from "lucide-react";
+import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Tooltip,
+  type ChartOptions,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
 import { dsaTopics } from "@/data/dsaData";
 import { TopicAccordion } from "@/components/dashboard/TopicAccordion";
 import { useEffect, useMemo, useState } from "react";
-import { apiRequest } from "@/lib/api/client";
+import { ApiError, apiRequest } from "@/lib/api/client";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 type ListingProblem = {
+  _id: string;
   slug: string;
   title: string;
   topic?: string | null;
@@ -15,8 +28,44 @@ type ListingProblem = {
   difficulty?: string | null;
 };
 
-const completedStorageKey = "placely:dsa:practice:completed:v1";
 const revisionStorageKey = "placely:dsa:practice:revision:v1";
+const difficultyLabels = ["Basic", "Easy", "Medium", "Hard"] as const;
+
+const distributionChartOptions: ChartOptions<"bar"> = {
+  indexAxis: "y",
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: {
+        color: "#bcbcbc",
+        usePointStyle: true,
+        pointStyle: "circle",
+        padding: 14,
+        boxWidth: 8,
+      },
+    },
+    tooltip: {
+      callbacks: {
+        label: (context) => ` ${context.dataset.label}: ${context.formattedValue}`,
+      },
+    },
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      stacked: true,
+      ticks: { color: "#a3a3a3", precision: 0 },
+      grid: { color: "#3f3f3f" },
+    },
+    y: {
+      stacked: true,
+      ticks: { color: "#eeeeee" },
+      grid: { display: false },
+    },
+  },
+};
 
 const topicOrder = [
   { title: "Basic", keys: ["BASIC", "BASICS", "FUNDAMENTALS", "INTRODUCTION", "VARIABLES", "DATA_TYPES", "INPUT_OUTPUT", "OPERATORS", "CONDITIONALS", "LOOPS", "FUNCTIONS", "TIME_SPACE_COMPLEXITY"] },
@@ -56,10 +105,10 @@ const topicOrderByName = new Map<string, number>(
 );
 
 const difficultyStyles: Record<string, string> = {
-  basic: "border-success-green/30 bg-success-green/10 text-success-green",
-  easy: "border-success-green/30 bg-success-green/10 text-success-green",
-  medium: "border-warning-yellow/30 bg-warning-yellow/10 text-warning-yellow",
-  hard: "border-error-red/30 bg-error-red/10 text-error-red",
+  basic: "border-green-500/30 bg-green-500/10 text-green-500",
+  easy: "border-green-500/30 bg-green-500/10 text-green-500",
+  medium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-600",
+  hard: "border-red-500/30 bg-red-500/10 text-red-600",
 };
 
 function normalizeTopicKey(topic: string) {
@@ -100,9 +149,8 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
   const [problems, setProblems] = useState<ListingProblem[]>([]);
   const [loading, setLoading] = useState(!learn);
   const [error, setError] = useState("");
-  const [completedSlugs, setCompletedSlugs] = useState<Set<string>>(
-    () => readStoredSlugs(completedStorageKey),
-  );
+  const [solvedProblemIds, setSolvedProblemIds] = useState<Set<string>>(new Set());
+  const [attemptedProblemIds, setAttemptedProblemIds] = useState<Set<string>>(new Set());
   const [revisionSlugs, setRevisionSlugs] = useState<Set<string>>(
     () => readStoredSlugs(revisionStorageKey),
   );
@@ -135,8 +183,16 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
   useEffect(() => {
     if (learn) return;
     let active = true;
-    apiRequest<ListingProblem[]>("/api/problem")
-      .then((nextProblems) => {
+
+    Promise.all([
+      apiRequest<ListingProblem[]>("/api/problem"),
+      apiRequest<Array<{ problemId: string; status: string }>>("/api/solved/problem")
+        .catch((requestError: unknown) => {
+          if (requestError instanceof ApiError && requestError.status === 404) return [];
+          throw requestError;
+        }),
+    ])
+      .then(([nextProblems, solvedRecords]) => {
         if (active) {
           setProblems(
             [...nextProblems].sort(
@@ -146,10 +202,20 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                 first.title.localeCompare(second.title),
             ),
           );
+          setSolvedProblemIds(new Set(
+            solvedRecords
+              .filter((record) => record.status === "SOLVED")
+              .map((record) => record.problemId),
+          ));
+          setAttemptedProblemIds(new Set(
+            solvedRecords
+              .filter((record) => record.status === "ATTEMPTED")
+              .map((record) => record.problemId),
+          ));
         }
       })
       .catch(() => {
-        if (active) setError("Unable to load practice problems.");
+        if (active) setError("Unable to load practice problems and their submission status.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -179,6 +245,63 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
     });
   };
 
+  const difficultyTotals = useMemo(() => {
+    return problems.reduce(
+      (totals, problem) => {
+        const difficulty = problem.difficulty?.trim().toLowerCase();
+        if (difficulty === "basic") totals.basic += 1;
+        else if (difficulty === "easy") totals.easy += 1;
+        else if (difficulty === "medium") totals.medium += 1;
+        else if (difficulty === "hard") totals.hard += 1;
+        return totals;
+      },
+      { basic: 0, easy: 0, medium: 0, hard: 0 },
+    );
+  }, [problems]);
+
+  const difficultySolved = useMemo(() => {
+    return problems.reduce(
+      (totals, problem) => {
+        if (!solvedProblemIds.has(problem._id)) return totals;
+        const difficulty = problem.difficulty?.trim().toLowerCase();
+        if (difficulty === "basic") totals.basic += 1;
+        else if (difficulty === "easy") totals.easy += 1;
+        else if (difficulty === "medium") totals.medium += 1;
+        else if (difficulty === "hard") totals.hard += 1;
+        return totals;
+      },
+      { basic: 0, easy: 0, medium: 0, hard: 0 },
+    );
+  }, [problems, solvedProblemIds]);
+
+  const solvedCount = problems.filter(({ _id }) => solvedProblemIds.has(_id)).length;
+  const totalCount = problems.length;
+  const solvedPercentage = totalCount > 0
+    ? Math.min(100, (solvedCount / totalCount) * 100)
+    : 0;
+  const distributionChartData = {
+    labels: [...difficultyLabels],
+    datasets: [
+      {
+        label: "Solved",
+        data: difficultyLabels.map((label) => difficultySolved[label.toLowerCase() as keyof typeof difficultySolved]),
+        backgroundColor: "#2dd4bf",
+        borderRadius: 4,
+        barThickness: 13,
+      },
+      {
+        label: "Remaining",
+        data: difficultyLabels.map((label) => {
+          const key = label.toLowerCase() as keyof typeof difficultyTotals;
+          return Math.max(0, difficultyTotals[key] - difficultySolved[key]);
+        }),
+        backgroundColor: "#525252",
+        borderRadius: 4,
+        barThickness: 13,
+      },
+    ],
+  };
+
   return (
     <div className="space-y-6">
       <Link href="/dashboard" className="flex items-center gap-2 text-sm text-muted-gray hover:text-white">
@@ -196,6 +319,55 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
             : "Solve curated problems and turn concepts into reliable interview skills."}
         </p>
       </div>
+      {!learn && (
+        <section aria-label="DSA progress">
+          {loading ? (
+            <div className="h-36 animate-pulse rounded-cards border border-graphite bg-surface" />
+          ) : !error && problems.length > 0 ? (
+            <div className="grid gap-4 rounded-cards border border-graphite bg-surface p-4 shadow-subtle sm:grid-cols-[minmax(180px,0.8fr)_minmax(0,1.4fr)] sm:items-center sm:gap-6 sm:px-5">
+              <div className="flex items-center gap-4">
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-teal-400/20 bg-teal-400/10">
+                  <Check aria-hidden="true" className="size-7 text-teal-400" strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-gray">Questions solved</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums text-bright-gray">
+                    {solvedCount.toLocaleString()}
+                    <span className="ml-1 text-sm font-normal text-muted-gray">/ {totalCount.toLocaleString()}</span>
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div
+                      role="progressbar"
+                      aria-label="Overall DSA progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(solvedPercentage)}
+                      className="h-1.5 w-24 overflow-hidden rounded-full bg-graphite"
+                    >
+                      <div
+                        className="h-full rounded-full bg-teal-400 transition-[width]"
+                        style={{ width: `${solvedPercentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs tabular-nums text-medium-gray">{Math.round(solvedPercentage)}%</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-gray">
+                    {attemptedProblemIds.size} attempted
+                  </p>
+                </div>
+              </div>
+              <div className="h-32 min-w-0 sm:h-36">
+                <Bar
+                  data={distributionChartData}
+                  options={distributionChartOptions}
+                  role="img"
+                  aria-label="Solved and remaining DSA questions by difficulty"
+                />
+              </div>
+            </div>
+          ) : null}
+        </section>
+      )}
       {learn ? (
         <TopicAccordion topics={dsaTopics} mode="learn" />
       ) : loading ? (
@@ -203,7 +375,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
           Loading problems...
         </div>
       ) : error ? (
-        <p role="alert" className="rounded-buttons border border-error-red/40 bg-error-red/10 p-4 text-sm text-error-red">
+        <p role="alert" className="rounded-buttons border border-error-red/40 bg-error-red/10 p-4 text-sm text-red-600">
           {error}
         </p>
       ) : problems.length === 0 ? (
@@ -213,13 +385,15 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
       ) : (
         <div className="overflow-hidden rounded-cards border border-graphite bg-surface shadow-subtle">
           {groupedProblems.map(({ topic, problems: topicProblems }, topicIndex) => {
-            const completedCount = topicProblems.filter(({ slug }) => completedSlugs.has(slug)).length;
+            const solvedCount = topicProblems.filter(({ _id }) => solvedProblemIds.has(_id)).length;
+            const displayedSolvedCount = solvedCount;
+            const displayedTotalCount = topicProblems.length;
             const isExpanded = expandedTopics
               ? expandedTopics.has(topic)
               : topicIndex === 0;
             const panelId = `practice-topic-${topicIndex}`;
-            const progress = topicProblems.length
-              ? (completedCount / topicProblems.length) * 100
+            const progress = displayedTotalCount
+              ? (displayedSolvedCount / displayedTotalCount) * 100
               : 0;
 
             return (
@@ -242,8 +416,8 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                     role="progressbar"
                     aria-label={`${topic} completion`}
                     aria-valuemin={0}
-                    aria-valuemax={topicProblems.length}
-                    aria-valuenow={completedCount}
+                    aria-valuemax={displayedTotalCount}
+                    aria-valuenow={displayedSolvedCount}
                     className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-graphite sm:block sm:w-24"
                   >
                     <span
@@ -252,7 +426,7 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                     />
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-medium-gray">
-                    {completedCount} / {topicProblems.length}
+                    {displayedSolvedCount} / {displayedTotalCount}
                   </span>
                   <ChevronDown
                     aria-hidden="true"
@@ -280,38 +454,23 @@ export function DsaListingPage({ mode }: { mode: "learn" | "practice" }) {
                           const label = ["basic", "easy", "medium", "hard"].includes(difficulty)
                             ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
                             : rawDifficulty;
-                          const isCompleted = completedSlugs.has(problem.slug);
+                          const isCompleted = solvedProblemIds.has(problem._id);
                           const isForRevision = revisionSlugs.has(problem.slug);
 
                           return (
                             <tr key={problem.slug} className="transition-colors hover:bg-white/[0.03]">
                               <td className="px-4 py-3.5 sm:px-5">
-                                <label className="inline-flex cursor-pointer items-center justify-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={isCompleted}
-                                    onChange={() =>
-                                      toggleStoredSlug(
-                                        problem.slug,
-                                        completedStorageKey,
-                                        completedSlugs,
-                                        setCompletedSlugs,
-                                      )
-                                    }
-                                    aria-label={`Mark ${problem.title} as ${isCompleted ? "incomplete" : "complete"}`}
-                                    className="peer sr-only"
-                                  />
-                                  <span
-                                    aria-hidden="true"
-                                    className={`flex size-5 items-center justify-center rounded-[5px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-lavender peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface ${
-                                      isCompleted
-                                        ? "border-lavender bg-lavender text-abyss"
-                                        : "border-muted-gray bg-abyss hover:border-bright-gray"
-                                    }`}
-                                  >
-                                    {isCompleted && <Check className="size-3.5" strokeWidth={3} />}
-                                  </span>
-                                </label>
+                                <span
+                                  role="img"
+                                  aria-label={`${problem.title} ${isCompleted ? "solved" : "unsolved"}`}
+                                  className="inline-flex size-5 items-center justify-center"
+                                >
+                                  {isCompleted ? (
+                                    <Check aria-hidden="true" className="size-4 text-green-500" strokeWidth={3} />
+                                  ) : (
+                                    <span aria-hidden="true" className="size-2 rounded-full bg-white" />
+                                  )}
+                                </span>
                               </td>
                               <td className="px-2 py-3.5">
                                 <div className="flex min-w-0 items-center gap-2.5">

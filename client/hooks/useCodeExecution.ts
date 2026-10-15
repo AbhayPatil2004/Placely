@@ -5,7 +5,10 @@ import type { EditorLanguage } from "@/data/problemBoilerplate";
 import { ApiError, getApiWebSocketUrl } from "@/lib/api/client";
 import {
   executeCode,
+  parseCodeRunResultMessage,
   parseExecutionMessage,
+  runProblemCode,
+  toExecutionOutcome,
   type ExecutionResult,
 } from "@/services/codeExecutionService";
 import {
@@ -123,6 +126,28 @@ export function useCodeExecution() {
           submissionResult.submissionId,
           submissionResult,
         );
+      }
+      return;
+    }
+
+    const codeRunResult = parseCodeRunResultMessage(data);
+    if (codeRunResult) {
+      const result: ExecutionResult = {
+        status: toExecutionOutcome(codeRunResult.status),
+        stdout: codeRunResult.stdout,
+        stderr: codeRunResult.stderr,
+        exitCode: codeRunResult.exitCode ?? undefined,
+        problemRun: codeRunResult,
+      };
+
+      if (currentJobIdRef.current === codeRunResult.jobId) {
+        finishWithResult(codeRunResult.jobId, result);
+      } else if (requestPendingRef.current) {
+        bufferedResultsRef.current.set(codeRunResult.jobId, { result });
+        if (bufferedResultsRef.current.size > 5) {
+          const oldestJobId = bufferedResultsRef.current.keys().next().value;
+          if (oldestJobId) bufferedResultsRef.current.delete(oldestJobId);
+        }
       }
       return;
     }
@@ -309,10 +334,12 @@ export function useCodeExecution() {
     code,
     language,
     input,
+    problemId,
   }: {
     code: string;
     language: EditorLanguage;
     input: string;
+    problemId?: string;
   }) => {
     if (runPendingRef.current) return;
     runPendingRef.current = true;
@@ -328,13 +355,31 @@ export function useCodeExecution() {
       return;
     }
 
+    if (problemId !== undefined && !problemId.trim()) {
+      runPendingRef.current = false;
+      setExecution({
+        ...initialState,
+        status: "error",
+        message: "This problem is missing its identifier and cannot be run.",
+      });
+      return;
+    }
+
     try {
       await connect();
       if (runSequence !== runSequenceRef.current || !mountedRef.current) return;
 
       requestPendingRef.current = true;
-      setExecution({ ...initialState, status: "connecting", message: "Sending code for execution..." });
-      const { jobId } = await executeCode({ code, language, input });
+      setExecution({
+        ...initialState,
+        status: "connecting",
+        message: problemId
+          ? "Sending code for problem evaluation..."
+          : "Sending code for execution...",
+      });
+      const { jobId } = problemId
+        ? await runProblemCode({ problemId, studentCode: code, language })
+        : await executeCode({ code, language, input });
       if (runSequence !== runSequenceRef.current || !mountedRef.current || !runPendingRef.current) return;
 
       requestPendingRef.current = false;
@@ -363,7 +408,7 @@ export function useCodeExecution() {
         } else if (error.status === 400) {
           setExecution({ ...initialState, status: "error", message: error.message });
         } else {
-          setExecution({ ...initialState, status: "error", message: "Execution request could not be queued." });
+          setExecution({ ...initialState, status: "error", message: error.message });
         }
       } else if (error instanceof Error && error.message.toLowerCase().includes("connect")) {
         setExecution({ ...initialState, status: "network_error", message: "Unable to connect to the execution service. Check your connection and try again." });
