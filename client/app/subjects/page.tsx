@@ -6,6 +6,7 @@ const subjects = [
   { key: "CN", name: "Computer Networks", href: "/subjects/cn/learn", available: true },
   { key: "OS", name: "Operating Systems", href: "/subjects/os/learn", available: true },
   { key: "SWE", name: "Software Engineering", href: "/subjects/swe/learn", available: true },
+  { key: "SQL", name: "Structured Query Language", href: "/subjects/sql/learn", available: true },
 ];
 
 export default function SubjectsPage() {

@@ -1,0 +1,1318 @@
+{
+  "subject": "SQL",
+  "format_version": "2.0",
+  "reading_style": {
+    "description": "Step-by-step SQL learning notes from beginner to advanced for placement preparation. Topics are split into short sections with stable IDs so learners can read and check off each section independently.",
+    "structure": [
+      "Overview",
+      "Syntax",
+      "Examples (SQL kept with its explanation)",
+      "Quick revision points"
+    ]
+  },
+  "learning_path": [
+    {
+      "stage": 1,
+      "name": "Beginner",
+      "topics": [
+        "sql-foundations",
+        "select-filter-sort",
+        "expressions-functions",
+        "aggregation-grouping"
+      ]
+    },
+    {
+      "stage": 2,
+      "name": "Intermediate",
+      "topics": [
+        "joins",
+        "subqueries-ctes",
+        "schema-design-constraints",
+        "dml-transactions"
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "Advanced",
+      "topics": [
+        "window-functions",
+        "indexes-views-programming",
+        "advanced-querying",
+        "sql-dialects-data-types"
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "Practice and interviews",
+      "topics": ["practice-schema", "placement-interview-questions"]
+    }
+  ],
+  "topics": [
+    {
+      "id": "sql-foundations",
+      "title": "SQL Foundations and Database Basics",
+      "sections": [
+        {
+          "id": "what-is-sql",
+          "heading": "What Is SQL?",
+          "explanation": "SQL (Structured Query Language) is used to define, query, and manipulate data in relational database systems.\nA relational database organizes information into tables containing rows (records) and columns (attributes).\nSQL is declarative: you describe the result you want, and the database chooses how to retrieve it.\nCommon systems include MySQL, PostgreSQL, Microsoft SQL Server, Oracle Database, and SQLite.\nSQL is used in backend development, analytics, reporting, data engineering, testing, and placement interviews.",
+          "examples": [
+            {
+              "title": "Read every employee",
+              "sql": "SELECT * FROM employees;",
+              "explanation": "Returns all columns and rows from employees. Prefer listing needed columns in production code."
+            }
+          ],
+          "quick_revision": [
+            "SQL is declarative and operates on relational data.",
+            "A row is a record; a column is an attribute.",
+            "SQL syntax differs slightly between database products."
+          ]
+        },
+        {
+          "id": "relational-terms",
+          "heading": "Core Relational Terms",
+          "explanation": "Database: an organized collection of data.\nTable: a relation made of rows and columns.\nSchema: the logical structure and objects in a database.\nPrimary key: uniquely identifies a row.\nForeign key: links rows between tables and helps enforce referential integrity.\nNULL: missing, unknown, or inapplicable value; it is not the same as zero or an empty string.\nA DBMS stores, retrieves, secures, and coordinates access to database data.",
+          "quick_revision": [
+            "Primary keys uniquely identify rows.",
+            "Foreign keys enforce relationships.",
+            "NULL requires special comparison rules."
+          ]
+        },
+        {
+          "id": "sql-command-groups",
+          "heading": "SQL Command Categories",
+          "explanation": "DDL (Data Definition Language): CREATE, ALTER, DROP, TRUNCATE.\nDML (Data Manipulation Language): INSERT, UPDATE, DELETE.\nDQL (Data Query Language): SELECT (often grouped with DML in some references).\nDCL (Data Control Language): GRANT, REVOKE.\nTCL (Transaction Control Language): COMMIT, ROLLBACK, SAVEPOINT.\nExact categorization can vary across textbooks and database products.",
+          "examples": [
+            {
+              "title": "Create a table",
+              "sql": "CREATE TABLE departments (department_id INT PRIMARY KEY, department_name VARCHAR(100));",
+              "explanation": "DDL defines a database object."
+            },
+            {
+              "title": "Add a row",
+              "sql": "INSERT INTO departments (department_id, department_name) VALUES (10, 'Engineering');",
+              "explanation": "DML changes table data."
+            }
+          ],
+          "quick_revision": [
+            "DDL changes structure; DML changes data; TCL controls transactions."
+          ]
+        },
+        {
+          "id": "sql-environment",
+          "heading": "A First SQL Setup",
+          "explanation": "Install or access a database such as MySQL, PostgreSQL, SQL Server, or SQLite.\nCreate a database/schema, create a table, insert sample data, and query it.\nSome systems use CREATE DATABASE and USE; PostgreSQL commonly connects to a database rather than using USE.\nThe example below is broadly supported, but identity/auto-increment syntax differs by DBMS.",
+          "examples": [
+            {
+              "title": "A tiny working example",
+              "sql": "CREATE TABLE greetings (id INT PRIMARY KEY, message VARCHAR(255));\nINSERT INTO greetings (id, message) VALUES (1, 'Hello, SQL!');\nSELECT message FROM greetings;",
+              "explanation": "Creates a table, inserts one row, and retrieves its message."
+            }
+          ],
+          "quick_revision": [
+            "Run examples in a test database first.",
+            "Use explicit column lists with INSERT."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Learn the relational model and command groups before complex queries."
+      ]
+    },
+    {
+      "id": "select-filter-sort",
+      "title": "SELECT, Filtering, Sorting, and Limiting",
+      "sections": [
+        {
+          "id": "select-from",
+          "heading": "SELECT and FROM",
+          "explanation": "SELECT chooses columns or expressions; FROM identifies the source table or view.\nDISTINCT removes duplicate result rows. SELECT * is convenient for exploration but can return unnecessary data.",
+          "syntax": "SELECT column1, column2\nFROM table_name;",
+          "examples": [
+            {
+              "title": "Select chosen columns",
+              "sql": "SELECT employee_id, employee_name, salary FROM employees;",
+              "explanation": "Returns only the requested columns."
+            },
+            {
+              "title": "Remove duplicate departments",
+              "sql": "SELECT DISTINCT department_id FROM employees;",
+              "explanation": "Returns each distinct department_id once."
+            }
+          ],
+          "quick_revision": [
+            "SELECT defines output columns.",
+            "DISTINCT applies to the selected combination of columns."
+          ]
+        },
+        {
+          "id": "where-conditions",
+          "heading": "WHERE and Comparison Operators",
+          "explanation": "WHERE filters rows before grouping. Common operators are =, <>, != (supported by many systems), <, <=, >, and >=.\nCombine conditions with AND, OR, and NOT. Use parentheses when mixing AND and OR to make intent explicit.\nSQL uses three-valued logic: TRUE, FALSE, and UNKNOWN. A comparison involving NULL usually yields UNKNOWN.",
+          "syntax": "SELECT columns\nFROM table_name\nWHERE condition;",
+          "examples": [
+            {
+              "title": "Employees earning over 50000",
+              "sql": "SELECT employee_name, salary FROM employees WHERE salary > 50000;",
+              "explanation": "Keeps only rows whose salary comparison is true."
+            },
+            {
+              "title": "Combine conditions",
+              "sql": "SELECT * FROM employees WHERE department_id = 10 AND salary >= 60000;",
+              "explanation": "Both conditions must be true."
+            }
+          ],
+          "quick_revision": [
+            "WHERE filters rows.",
+            "Use parentheses to avoid ambiguous boolean logic.",
+            "NULL comparisons are not ordinary equality comparisons."
+          ]
+        },
+        {
+          "id": "between-in-like",
+          "heading": "BETWEEN, IN, LIKE, and Pattern Matching",
+          "explanation": "BETWEEN includes both endpoints. IN checks membership in a list or subquery.\nLIKE matches patterns: % means zero or more characters and _ means exactly one character.\nPattern matching and case sensitivity depend on collation and database settings.",
+          "examples": [
+            {
+              "title": "Salary range",
+              "sql": "SELECT * FROM employees WHERE salary BETWEEN 40000 AND 70000;",
+              "explanation": "Includes salaries equal to 40000 or 70000."
+            },
+            {
+              "title": "Match selected departments",
+              "sql": "SELECT * FROM employees WHERE department_id IN (10, 20, 30);",
+              "explanation": "Matches any listed department."
+            },
+            {
+              "title": "Names beginning with A",
+              "sql": "SELECT * FROM employees WHERE employee_name LIKE 'A%';",
+              "explanation": "Matches names whose first character is A."
+            }
+          ],
+          "quick_revision": [
+            "BETWEEN is inclusive.",
+            "LIKE uses % and _ wildcards.",
+            "Be careful using NOT IN when its list/subquery can contain NULL."
+          ]
+        },
+        {
+          "id": "null-handling",
+          "heading": "NULL, IS NULL, and COALESCE",
+          "explanation": "Do not write column = NULL. Use IS NULL or IS NOT NULL.\nCOALESCE(a, b, ...) returns the first non-NULL expression; supported by major SQL systems.\nNULLIF(a, b) returns NULL when a equals b, otherwise returns a.",
+          "examples": [
+            {
+              "title": "Find employees without a manager",
+              "sql": "SELECT employee_name FROM employees WHERE manager_id IS NULL;",
+              "explanation": "IS NULL correctly checks missing manager IDs."
+            },
+            {
+              "title": "Display a fallback",
+              "sql": "SELECT employee_name, COALESCE(phone, 'Not provided') AS phone_display FROM employees;",
+              "explanation": "Substitutes a label for a NULL phone value."
+            }
+          ],
+          "quick_revision": [
+            "Use IS NULL, not = NULL.",
+            "COALESCE handles missing values."
+          ]
+        },
+        {
+          "id": "order-limit",
+          "heading": "ORDER BY and Limiting Results",
+          "explanation": "ORDER BY sorts the final result. ASC is ascending (default in most systems); DESC is descending.\nUse a deterministic tie-breaker when stable ordering matters. LIMIT is common in MySQL/PostgreSQL/SQLite; SQL Server uses TOP or OFFSET/FETCH; standard SQL supports FETCH FIRST in many systems.",
+          "examples": [
+            {
+              "title": "Highest salaries first",
+              "sql": "SELECT employee_name, salary FROM employees ORDER BY salary DESC, employee_name ASC;",
+              "explanation": "Sorts by salary descending, then name ascending for ties."
+            },
+            {
+              "title": "Top five rows (MySQL/PostgreSQL/SQLite)",
+              "sql": "SELECT employee_name, salary FROM employees ORDER BY salary DESC LIMIT 5;",
+              "explanation": "Returns five rows after sorting."
+            }
+          ],
+          "quick_revision": [
+            "Sort before limiting.",
+            "Syntax for limiting rows is dialect-specific.",
+            "Use a tie-breaker for repeatable results."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Master SELECT, WHERE, NULL, ORDER BY, and row limiting first."
+      ]
+    },
+    {
+      "id": "expressions-functions",
+      "title": "Expressions, Operators, and Built-in Functions",
+      "sections": [
+        {
+          "id": "expressions-aliases",
+          "heading": "Expressions, Aliases, and CASE",
+          "explanation": "Expressions can calculate values from columns, constants, and functions. AS assigns a readable output alias.\nCASE provides conditional logic inside a query. It returns the result for the first matching WHEN branch, or ELSE if supplied.",
+          "examples": [
+            {
+              "title": "Calculated annual salary",
+              "sql": "SELECT employee_name, salary * 12 AS annual_salary FROM employees;",
+              "explanation": "Calculates an annualized value assuming salary is monthly."
+            },
+            {
+              "title": "Classify salaries",
+              "sql": "SELECT employee_name, CASE WHEN salary >= 100000 THEN 'High' WHEN salary >= 60000 THEN 'Medium' ELSE 'Entry' END AS salary_band FROM employees;",
+              "explanation": "Creates a label using ordered conditions."
+            }
+          ],
+          "quick_revision": [
+            "Aliases improve readability.",
+            "CASE handles conditional output."
+          ]
+        },
+        {
+          "id": "string-functions",
+          "heading": "String Functions",
+          "explanation": "Common functions include CONCAT, LENGTH/CHAR_LENGTH, LOWER, UPPER, TRIM, SUBSTRING, REPLACE, and POSITION/INSTR.\nNames and argument syntax vary by database. SQL Server uses LEN and SUBSTRING; PostgreSQL supports LENGTH and SUBSTRING.",
+          "examples": [
+            {
+              "title": "Normalize a name",
+              "sql": "SELECT UPPER(TRIM(employee_name)) AS normalized_name FROM employees;",
+              "explanation": "Removes surrounding spaces and converts text to uppercase."
+            },
+            {
+              "title": "Extract a substring (syntax varies)",
+              "sql": "SELECT SUBSTRING(employee_name FROM 1 FOR 3) AS short_name FROM employees;",
+              "explanation": "PostgreSQL-style substring syntax; other systems may use SUBSTRING(name, 1, 3)."
+            }
+          ],
+          "quick_revision": [
+            "Check the target DBMS for function names and argument order."
+          ]
+        },
+        {
+          "id": "numeric-functions",
+          "heading": "Numeric Functions",
+          "explanation": "Common numeric functions include ABS, ROUND, CEILING/CEIL, FLOOR, POWER, MOD, and database-specific random functions.\nInteger division and rounding behavior can differ across systems and data types.",
+          "examples": [
+            {
+              "title": "Round a calculation",
+              "sql": "SELECT ROUND(salary * 1.075, 2) AS revised_salary FROM employees;",
+              "explanation": "Calculates a 7.5% increase and rounds to two decimal places."
+            }
+          ],
+          "quick_revision": [
+            "Choose decimal types for exact monetary calculations where appropriate."
+          ]
+        },
+        {
+          "id": "date-functions",
+          "heading": "Date and Time Functions",
+          "explanation": "Date functions vary substantially. Common concepts include current date/time, extracting year/month, date arithmetic, date differences, and formatting.\nExamples: CURRENT_DATE is standard in many systems; MySQL uses DATE_ADD; PostgreSQL supports date + interval; SQL Server uses DATEADD.\nStore dates using date/time types rather than formatted text when possible.",
+          "examples": [
+            {
+              "title": "Current date",
+              "sql": "SELECT CURRENT_DATE;",
+              "explanation": "Returns the current date in systems supporting this standard expression."
+            },
+            {
+              "title": "Filter a month using a half-open range",
+              "sql": "SELECT * FROM orders WHERE order_date >= '2026-01-01' AND order_date < '2026-02-01';",
+              "explanation": "Includes all timestamps in January without applying a function to the indexed column."
+            }
+          ],
+          "quick_revision": [
+            "Date syntax is dialect-specific.",
+            "Half-open ranges are useful for timestamp filtering."
+          ]
+        },
+        {
+          "id": "type-conversion",
+          "heading": "Type Conversion and CAST",
+          "explanation": "CAST converts an expression to a specified type. Implicit conversions can cause errors, unexpected comparisons, or poor index usage.\nPrefer explicit, meaningful conversions and validate input data.",
+          "examples": [
+            {
+              "title": "Convert text to integer",
+              "sql": "SELECT CAST('42' AS INTEGER) AS value_num;",
+              "explanation": "Converts a numeric text literal to an integer in systems supporting this type name."
+            }
+          ],
+          "quick_revision": ["Avoid relying on implicit conversions."]
+        }
+      ],
+      "quick_revision": [
+        "Know CASE, string functions, numeric functions, date operations, and CAST."
+      ]
+    },
+    {
+      "id": "aggregation-grouping",
+      "title": "Aggregate Functions and GROUP BY",
+      "sections": [
+        {
+          "id": "aggregate-functions",
+          "heading": "COUNT, SUM, AVG, MIN, and MAX",
+          "explanation": "Aggregate functions summarize multiple rows. COUNT(*) counts rows; COUNT(column) counts non-NULL values in that column.\nSUM and AVG ignore NULL values. MIN and MAX return the smallest and largest non-NULL values.",
+          "examples": [
+            {
+              "title": "Count employees",
+              "sql": "SELECT COUNT(*) AS employee_count FROM employees;",
+              "explanation": "Counts all rows, including rows with NULL values in other columns."
+            },
+            {
+              "title": "Average salary",
+              "sql": "SELECT AVG(salary) AS average_salary FROM employees;",
+              "explanation": "Averages non-NULL salary values."
+            }
+          ],
+          "quick_revision": [
+            "COUNT(*) counts rows; COUNT(column) excludes NULL in that column."
+          ]
+        },
+        {
+          "id": "group-by",
+          "heading": "GROUP BY",
+          "explanation": "GROUP BY forms groups that share the same grouping values, then aggregates each group.\nEvery selected expression should generally be grouped or aggregated; some database modes enforce this strictly.",
+          "examples": [
+            {
+              "title": "Headcount by department",
+              "sql": "SELECT department_id, COUNT(*) AS headcount FROM employees GROUP BY department_id;",
+              "explanation": "Returns one result row per department_id group."
+            },
+            {
+              "title": "Department salary totals",
+              "sql": "SELECT department_id, SUM(salary) AS payroll FROM employees GROUP BY department_id;",
+              "explanation": "Adds salary values inside each group."
+            }
+          ],
+          "quick_revision": [
+            "GROUP BY creates one output group per distinct grouping key."
+          ]
+        },
+        {
+          "id": "having-vs-where",
+          "heading": "WHERE vs HAVING",
+          "explanation": "WHERE filters input rows before grouping. HAVING filters groups after aggregation.\nA condition on an aggregate such as COUNT(*) normally belongs in HAVING.",
+          "examples": [
+            {
+              "title": "Departments with at least five employees",
+              "sql": "SELECT department_id, COUNT(*) AS headcount FROM employees GROUP BY department_id HAVING COUNT(*) >= 5;",
+              "explanation": "Groups rows, then keeps only qualifying groups."
+            }
+          ],
+          "quick_revision": ["WHERE filters rows; HAVING filters groups."]
+        },
+        {
+          "id": "grouping-multiple-columns",
+          "heading": "Grouping by Multiple Columns",
+          "explanation": "Grouping by multiple columns creates groups for each unique combination.\nROLLUP, CUBE, and GROUPING SETS support subtotals and multiple grouping levels, but syntax and support vary by database.",
+          "examples": [
+            {
+              "title": "Sales by region and product",
+              "sql": "SELECT region, product_id, SUM(amount) AS total_sales FROM sales GROUP BY region, product_id;",
+              "explanation": "Returns totals for each region/product combination."
+            }
+          ],
+          "quick_revision": [
+            "Each additional grouping column makes groups more specific."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Practice aggregate queries and explain WHERE versus HAVING clearly."
+      ]
+    },
+    {
+      "id": "joins",
+      "title": "Joins and Set Operations",
+      "sections": [
+        {
+          "id": "join-concepts",
+          "heading": "Why Joins Are Needed",
+          "explanation": "A join combines related rows from two or more tables. Join predicates usually connect primary-key and foreign-key columns.\nAlways identify the relationship and expected row count before joining; one-to-many joins can multiply rows.",
+          "examples": [
+            {
+              "title": "Example tables",
+              "sql": "-- employees(employee_id, employee_name, department_id)\n-- departments(department_id, department_name)",
+              "explanation": "employees.department_id refers to departments.department_id."
+            }
+          ],
+          "quick_revision": [
+            "Understand table relationships before writing a join."
+          ]
+        },
+        {
+          "id": "inner-join",
+          "heading": "INNER JOIN",
+          "explanation": "INNER JOIN returns only rows that satisfy the join condition in both tables.",
+          "syntax": "SELECT e.employee_name, d.department_name\nFROM employees AS e\nINNER JOIN departments AS d\n  ON e.department_id = d.department_id;",
+          "quick_revision": ["INNER JOIN keeps matching rows only."]
+        },
+        {
+          "id": "left-right-full-join",
+          "heading": "LEFT, RIGHT, and FULL OUTER JOIN",
+          "explanation": "LEFT JOIN preserves every row from the left table and fills unmatched right-side columns with NULL.\nRIGHT JOIN preserves every row from the right table. FULL OUTER JOIN preserves unmatched rows from both sides where supported.\nMySQL does not natively support FULL OUTER JOIN; it can be emulated using UNION with care.",
+          "examples": [
+            {
+              "title": "Employees including those without a department match",
+              "sql": "SELECT e.employee_name, d.department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.department_id;",
+              "explanation": "Employees remain in the output even when no department matches."
+            }
+          ],
+          "quick_revision": [
+            "LEFT JOIN preserves the left side.",
+            "A filter on the right table in WHERE can accidentally remove unmatched rows."
+          ]
+        },
+        {
+          "id": "cross-self-joins",
+          "heading": "CROSS JOIN and SELF JOIN",
+          "explanation": "CROSS JOIN produces the Cartesian product: each left row paired with every right row.\nA SELF JOIN joins a table to itself, commonly for employee-manager relationships or comparing rows.",
+          "examples": [
+            {
+              "title": "Employee and manager",
+              "sql": "SELECT e.employee_name AS employee, m.employee_name AS manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id;",
+              "explanation": "The table appears twice with different aliases."
+            }
+          ],
+          "quick_revision": [
+            "Use aliases for self joins.",
+            "CROSS JOIN can create very large result sets."
+          ]
+        },
+        {
+          "id": "join-pitfalls",
+          "heading": "Join Pitfalls and Duplicate Rows",
+          "explanation": "Duplicate-looking rows often result from one-to-many or many-to-many relationships, not from SQL malfunction.\nJoin on all required key columns. Use EXISTS for existence checks when you do not need columns from the matching table.\nAvoid using DISTINCT merely to hide a join bug.",
+          "examples": [
+            {
+              "title": "Find employees with at least one order",
+              "sql": "SELECT e.employee_id, e.employee_name FROM employees e WHERE EXISTS (SELECT 1 FROM orders o WHERE o.employee_id = e.employee_id);",
+              "explanation": "Returns each employee once if a matching order exists."
+            }
+          ],
+          "quick_revision": [
+            "Understand cardinality.",
+            "EXISTS can avoid duplicates caused by selecting from one-to-many matches."
+          ]
+        },
+        {
+          "id": "set-operations",
+          "heading": "UNION, UNION ALL, INTERSECT, EXCEPT",
+          "explanation": "UNION combines compatible result sets and removes duplicates. UNION ALL keeps duplicates and is usually cheaper.\nINTERSECT returns rows common to both results; EXCEPT returns rows in the first result but not the second. Availability and names vary (Oracle uses MINUS in place of EXCEPT in common usage).\nEach query must return the same number of columns with compatible types.",
+          "examples": [
+            {
+              "title": "Combine customer sources",
+              "sql": "SELECT email FROM online_customers UNION SELECT email FROM store_customers;",
+              "explanation": "Combines emails and removes duplicate result rows."
+            }
+          ],
+          "quick_revision": [
+            "Use UNION ALL when duplicate elimination is unnecessary."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Be confident with INNER/LEFT joins, self joins, EXISTS, and UNION versus UNION ALL."
+      ]
+    },
+    {
+      "id": "subqueries-ctes",
+      "title": "Subqueries, CTEs, and Recursive Queries",
+      "sections": [
+        {
+          "id": "subqueries",
+          "heading": "Subqueries",
+          "explanation": "A subquery is a query nested inside another SQL statement. It can appear in WHERE, FROM, SELECT, or other supported positions.\nScalar subqueries return one value; table subqueries return rows. A scalar subquery returning multiple rows may cause an error.",
+          "examples": [
+            {
+              "title": "Employees earning above company average",
+              "sql": "SELECT employee_name, salary FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);",
+              "explanation": "The inner query computes the average used by the outer query."
+            }
+          ],
+          "quick_revision": [
+            "Know scalar, multi-row, and correlated subqueries."
+          ]
+        },
+        {
+          "id": "correlated-subqueries",
+          "heading": "Correlated Subqueries and EXISTS",
+          "explanation": "A correlated subquery references a value from the outer query and is logically evaluated for outer rows, though the optimizer may transform it.\nEXISTS tests whether at least one matching row exists. NOT EXISTS is often safer than NOT IN when NULL values may appear.",
+          "examples": [
+            {
+              "title": "Employees above their department average",
+              "sql": "SELECT e.employee_id, e.employee_name, e.salary FROM employees e WHERE e.salary > (SELECT AVG(e2.salary) FROM employees e2 WHERE e2.department_id = e.department_id);",
+              "explanation": "The subquery's department is tied to each outer employee."
+            }
+          ],
+          "quick_revision": [
+            "Use EXISTS for existence checks.",
+            "Understand NULL behavior with NOT IN."
+          ]
+        },
+        {
+          "id": "cte",
+          "heading": "Common Table Expressions (WITH)",
+          "explanation": "A CTE gives a query result a temporary name for the duration of one statement. It can improve readability and can be referenced by later parts of that statement.\nA CTE is not automatically faster than an equivalent subquery; optimization behavior varies.",
+          "examples": [
+            {
+              "title": "Readable high-salary query",
+              "sql": "WITH high_paid AS (SELECT employee_id, employee_name, salary FROM employees WHERE salary >= 80000) SELECT employee_name, salary FROM high_paid ORDER BY salary DESC;",
+              "explanation": "Defines a named intermediate result and queries it."
+            }
+          ],
+          "quick_revision": ["Use CTEs to organize multi-step queries."]
+        },
+        {
+          "id": "recursive-cte",
+          "heading": "Recursive CTEs",
+          "explanation": "Recursive CTEs traverse hierarchical or graph-like data, such as organizational charts, categories, or parent-child relationships.\nThey usually have an anchor query plus a recursive member. Guard against cycles and unexpectedly deep recursion.\nExact syntax and recursion limits differ by DBMS.",
+          "examples": [
+            {
+              "title": "Illustrative hierarchy traversal",
+              "sql": "WITH RECURSIVE org AS (\n  SELECT employee_id, employee_name, manager_id, 0 AS depth\n  FROM employees WHERE manager_id IS NULL\n  UNION ALL\n  SELECT e.employee_id, e.employee_name, e.manager_id, o.depth + 1\n  FROM employees e JOIN org o ON e.manager_id = o.employee_id\n)\nSELECT * FROM org;",
+              "explanation": "Starts at top-level employees, then repeatedly finds direct reports. Recursive CTE syntax varies by database."
+            }
+          ],
+          "quick_revision": [
+            "Anchor query starts recursion; recursive member expands it."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Subqueries solve nested logic; CTEs improve structure; recursive CTEs handle hierarchies."
+      ]
+    },
+    {
+      "id": "window-functions",
+      "title": "Window Functions",
+      "sections": [
+        {
+          "id": "window-overview",
+          "heading": "What Window Functions Do",
+          "explanation": "Window functions calculate values across a related set of rows while keeping individual rows in the result.\nOVER defines the window; PARTITION BY divides it into groups and ORDER BY defines order within each group.\nUnlike GROUP BY, window functions do not collapse all rows into one row per group.",
+          "examples": [
+            {
+              "title": "Rank employees by salary in each department",
+              "sql": "SELECT employee_name, department_id, salary, RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS salary_rank FROM employees;",
+              "explanation": "Ranks salaries separately inside each department."
+            }
+          ],
+          "quick_revision": ["Window functions preserve row-level detail."]
+        },
+        {
+          "id": "ranking-functions",
+          "heading": "ROW_NUMBER, RANK, and DENSE_RANK",
+          "explanation": "ROW_NUMBER assigns a unique sequential number. RANK gives tied rows the same rank and leaves gaps after ties. DENSE_RANK gives tied rows the same rank without gaps.\nAdd a tie-breaker to ORDER BY when you need deterministic row numbering.",
+          "examples": [
+            {
+              "title": "Top three earners per department",
+              "sql": "WITH ranked AS (\n  SELECT e.*, ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC, employee_id) AS rn\n  FROM employees e\n)\nSELECT * FROM ranked WHERE rn <= 3;",
+              "explanation": "Returns up to three employees per department. ROW_NUMBER selects exactly three when at least three rows exist."
+            }
+          ],
+          "quick_revision": [
+            "ROW_NUMBER has no ties; RANK has gaps; DENSE_RANK has no gaps."
+          ]
+        },
+        {
+          "id": "window-aggregates",
+          "heading": "Running Totals and Moving Averages",
+          "explanation": "Aggregate functions can be used as window functions. Specify a frame when needed; defaults can produce behavior different from a full-partition total, especially with peers.",
+          "examples": [
+            {
+              "title": "Running sales total",
+              "sql": "SELECT order_date, amount, SUM(amount) OVER (ORDER BY order_date, order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total FROM orders;",
+              "explanation": "Adds each row's amount to all preceding rows in the chosen order."
+            },
+            {
+              "title": "Department average alongside each employee",
+              "sql": "SELECT employee_name, department_id, salary, AVG(salary) OVER (PARTITION BY department_id) AS department_avg FROM employees;",
+              "explanation": "Shows each salary alongside its department average."
+            }
+          ],
+          "quick_revision": [
+            "ROWS frame makes row-by-row accumulation explicit."
+          ]
+        },
+        {
+          "id": "lag-lead",
+          "heading": "LAG, LEAD, FIRST_VALUE, LAST_VALUE",
+          "explanation": "LAG accesses a previous row and LEAD accesses a following row in the window order.\nFIRST_VALUE and LAST_VALUE select values from a window frame; LAST_VALUE often needs an explicit frame extending to UNBOUNDED FOLLOWING to return the partition's final value.",
+          "examples": [
+            {
+              "title": "Compare current and previous month",
+              "sql": "SELECT month, revenue, LAG(revenue) OVER (ORDER BY month) AS previous_revenue, revenue - LAG(revenue) OVER (ORDER BY month) AS change FROM monthly_sales;",
+              "explanation": "Compares each month's revenue with the prior row."
+            }
+          ],
+          "quick_revision": [
+            "LAG/LEAD are common placement questions for trend analysis."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Window functions are high-value placement topics, especially ranking and top-N-per-group."
+      ]
+    },
+    {
+      "id": "schema-design-constraints",
+      "title": "Table Design, Keys, Constraints, and Normalization",
+      "sections": [
+        {
+          "id": "create-alter-drop",
+          "heading": "CREATE, ALTER, DROP, and TRUNCATE",
+          "explanation": "CREATE defines objects; ALTER changes an object's structure; DROP removes an object; TRUNCATE removes all rows while retaining the table definition.\nTransactional behavior and identity-counter behavior of TRUNCATE vary by DBMS. Always check the environment before destructive operations.",
+          "examples": [
+            {
+              "title": "Add an email column",
+              "sql": "ALTER TABLE employees ADD email VARCHAR(255);",
+              "explanation": "Adds a nullable email column in systems supporting this syntax."
+            }
+          ],
+          "quick_revision": [
+            "DROP removes the object; TRUNCATE removes table rows; DELETE removes selected rows."
+          ]
+        },
+        {
+          "id": "constraints",
+          "heading": "Constraints",
+          "explanation": "NOT NULL disallows missing values; UNIQUE enforces uniqueness; PRIMARY KEY uniquely identifies rows; FOREIGN KEY enforces references; CHECK validates a condition; DEFAULT supplies a value when omitted.\nNULL handling within UNIQUE constraints differs by database. A primary key is unique and not null.",
+          "examples": [
+            {
+              "title": "Create a constrained table",
+              "sql": "CREATE TABLE departments (\n  department_id INT PRIMARY KEY,\n  department_name VARCHAR(100) NOT NULL UNIQUE\n);",
+              "explanation": "Requires a unique ID and a non-null, unique department name."
+            }
+          ],
+          "quick_revision": [
+            "Constraints protect data integrity at the database level."
+          ]
+        },
+        {
+          "id": "keys",
+          "heading": "Primary, Foreign, Candidate, Composite, and Surrogate Keys",
+          "explanation": "A candidate key can uniquely identify a row; one candidate key is selected as the primary key.\nA composite key uses multiple columns. A surrogate key is an artificial identifier, such as an integer ID.\nForeign keys represent relationships and can specify actions such as ON DELETE CASCADE or SET NULL, which must be chosen carefully.",
+          "quick_revision": ["Choose stable keys and enforce relationships."]
+        },
+        {
+          "id": "normalization",
+          "heading": "Normalization: 1NF, 2NF, 3NF, and BCNF",
+          "explanation": "Normalization reduces redundancy and update anomalies.\n1NF: values are atomic under the chosen model; avoid repeating groups.\n2NF: in 1NF and every non-prime attribute depends on the whole candidate key, not just part of a composite key.\n3NF: in 2NF and removes relevant transitive dependencies; formally, for every non-trivial functional dependency X → A, X is a superkey or A is prime.\nBCNF: for every non-trivial functional dependency X → Y, X is a superkey.\nDenormalization may be used deliberately for read performance, with consistency trade-offs.",
+          "quick_revision": [
+            "Know the anomalies: insertion, update, and deletion.",
+            "Be able to normalize a small relation step by step."
+          ]
+        },
+        {
+          "id": "relationships-erd",
+          "heading": "Relationships and ER Modeling",
+          "explanation": "One-to-one, one-to-many, and many-to-many describe common relationship cardinalities.\nA many-to-many relationship is usually implemented using a junction/bridge table containing foreign keys to each related table.",
+          "examples": [
+            {
+              "title": "Many-to-many enrollment",
+              "sql": "CREATE TABLE student_courses (\n  student_id INT NOT NULL,\n  course_id INT NOT NULL,\n  enrolled_at DATE,\n  PRIMARY KEY (student_id, course_id),\n  FOREIGN KEY (student_id) REFERENCES students(student_id),\n  FOREIGN KEY (course_id) REFERENCES courses(course_id)\n);",
+              "explanation": "The composite primary key prevents duplicate enrollment pairs."
+            }
+          ],
+          "quick_revision": [
+            "Use a junction table for many-to-many relationships."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Learn keys, constraints, relationships, and normalization with examples."
+      ]
+    },
+    {
+      "id": "dml-transactions",
+      "title": "INSERT, UPDATE, DELETE, and Transactions",
+      "sections": [
+        {
+          "id": "insert-update-delete",
+          "heading": "INSERT, UPDATE, and DELETE",
+          "explanation": "INSERT adds rows; UPDATE modifies matching rows; DELETE removes matching rows.\nAlways check the WHERE clause on UPDATE and DELETE. Without WHERE, all rows can be changed or removed.\nINSERT syntax for multiple rows and upsert operations varies by database.",
+          "examples": [
+            {
+              "title": "Insert a row",
+              "sql": "INSERT INTO employees (employee_id, employee_name, department_id, salary) VALUES (101, 'Asha', 10, 65000);",
+              "explanation": "Adds a row using an explicit column list."
+            },
+            {
+              "title": "Update one employee",
+              "sql": "UPDATE employees SET salary = 70000 WHERE employee_id = 101;",
+              "explanation": "Changes salary for the employee whose ID is 101."
+            },
+            {
+              "title": "Delete old test data",
+              "sql": "DELETE FROM employees WHERE employee_id = 101;",
+              "explanation": "Removes matching rows; verify the condition before executing."
+            }
+          ],
+          "quick_revision": [
+            "Never run an unreviewed UPDATE or DELETE without a WHERE clause."
+          ]
+        },
+        {
+          "id": "transactions-acid",
+          "heading": "Transactions and ACID",
+          "explanation": "A transaction groups operations into one logical unit.\nAtomicity: all operations succeed or none do.\nConsistency: constraints and rules remain satisfied.\nIsolation: concurrent transactions are controlled to limit interference.\nDurability: committed changes survive failures according to the system's guarantees.\nUse BEGIN/START TRANSACTION, COMMIT, and ROLLBACK according to the target DBMS.",
+          "examples": [
+            {
+              "title": "Transfer funds (illustrative)",
+              "sql": "BEGIN;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 2;\nCOMMIT;",
+              "explanation": "Both updates should be part of the same transaction. Add validation and error handling in application code; syntax varies by DBMS."
+            }
+          ],
+          "quick_revision": [
+            "ACID is a must-know interview topic.",
+            "Commit makes the transaction permanent; rollback cancels uncommitted changes."
+          ]
+        },
+        {
+          "id": "isolation-levels",
+          "heading": "Isolation Levels and Concurrency",
+          "explanation": "Common SQL isolation levels are READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, and SERIALIZABLE.\nPotential anomalies include dirty reads, non-repeatable reads, and phantom reads. Actual behavior depends on DBMS implementation and MVCC/locking strategy.\nStronger isolation can reduce anomalies but may reduce concurrency or increase contention.",
+          "quick_revision": [
+            "Know the trade-off between consistency and concurrency."
+          ]
+        },
+        {
+          "id": "locks-deadlocks",
+          "heading": "Locks and Deadlocks",
+          "explanation": "Databases use locks and/or multiversion concurrency control to coordinate concurrent work.\nA deadlock occurs when transactions wait on one another in a cycle. A DBMS may abort one transaction; applications should handle retries where appropriate.\nKeep transactions short, access resources in a consistent order, and index predicates used by updates where suitable.",
+          "quick_revision": [
+            "Deadlocks are different from slow queries; design retry-safe transactions."
+          ]
+        },
+        {
+          "id": "savepoints-upsert",
+          "heading": "SAVEPOINT and Upsert Patterns",
+          "explanation": "SAVEPOINT creates a point within a transaction to which you may roll back.\nUpsert means insert a row or update it if a key conflict exists. PostgreSQL supports ON CONFLICT; MySQL supports ON DUPLICATE KEY UPDATE; SQL Server patterns often use other approaches. MERGE support and behavior vary.",
+          "examples": [
+            {
+              "title": "PostgreSQL upsert example",
+              "sql": "INSERT INTO employees (employee_id, employee_name, salary)\nVALUES (101, 'Asha', 70000)\nON CONFLICT (employee_id) DO UPDATE SET salary = EXCLUDED.salary;",
+              "explanation": "In PostgreSQL, updates salary if employee_id already exists."
+            }
+          ],
+          "quick_revision": ["Upsert syntax is not portable across all DBMSs."]
+        }
+      ],
+      "quick_revision": [
+        "Transactions, ACID, isolation, and safe data modification are essential."
+      ]
+    },
+    {
+      "id": "indexes-views-programming",
+      "title": "Indexes, Views, and Database Programming",
+      "sections": [
+        {
+          "id": "indexes",
+          "heading": "Indexes and Index Design",
+          "explanation": "An index is an auxiliary structure that can speed up lookups, joins, and sorting, at the cost of storage and extra work on writes.\nB-tree indexes are common. Composite indexes depend on column order; an index on (department_id, salary) is generally most useful when predicates use the leftmost prefix.\nIndex selectivity, table size, query patterns, and the optimizer all affect usefulness. Avoid adding indexes blindly.",
+          "examples": [
+            {
+              "title": "Create a common lookup index",
+              "sql": "CREATE INDEX idx_employees_department ON employees(department_id);",
+              "explanation": "May improve queries filtering or joining on department_id; verify with an execution plan."
+            }
+          ],
+          "quick_revision": [
+            "Indexes speed some reads but add write/storage overhead.",
+            "Index the columns used by real query patterns."
+          ]
+        },
+        {
+          "id": "execution-plans",
+          "heading": "EXPLAIN and Query Plans",
+          "explanation": "EXPLAIN displays how the database plans to execute a query; some systems offer EXPLAIN ANALYZE to run it and report actual measurements.\nInspect scans, join algorithms, row estimates, sorts, and index usage. Actual plan terms vary by DBMS.\nDo not assume an index is used merely because one exists.",
+          "examples": [
+            {
+              "title": "Inspect a plan",
+              "sql": "EXPLAIN SELECT * FROM employees WHERE department_id = 10;",
+              "explanation": "Shows the planned access path in many SQL systems; exact output differs."
+            }
+          ],
+          "quick_revision": ["Use plans and measurements rather than guessing."]
+        },
+        {
+          "id": "views",
+          "heading": "Views and Materialized Views",
+          "explanation": "A view is a named query presented like a virtual table. It can simplify access and support security boundaries, though permissions and updatability rules vary.\nA materialized view stores query results and must be refreshed or maintained; availability and refresh syntax differ by DBMS.",
+          "examples": [
+            {
+              "title": "Create a view",
+              "sql": "CREATE VIEW employee_directory AS SELECT employee_id, employee_name, department_id FROM employees;",
+              "explanation": "Provides a reusable logical projection of the employees table."
+            }
+          ],
+          "quick_revision": [
+            "A regular view usually stores a query definition, not a separate result copy."
+          ]
+        },
+        {
+          "id": "stored-procedures-functions",
+          "heading": "Stored Procedures and Functions",
+          "explanation": "Stored procedures package database-side operations; functions return a value or table depending on the DBMS.\nThey can centralize logic and reduce round trips, but language, syntax, permissions, and transaction behavior differ substantially across MySQL, PostgreSQL, SQL Server, and Oracle.",
+          "quick_revision": [
+            "Do not assume stored procedure syntax is portable."
+          ]
+        },
+        {
+          "id": "triggers",
+          "heading": "Triggers",
+          "explanation": "Triggers execute automatically in response to events such as INSERT, UPDATE, or DELETE. They can enforce auditing or derived behavior but may hide side effects and complicate debugging.\nPrefer explicit constraints for simple integrity rules; use triggers when their automatic behavior is justified.",
+          "quick_revision": [
+            "Triggers should be documented and tested for side effects."
+          ]
+        },
+        {
+          "id": "security-sql-injection",
+          "heading": "Permissions and SQL Injection",
+          "explanation": "Apply least privilege: grant only the permissions a role needs. GRANT and REVOKE manage privileges, with syntax varying by DBMS.\nSQL injection happens when untrusted input is concatenated into SQL text. Use parameterized queries/prepared statements, validate inputs, and avoid relying on escaping alone.\nNever store plaintext passwords in database tables; applications should use a modern password-hashing scheme.",
+          "examples": [
+            {
+              "title": "Unsafe pattern — do not use",
+              "sql": "-- BAD: query text built by concatenating user input\n-- SELECT * FROM users WHERE username = '' || user_input || '';",
+              "explanation": "Concatenating untrusted input can alter the query's meaning."
+            },
+            {
+              "title": "Safer parameterized pattern (pseudocode)",
+              "sql": "SELECT * FROM users WHERE username = ?;",
+              "explanation": "Bind the user-supplied value as a parameter using the database driver's supported placeholder syntax."
+            }
+          ],
+          "quick_revision": [
+            "Parameterized queries are the primary defense against SQL injection.",
+            "Use least-privilege database accounts."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Indexes and execution plans matter for performance; permissions and parameterization matter for security."
+      ]
+    },
+    {
+      "id": "advanced-querying",
+      "title": "Advanced SQL Patterns and Performance",
+      "sections": [
+        {
+          "id": "top-n-patterns",
+          "heading": "Top-N Queries and Top-N per Group",
+          "explanation": "A global top-N query sorts then limits rows. Top-N per group is commonly solved with ROW_NUMBER, RANK, or DENSE_RANK partitioned by the group key.\nDecide whether ties should be included: ROW_NUMBER returns a fixed maximum count, while RANK/DENSE_RANK can return more rows when values tie.",
+          "examples": [
+            {
+              "title": "Second-highest distinct salary",
+              "sql": "SELECT MAX(salary) AS second_highest_salary FROM employees WHERE salary < (SELECT MAX(salary) FROM employees);",
+              "explanation": "Returns the second-highest distinct salary, or NULL if there is no lower salary."
+            },
+            {
+              "title": "Top two salary ranks per department",
+              "sql": "WITH ranked AS (SELECT e.*, DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk FROM employees e) SELECT * FROM ranked WHERE rnk <= 2;",
+              "explanation": "Includes ties and returns the top two distinct salary levels in each department."
+            }
+          ],
+          "quick_revision": [
+            "Clarify how ties should be handled before choosing a ranking function."
+          ]
+        },
+        {
+          "id": "conditional-aggregation",
+          "heading": "Conditional Aggregation and Pivoting",
+          "explanation": "Conditional aggregation uses CASE inside aggregate functions to summarize different categories in one query.\nPivot syntax differs by DBMS; conditional aggregation is widely portable.",
+          "examples": [
+            {
+              "title": "Count active and inactive users",
+              "sql": "SELECT department_id, SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) AS active_count, SUM(CASE WHEN status = 'Inactive' THEN 1 ELSE 0 END) AS inactive_count FROM employees GROUP BY department_id;",
+              "explanation": "Calculates multiple conditional counts in one grouped query."
+            }
+          ],
+          "quick_revision": [
+            "Conditional aggregation is a versatile interview pattern."
+          ]
+        },
+        {
+          "id": "anti-joins",
+          "heading": "Semi-Joins and Anti-Joins",
+          "explanation": "A semi-join returns rows from one side for which a match exists; EXISTS is a common expression of this pattern.\nAn anti-join returns rows for which no match exists; NOT EXISTS or a carefully written LEFT JOIN ... IS NULL can express it.",
+          "examples": [
+            {
+              "title": "Customers with no orders",
+              "sql": "SELECT c.customer_id, c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
+              "explanation": "Returns customers with no matching order and avoids NOT IN's NULL trap."
+            }
+          ],
+          "quick_revision": [
+            "NOT EXISTS is often a clear way to express 'no matching row'."
+          ]
+        },
+        {
+          "id": "gaps-islands-dedup",
+          "heading": "Deduplication, Gaps, and Islands",
+          "explanation": "Use ROW_NUMBER to identify duplicate records according to a chosen business key and ordering. Never delete duplicates until you have defined which row to retain and backed up or verified the data.\nGaps-and-islands problems group consecutive dates or numbers. A common approach uses ROW_NUMBER and a stable ordering to derive a group key.",
+          "examples": [
+            {
+              "title": "Mark duplicate emails",
+              "sql": "WITH numbered AS (SELECT user_id, email, ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at, user_id) AS rn FROM users) SELECT * FROM numbered WHERE rn > 1;",
+              "explanation": "Lists rows after the first row for each email; decide how NULL emails should be handled."
+            }
+          ],
+          "quick_revision": [
+            "Define the business key and retention rule before deduplication."
+          ]
+        },
+        {
+          "id": "query-optimization",
+          "heading": "Query Optimization Checklist",
+          "explanation": "Select only needed columns; filter early where logically appropriate; write correct joins; avoid unnecessary DISTINCT; index based on measured workloads; inspect execution plans; update statistics when required; avoid applying functions to indexed columns in predicates when a range can be used.\nSargable predicates are predicates that can use an index access path more readily, though the optimizer and index design determine actual behavior.\nOptimize for correctness first, then measure performance with representative data.",
+          "quick_revision": [
+            "Measure before and after changes.",
+            "A shorter query is not necessarily a faster query."
+          ]
+        },
+        {
+          "id": "partitioning-sharding",
+          "heading": "Partitioning and Sharding Concepts",
+          "explanation": "Partitioning divides a large table into manageable pieces within a database system, often by range, list, or hash.\nSharding distributes data across separate database instances or nodes. Sharding introduces routing, rebalancing, and cross-shard query complexity.\nThese are architectural concepts, and implementation varies by database product.",
+          "quick_revision": [
+            "Partitioning and sharding are different scaling strategies."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Practice window functions, anti-joins, conditional aggregation, and plan reading."
+      ]
+    },
+    {
+      "id": "sql-dialects-data-types",
+      "title": "Data Types, Dialects, and Portability",
+      "sections": [
+        {
+          "id": "data-types",
+          "heading": "Common SQL Data Types",
+          "explanation": "Numeric: SMALLINT, INT/INTEGER, BIGINT, DECIMAL/NUMERIC, REAL, FLOAT/DOUBLE.\nText: CHAR, VARCHAR, and database-specific text types.\nDate/time: DATE, TIME, TIMESTAMP, and time-zone-aware variants where available.\nOther types may include BOOLEAN, BINARY/VARBINARY, JSON, UUID, arrays, and spatial types depending on the DBMS.\nUse DECIMAL/NUMERIC for exact decimal quantities such as currency when appropriate; floating-point values are approximate.",
+          "quick_revision": [
+            "Choose types based on range, precision, semantics, and DBMS support."
+          ]
+        },
+        {
+          "id": "dialect-differences",
+          "heading": "MySQL vs PostgreSQL vs SQL Server vs Oracle",
+          "explanation": "Core SELECT, joins, grouping, and standard constraints are broadly similar, but identity columns, row limiting, date functions, upsert, procedural code, JSON features, and string functions vary.\nMySQL commonly uses LIMIT and AUTO_INCREMENT; PostgreSQL supports LIMIT, identity columns, and ON CONFLICT; SQL Server supports TOP/OFFSET-FETCH and IDENTITY; Oracle commonly uses FETCH FIRST and has its own PL/SQL and MERGE features.\nTreat examples as dialect-specific when labeled, and verify syntax against the database used in the interview or job.",
+          "quick_revision": ["State the DBMS when syntax is not portable."]
+        },
+        {
+          "id": "logical-query-processing",
+          "heading": "Logical Query Processing Order",
+          "explanation": "A useful conceptual order is FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, DISTINCT, ORDER BY, then row limiting (LIMIT/OFFSET or equivalent).\nThis helps explain why a SELECT alias may not be available in WHERE in many DBMSs, while it may be usable in ORDER BY.\nThe optimizer can execute operations in a different physical order while preserving semantics.",
+          "quick_revision": [
+            "Conceptual order helps debug alias and aggregation questions."
+          ]
+        },
+        {
+          "id": "set-operators-precedence",
+          "heading": "Operator Precedence and Three-Valued Logic",
+          "explanation": "Parentheses make complex conditions clearer. AND is generally evaluated before OR; use parentheses instead of relying on memory.\nComparisons involving NULL often yield UNKNOWN. WHERE retains only rows where the predicate is TRUE.",
+          "examples": [
+            {
+              "title": "Explicit logic",
+              "sql": "SELECT * FROM employees WHERE (department_id = 10 OR department_id = 20) AND salary > 50000;",
+              "explanation": "Parentheses make the intended grouping clear."
+            }
+          ],
+          "quick_revision": ["Use parentheses in mixed boolean expressions."]
+        }
+      ],
+      "quick_revision": [
+        "SQL concepts transfer well, but syntax and behavior should be checked for the target DBMS."
+      ]
+    },
+    {
+      "id": "practice-schema",
+      "title": "Practice Database and Guided Exercises",
+      "sections": [
+        {
+          "id": "practice-schema-definition",
+          "heading": "Suggested Practice Schema",
+          "explanation": "Use this compact schema for the exercises in this file. Insert your own sample rows and test edge cases such as NULL salaries, duplicate values, and departments with no employees.",
+          "examples": [
+            {
+              "title": "Create core tables",
+              "sql": "CREATE TABLE departments (department_id INT PRIMARY KEY, department_name VARCHAR(100) NOT NULL);\nCREATE TABLE employees (employee_id INT PRIMARY KEY, employee_name VARCHAR(100) NOT NULL, department_id INT, manager_id INT, salary DECIMAL(10,2), hire_date DATE, email VARCHAR(255), FOREIGN KEY (department_id) REFERENCES departments(department_id), FOREIGN KEY (manager_id) REFERENCES employees(employee_id));\nCREATE TABLE customers (customer_id INT PRIMARY KEY, customer_name VARCHAR(100) NOT NULL, email VARCHAR(255));\nCREATE TABLE orders (order_id INT PRIMARY KEY, customer_id INT NOT NULL, order_date DATE, amount DECIMAL(10,2), status VARCHAR(30), FOREIGN KEY (customer_id) REFERENCES customers(customer_id));",
+              "explanation": "A reusable schema for joins, aggregates, self joins, subqueries, and window functions."
+            }
+          ],
+          "quick_revision": [
+            "Create small sample datasets with edge cases before solving interview problems."
+          ]
+        },
+        {
+          "id": "practice-beginner",
+          "heading": "Beginner Practice Tasks",
+          "explanation": "Try writing each query before looking up a solution:\n1. Display all employee names and salaries.\n2. Find employees earning more than 50,000.\n3. List employees hired after a chosen date.\n4. Find employees whose names start with 'S'.\n5. Count employees in each department.\n6. Find departments with no employees.",
+          "examples": [
+            {
+              "title": "Departments with no employees",
+              "sql": "SELECT d.department_id, d.department_name FROM departments d LEFT JOIN employees e ON e.department_id = d.department_id WHERE e.employee_id IS NULL;",
+              "explanation": "Keeps departments without a matching employee."
+            }
+          ],
+          "quick_revision": ["Solve each task using the practice schema."]
+        },
+        {
+          "id": "practice-intermediate",
+          "heading": "Intermediate Practice Tasks",
+          "explanation": "1. Find the average salary by department.\n2. Find employees who earn more than their department average.\n3. Find customers who have never placed an order.\n4. Find the most recent order for each customer.\n5. Find the second-highest distinct salary.\n6. Show monthly sales totals and running totals.",
+          "examples": [
+            {
+              "title": "Most recent order per customer",
+              "sql": "WITH ranked AS (SELECT o.*, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC, order_id DESC) AS rn FROM orders o) SELECT * FROM ranked WHERE rn = 1;",
+              "explanation": "Chooses one latest order per customer, using order_id as a tie-breaker."
+            }
+          ],
+          "quick_revision": [
+            "Practice correlated subqueries, NOT EXISTS, and window functions."
+          ]
+        },
+        {
+          "id": "practice-advanced",
+          "heading": "Advanced Practice Tasks",
+          "explanation": "1. Find the top three salaries per department including ties.\n2. Calculate month-over-month revenue change.\n3. Detect duplicate emails and decide which record to retain.\n4. Find consecutive login-day streaks.\n5. Build an employee hierarchy using a recursive CTE.\n6. Compare alternative query plans and explain the performance difference.",
+          "quick_revision": [
+            "Explain the approach, edge cases, and complexity—not only the final SQL."
+          ]
+        }
+      ],
+      "quick_revision": [
+        "Use the same schema to practice progressively harder patterns."
+      ]
+    }
+  ],
+  "placement_interview_questions": {
+    "id": "placement-interview-questions",
+    "title": "Frequently Asked SQL Placement and Interview Questions",
+    "note": "These are representative questions commonly used in SQL interview preparation and publicly shared interview-practice sets. They are not claimed to be verbatim questions from a specific company's private interview or a verified record of a particular candidate's interview. Always confirm syntax for the target DBMS.",
+    "question_count": 23,
+    "questions": [
+      {
+        "id": "q-second-highest-salary",
+        "question": "Find the second-highest distinct salary.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["MAX", "subquery", "NULL result"],
+        "sql": "SELECT MAX(salary) AS second_highest_salary\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);",
+        "explanation": "The inner query finds the maximum salary. The outer query finds the maximum salary strictly below it. If no lower salary exists, the result is NULL. This returns the second-highest distinct salary, not the second row after sorting.",
+        "follow_up": "How would you return every employee earning that salary?"
+      },
+      {
+        "id": "q-nth-highest-salary",
+        "question": "Find the Nth-highest distinct salary.",
+        "difficulty": "Intermediate",
+        "concepts": ["DENSE_RANK", "window functions"],
+        "sql": "WITH ranked AS (\n  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS salary_rank\n  FROM employees\n  WHERE salary IS NOT NULL\n)\nSELECT DISTINCT salary\nFROM ranked\nWHERE salary_rank = :n;",
+        "explanation": "DENSE_RANK assigns the same rank to equal salaries and does not skip rank numbers. Replace :n with a bound parameter supported by your client; parameter syntax varies.",
+        "follow_up": "Explain the difference between ROW_NUMBER, RANK, and DENSE_RANK."
+      },
+      {
+        "id": "q-duplicate-records",
+        "question": "Find duplicate email addresses.",
+        "difficulty": "Beginner",
+        "concepts": ["GROUP BY", "HAVING"],
+        "sql": "SELECT email, COUNT(*) AS occurrences\nFROM users\nWHERE email IS NOT NULL\nGROUP BY email\nHAVING COUNT(*) > 1;",
+        "explanation": "Groups rows by email and returns groups with more than one occurrence. Whether email comparison is case-sensitive depends on collation and normalization rules.",
+        "follow_up": "How would you list the full rows that contain duplicate emails?"
+      },
+      {
+        "id": "q-delete-duplicates",
+        "question": "Identify duplicate rows while keeping the earliest record for each email.",
+        "difficulty": "Intermediate",
+        "concepts": ["ROW_NUMBER", "CTE", "deduplication"],
+        "sql": "WITH numbered AS (\n  SELECT user_id, email,\n         ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at, user_id) AS rn\n  FROM users\n  WHERE email IS NOT NULL\n)\nSELECT * FROM numbered WHERE rn > 1;",
+        "explanation": "This SELECT identifies rows that would be considered duplicates under the chosen rule. Review the result and back up data before converting it into a DELETE. The ordering defines which row is retained.",
+        "follow_up": "Why should you preview and back up rows before deleting?"
+      },
+      {
+        "id": "q-employees-above-average",
+        "question": "Find employees earning more than the company-wide average salary.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["AVG", "subquery"],
+        "sql": "SELECT employee_id, employee_name, salary\nFROM employees\nWHERE salary > (SELECT AVG(salary) FROM employees);",
+        "explanation": "The scalar subquery calculates the average of non-NULL salary values; the outer query returns employees above that average.",
+        "follow_up": "Modify the query to compare each employee with their department average."
+      },
+      {
+        "id": "q-department-average",
+        "question": "Find employees earning more than their department's average salary.",
+        "difficulty": "Intermediate",
+        "concepts": ["correlated subquery", "AVG"],
+        "sql": "SELECT e.employee_id, e.employee_name, e.department_id, e.salary\nFROM employees e\nWHERE e.salary > (\n  SELECT AVG(e2.salary)\n  FROM employees e2\n  WHERE e2.department_id = e.department_id\n);",
+        "explanation": "The inner query calculates an average for the current employee's department. Employees with NULL salary do not satisfy the comparison.",
+        "follow_up": "Solve the same problem with AVG() OVER (PARTITION BY department_id)."
+      },
+      {
+        "id": "q-top-three-per-department",
+        "question": "Find the top three highest-paid employees in each department.",
+        "difficulty": "Intermediate",
+        "concepts": ["ROW_NUMBER", "PARTITION BY"],
+        "sql": "WITH ranked AS (\n  SELECT e.*,\n         ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC, employee_id) AS rn\n  FROM employees e\n)\nSELECT * FROM ranked WHERE rn <= 3;",
+        "explanation": "ROW_NUMBER numbers employees within each department. This returns at most three employees per department and uses employee_id to make tie handling deterministic.",
+        "follow_up": "How would the result change if RANK or DENSE_RANK were used?"
+      },
+      {
+        "id": "q-customers-no-orders",
+        "question": "Find customers who have never placed an order.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["NOT EXISTS", "anti-join"],
+        "sql": "SELECT c.customer_id, c.customer_name\nFROM customers c\nWHERE NOT EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);",
+        "explanation": "NOT EXISTS keeps customers for whom the correlated query finds no matching order. It is robust against NULLs in the subquery result.",
+        "follow_up": "Write the equivalent LEFT JOIN ... IS NULL query."
+      },
+      {
+        "id": "q-department-count-zero",
+        "question": "Show every department and its employee count, including departments with zero employees.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["LEFT JOIN", "COUNT"],
+        "sql": "SELECT d.department_id, d.department_name,\n       COUNT(e.employee_id) AS employee_count\nFROM departments d\nLEFT JOIN employees e ON e.department_id = d.department_id\nGROUP BY d.department_id, d.department_name;",
+        "explanation": "LEFT JOIN preserves departments without employees. COUNT(e.employee_id) returns zero for unmatched departments; COUNT(*) would count the preserved department row as one.",
+        "follow_up": "Why is COUNT(e.employee_id) preferable to COUNT(*) here?"
+      },
+      {
+        "id": "q-consecutive-rows",
+        "question": "Find customers with orders on at least three consecutive calendar days.",
+        "difficulty": "Advanced",
+        "concepts": ["window functions", "date gaps and islands"],
+        "sql": "WITH daily AS (\n  SELECT DISTINCT customer_id, order_date\n  FROM orders\n  WHERE order_date IS NOT NULL\n), numbered AS (\n  SELECT customer_id, order_date,\n         ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date) AS rn\n  FROM daily\n), grouped AS (\n  SELECT customer_id, order_date,\n         order_date - (rn * INTERVAL '1 day') AS grp\n  FROM numbered\n)\nSELECT customer_id, MIN(order_date) AS streak_start,\n       MAX(order_date) AS streak_end, COUNT(*) AS consecutive_days\nFROM grouped\nGROUP BY customer_id, grp\nHAVING COUNT(*) >= 3;",
+        "explanation": "This is a PostgreSQL-style gaps-and-islands pattern. Date arithmetic and interval syntax vary by DBMS; adapt it for MySQL or SQL Server. DISTINCT makes the streak based on days with at least one order.",
+        "follow_up": "How would you return only the longest streak per customer?"
+      },
+      {
+        "id": "q-monthly-sales",
+        "question": "Calculate monthly sales and month-over-month change.",
+        "difficulty": "Intermediate–Advanced",
+        "concepts": ["date grouping", "LAG", "aggregation"],
+        "sql": "WITH monthly AS (\n  SELECT DATE_TRUNC('month', order_date) AS month_start,\n         SUM(amount) AS revenue\n  FROM orders\n  WHERE order_date IS NOT NULL\n  GROUP BY DATE_TRUNC('month', order_date)\n), compared AS (\n  SELECT month_start, revenue,\n         LAG(revenue) OVER (ORDER BY month_start) AS previous_revenue\n  FROM monthly\n)\nSELECT month_start, revenue, previous_revenue,\n       revenue - previous_revenue AS revenue_change\nFROM compared\nORDER BY month_start;",
+        "explanation": "Aggregates revenue by month, then uses LAG to compare each month with the previous available month. DATE_TRUNC is PostgreSQL syntax; date grouping differs by DBMS.",
+        "follow_up": "How would you calculate percentage change and avoid division by zero?"
+      },
+      {
+        "id": "q-running-total",
+        "question": "Calculate a running total of order amounts.",
+        "difficulty": "Intermediate",
+        "concepts": ["SUM OVER", "window frame"],
+        "sql": "SELECT order_id, order_date, amount,\n       SUM(amount) OVER (\n         ORDER BY order_date, order_id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS running_total\nFROM orders;",
+        "explanation": "The explicit ROWS frame adds amounts from the first ordered row through the current row. The order_id tie-breaker makes ordering stable when dates match.",
+        "follow_up": "How would you reset the running total for each customer?"
+      },
+      {
+        "id": "q-rank-vs-dense-rank",
+        "question": "Explain and demonstrate ROW_NUMBER, RANK, and DENSE_RANK.",
+        "difficulty": "Intermediate",
+        "concepts": ["window ranking"],
+        "sql": "SELECT employee_name, salary,\n       ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num,\n       RANK() OVER (ORDER BY salary DESC) AS salary_rank,\n       DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_salary_rank\nFROM employees;",
+        "explanation": "ROW_NUMBER gives every row a distinct sequence number. RANK ties share a rank and leave gaps. DENSE_RANK ties share a rank without gaps. Add a secondary ordering column for deterministic row numbering.",
+        "follow_up": "Which function is best for the top two distinct salary levels?"
+      },
+      {
+        "id": "q-self-join-manager",
+        "question": "Display each employee with their manager's name.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["self join", "LEFT JOIN"],
+        "sql": "SELECT e.employee_name AS employee,\n       m.employee_name AS manager\nFROM employees e\nLEFT JOIN employees m ON m.employee_id = e.manager_id;",
+        "explanation": "The employees table is joined to itself. LEFT JOIN preserves employees who have no manager, such as top-level employees.",
+        "follow_up": "How would you list all descendants of a manager?"
+      },
+      {
+        "id": "q-join-vs-exists",
+        "question": "When would you use EXISTS instead of JOIN?",
+        "difficulty": "Intermediate",
+        "concepts": ["join cardinality", "semi-join"],
+        "sql": "SELECT c.customer_id, c.customer_name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);",
+        "explanation": "Use EXISTS when the question is whether at least one matching row exists and you only need columns from the outer table. A JOIN can produce multiple rows per customer when a customer has multiple orders.",
+        "follow_up": "How can DISTINCT hide a faulty join?"
+      },
+      {
+        "id": "q-where-having",
+        "question": "Explain WHERE versus HAVING with an example.",
+        "difficulty": "Beginner",
+        "concepts": ["filtering", "aggregation"],
+        "sql": "SELECT department_id, COUNT(*) AS headcount\nFROM employees\nWHERE salary >= 40000\nGROUP BY department_id\nHAVING COUNT(*) >= 5;",
+        "explanation": "WHERE removes individual employees before grouping; HAVING removes groups after COUNT is calculated.",
+        "follow_up": "Can HAVING be used without GROUP BY in some DBMSs?"
+      },
+      {
+        "id": "q-union-all",
+        "question": "Explain UNION versus UNION ALL.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["set operations", "duplicates"],
+        "sql": "SELECT email FROM online_customers\nUNION ALL\nSELECT email FROM store_customers;",
+        "explanation": "UNION ALL concatenates compatible result sets and preserves duplicates. UNION removes duplicate result rows, which may require extra work. Use UNION ALL when duplicates are meaningful or duplicate removal is unnecessary.",
+        "follow_up": "What requirements must both SELECT statements satisfy?"
+      },
+      {
+        "id": "q-delete-vs-truncate",
+        "question": "Compare DELETE, TRUNCATE, and DROP.",
+        "difficulty": "Beginner–Intermediate",
+        "concepts": ["DDL", "DML", "table operations"],
+        "sql": "DELETE FROM staging_orders WHERE batch_id = 99;\nTRUNCATE TABLE staging_orders;\nDROP TABLE staging_orders;",
+        "explanation": "DELETE removes selected rows (or all rows without WHERE); TRUNCATE removes all rows while keeping the table; DROP removes the table object. The three example statements are alternatives, not statements to run sequentially. Transaction and identity behavior vary by DBMS.",
+        "follow_up": "Which operation can selectively remove rows?"
+      },
+      {
+        "id": "q-acid",
+        "question": "Explain ACID properties with a banking transaction example.",
+        "difficulty": "Intermediate",
+        "concepts": ["transactions", "concurrency"],
+        "sql": "BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE account_id = 2;\nCOMMIT;",
+        "explanation": "Atomicity keeps both updates together; consistency preserves defined rules; isolation controls concurrent effects; durability protects committed changes. Add application-level validation and error handling. Transaction syntax may vary.",
+        "follow_up": "What should the application do if the second update fails?"
+      },
+      {
+        "id": "q-index",
+        "question": "What is an index, and when can it hurt performance?",
+        "difficulty": "Intermediate",
+        "concepts": ["query plans", "write overhead"],
+        "sql": "CREATE INDEX idx_orders_customer_date ON orders(customer_id, order_date);\nEXPLAIN SELECT order_id, order_date FROM orders WHERE customer_id = 10 ORDER BY order_date;",
+        "explanation": "The composite index may help filtering by customer_id and ordering by order_date. Indexes consume storage and add work to INSERT, UPDATE, and DELETE. Verify the execution plan rather than assuming the index will be used.",
+        "follow_up": "Why does column order matter in a composite index?"
+      },
+      {
+        "id": "q-normalization",
+        "question": "Explain 1NF, 2NF, and 3NF and why normalization matters.",
+        "difficulty": "Intermediate",
+        "concepts": ["schema design", "functional dependencies"],
+        "sql": "-- Example decomposition:\n-- employees(employee_id, employee_name, department_id)\n-- departments(department_id, department_name)",
+        "explanation": "Normalization organizes attributes to reduce redundancy and insertion, update, and deletion anomalies. 1NF addresses repeating/non-atomic groups; 2NF removes partial dependencies on part of a candidate key; 3NF removes relevant transitive dependencies. The example separates department details from employee rows.",
+        "follow_up": "When might denormalization be justified?"
+      },
+      {
+        "id": "q-sql-injection",
+        "question": "What is SQL injection and how do you prevent it?",
+        "difficulty": "Intermediate",
+        "concepts": ["security", "parameterized queries"],
+        "sql": "SELECT * FROM users WHERE username = ?;",
+        "explanation": "The placeholder represents a bound parameter in a prepared statement; the exact placeholder style depends on the driver. Never build SQL by concatenating untrusted input. Use least-privilege accounts and validate inputs as an additional defense.",
+        "follow_up": "Why is escaping user input alone not the preferred defense?"
+      },
+      {
+        "id": "q-optimization",
+        "question": "How would you troubleshoot a slow SQL query?",
+        "difficulty": "Intermediate–Advanced",
+        "concepts": ["EXPLAIN", "indexes", "statistics"],
+        "sql": "EXPLAIN SELECT e.employee_name, d.department_name\nFROM employees e\nJOIN departments d ON d.department_id = e.department_id\nWHERE e.department_id = 10;",
+        "explanation": "Inspect the plan, estimated and actual row counts when available, scans, joins, sorts, and index usage. Check predicate selectivity, statistics, data volume, and whether the query returns unnecessary columns. Measure changes with representative data.",
+        "follow_up": "Why might adding an index not improve the query?"
+      }
+    ]
+  },
+  "placement_preparation_checklist": [
+    "Write SELECT queries using WHERE, ORDER BY, DISTINCT, LIKE, IN, BETWEEN, and NULL checks.",
+    "Explain and write INNER JOIN, LEFT JOIN, self join, and anti-join queries.",
+    "Use COUNT, SUM, AVG, GROUP BY, and HAVING correctly.",
+    "Solve second-highest/Nth-highest salary and top-N-per-group problems.",
+    "Understand subqueries, correlated subqueries, EXISTS, CTEs, and window functions.",
+    "Explain keys, constraints, normalization, ACID, isolation, and indexes.",
+    "Read an EXPLAIN plan and discuss query optimization trade-offs.",
+    "Know SQL injection prevention and parameterized queries.",
+    "Practice on a database with realistic sample data and edge cases.",
+    "Explain your approach, NULL handling, duplicates, tie behavior, and complexity during interviews."
+  ]
+}
