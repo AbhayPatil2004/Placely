@@ -1,9 +1,9 @@
-[
+export default [
     {
   "title": "Binary Search",
   "slug": "binary-search",
   "problemStatement": "Given an array of integers nums which is sorted in ascending order, and an integer target, write a function to search target in nums. If target exists, then return its index. Otherwise, return -1.",
-  "topic": "ARRAY",
+  "topic": "BINARY_SEARCH",
   "subTopics": [],
   "tags": ["array", "binary-search"],
   "pattern": ["BINARY_SEARCH"],
@@ -610,7 +610,7 @@
   "expectedTimeComplexity": "O(log(min(m, n)))",
   "expectedSpaceComplexity": "O(1)",
   "companies": ["Amazon", "Microsoft", "Google", "TCS", "Infosys"],
-  "order": 6
+  "order": 8
  },
 {
   "title": "Search in a 2D Matrix",
@@ -814,8 +814,10 @@
   "expectedTimeComplexity": "O(log N)",
   "expectedSpaceComplexity": "O(1)",
   "companies": ["Amazon", "Microsoft", "Google", "TCS", "Infosys"],
-  "order": 8
+  "order": 6
 }
 
 
 ]
+
+// export default binarySearchProblems;

@@ -4,6 +4,9 @@ import ApiError from "../../utils/apiError.js";
 import Solved from "../models/solved.model.js";
 import { GetStudentId } from "../../utils/studentDetails.js";
 import basicQuestions from "../../../../problems/DSA/basic.js";
+import arrayQuestions from "../../../../problems/DSA/array.js";
+import stringQuestions from "../../../../problems/DSA/string.js";
+import BinarySearchQuestions from "../../../../problems/DSA/binarySearch.js";
 
 const GetAllProblems = async (req, res) => {
 
@@ -30,8 +33,13 @@ const GetAllProblems = async (req, res) => {
 const AddMultipleProblems = async () => {
 
     try {
-
-        const questions = basicQuestions;
+        //  console.log("Basic:", basicQuestions.length);
+        // console.log("Array:", arrayQuestions.length);
+        // console.log("String:", stringQuestions.length);
+        // console.log("Binary Search:", BinarySearchQuestions.length);
+        
+        
+        const questions = [...basicQuestions, ...arrayQuestions, ...stringQuestions, ...BinarySearchQuestions];
 
         if (!Array.isArray(questions) || questions.length === 0) {
             console.log("No questions found to upload.");
@@ -1354,6 +1362,7 @@ const GetProblemsSheet = async (req, res) => {
         // ============================================================
         // Create Final Response In Fixed Topic Order
         // ============================================================
+        
 
         const orderedProblems = {};
 
@@ -1369,7 +1378,7 @@ const GetProblemsSheet = async (req, res) => {
                         );
                 }
             });
-
+           
         // ============================================================
         // Optional: Detect topics that are not in topicOrder
         // ============================================================

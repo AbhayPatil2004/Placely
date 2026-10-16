@@ -1,4 +1,7 @@
-[
+// import { array } from "node:stream/iter";
+
+export default [
+
   {
   "title": "Maximum Consecutive Ones",
   "slug": "maximum-consecutive-ones",
@@ -1111,3 +1114,4 @@
 }
 
 ]
+// export default problems;

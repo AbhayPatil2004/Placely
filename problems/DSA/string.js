@@ -1,4 +1,4 @@
-[
+export default [
     {
   "title": "Count Vowels and Consonants",
   "slug": "count-vowels-and-consonants",
@@ -902,3 +902,4 @@
   "order": 8
 },
 ]
+// export default problems;

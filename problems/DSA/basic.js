@@ -1,4 +1,4 @@
-[
+export default [
   {
     "title": "Calculate Total and Average of Three Numbers",
     "slug": "calculate-total-and-average-of-three-numbers",
@@ -4504,3 +4504,4 @@
   }
 
 ]
+// export default basicProblems ;
